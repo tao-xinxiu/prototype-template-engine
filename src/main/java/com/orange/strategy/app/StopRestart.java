@@ -12,6 +12,7 @@ import com.orange.model.Step;
 public class StopRestart extends Step {
 	private static final Logger logger = LoggerFactory.getLogger(StopRestart.class);
 	private static final int uploadTimeout = 5; // upload package timeout in min
+	private static final int waitDNS = 5; // wait DNS cache in min
 	private static final String processType = "web";
 
 	private PaaSClient client;
@@ -31,6 +32,23 @@ public class StopRestart extends Step {
 		// StopRestart should only be used when app existed.
 		assert appId != null : "Should not StopRestart not existed app!";
 		logger.info("app id found: {}", appId);
+		
+		String localRouteId = client.getLocalRouteId(application.getLocalHostname());
+		if (localRouteId == null) {
+			logger.info("local route not existed");
+		} else {
+			logger.info("local route id found: {} for hostname {}", localRouteId, application.getLocalHostname());
+			String routeMappingId = client.getRouteMappingId(appId, localRouteId);
+			logger.info("route-mapping id found: {}", routeMappingId);
+			client.deleteRouteMapping(routeMappingId);
+			logger.info("local route unmapped", routeMappingId);
+			logger.info("start waiting {} min for DNS cache", waitDNS);
+			try {
+				Thread.sleep(waitDNS * 1000 * 60);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+		}
 		
 		String packageId = client.createPackage(appId, PackageType.BITS, null);
 		logger.info("package created with id: {}", packageId);
@@ -70,6 +88,18 @@ public class StopRestart extends Step {
 				e.printStackTrace();
 			}
 		}
+		logger.info("app started");
+		
+		localRouteId = client.getLocalRouteId(application.getLocalHostname());
+		if (localRouteId == null) {
+			client.createLocalRoute(application.getLocalHostname());
+			logger.info("local route created with id: {}", localRouteId);
+		} else {
+			logger.info("local route existed with id: {}", localRouteId);
+		}
+		client.createRouteMapping(appId, localRouteId);
+		logger.info("local route mapping created");
+		
 		logger.info("Step {} Done! App: {} running on the target: {}", this.getClass().getName(), application,
 				client.getTargetName());
 	}

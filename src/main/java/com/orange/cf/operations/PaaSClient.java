@@ -1,11 +1,18 @@
 package com.orange.cf.operations;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.cloudfoundry.client.CloudFoundryClient;
 import org.cloudfoundry.client.v2.domains.*;
@@ -50,7 +57,7 @@ public class PaaSClient {
 			compatible = true;
 		}
 	}
-	
+
 	public String getTargetName() {
 		return target.getName();
 	}
@@ -75,8 +82,8 @@ public class PaaSClient {
 
 	private String requestSpaceId() {
 		try {
-			ListSpacesRequest request = ListSpacesRequest.builder().organizationId(requestOrgId()).name(target.getSpace())
-					.build();
+			ListSpacesRequest request = ListSpacesRequest.builder().organizationId(requestOrgId())
+					.name(target.getSpace()).build();
 			ListSpacesResponse response = cloudFoundryClient.spaces().list(request).block();
 			return response.getResources().get(0).getMetadata().getId();
 		} catch (Exception e) {
@@ -127,14 +134,16 @@ public class PaaSClient {
 			throw new IllegalStateException("expcetion during getting app id for: " + appName, e);
 		}
 	}
-	
-	public Map<String, Object> getAppEnv (String appId) {
-		GetApplicationEnvironmentRequest request = GetApplicationEnvironmentRequest.builder().applicationId(appId).build();
-		GetApplicationEnvironmentResponse response = cloudFoundryClient.applicationsV3().getEnvironment(request).block();
+
+	public Map<String, Object> getAppEnv(String appId) {
+		GetApplicationEnvironmentRequest request = GetApplicationEnvironmentRequest.builder().applicationId(appId)
+				.build();
+		GetApplicationEnvironmentResponse response = cloudFoundryClient.applicationsV3().getEnvironment(request)
+				.block();
 		return response.getEnvironmentVariables();
 	}
-	
-	public Object getAppEnv (String appId, String envKey) {
+
+	public Object getAppEnv(String appId, String envKey) {
 		return getAppEnv(appId).get(envKey);
 	}
 
@@ -402,6 +411,39 @@ public class PaaSClient {
 		}
 	}
 
+	public String getRouteMappingId(String appId, String routeId) {
+		try {
+			// avoid multi thread is targeting multiple cf instances
+			synchronized (processLock) {
+				cfCliLogin();
+				return executePipedCommand(
+						Arrays.asList("cf", "curl",
+								String.format("v3/apps/%s/route_mappings?route_guids=%s", appId, routeId)),
+						Arrays.asList("jq", "-r", ".resources[].guid"));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("expcetion during getting route mapping with arg: " + appId + "; " + routeId);
+			throw new IllegalStateException(
+					"expcetion during getting route mapping with arg: " + appId + "; " + routeId, e);
+		}
+	}
+
+	public void deleteRouteMapping(String routeMappingId) {
+		try {
+			// avoid multi thread is targeting multiple cf instances
+			synchronized (processLock) {
+				cfCliLogin();
+				executeCommand(Arrays.asList("cf", "curl", String.format("v3/route_mappings/%s", routeMappingId), "-X",
+						"DELETE"));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("expcetion during deleting route mapping with arg: " + routeMappingId);
+			throw new IllegalStateException("expcetion during deleting route mapping with arg: " + routeMappingId, e);
+		}
+	}
+
 	public List<String> getProcessesState(String appId, String processType) {
 		try {
 			GetApplicationProcessStatisticsRequest request = GetApplicationProcessStatisticsRequest.builder()
@@ -440,17 +482,56 @@ public class PaaSClient {
 
 	private void executeCommand(List<String> command) {
 		try {
-			ProcessBuilder processBuilder = new ProcessBuilder(command);
+			ProcessBuilder processBuilder = new ProcessBuilder(command).inheritIO();
 			Process process = processBuilder.start();
 			process.waitFor();
 			int existCode = process.exitValue();
-			if (process.exitValue() != 0) {
+			if (existCode != 0) {
 				throw new IllegalStateException("command exit with code: " + existCode);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("expcetion during executing command: {}", command);
 			throw new IllegalStateException("expcetion during executing command: " + command, e);
+		}
+	}
+
+	private static String executePipedCommand(List<String> srcCommand, List<String> targetCommand) {
+		try {
+			ProcessBuilder srcProcessBuilder = new ProcessBuilder(srcCommand);
+			ProcessBuilder targetProcessBuilder = new ProcessBuilder(targetCommand);
+			Process srcProcess = srcProcessBuilder.start();
+			Process targetProcess = targetProcessBuilder.start();
+			redirect(srcProcess.getInputStream(), targetProcess.getOutputStream());
+			srcProcess.waitFor();
+			targetProcess.waitFor();
+			int existCode = targetProcess.exitValue();
+			if (existCode != 0) {
+				throw new IllegalStateException("command exit with code: " + existCode);
+			}
+			return new BufferedReader(new InputStreamReader(targetProcess.getInputStream())).lines()
+					.collect(Collectors.joining("\n"));
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("expcetion during executing command: " + srcCommand + "; " + targetCommand);
+			throw new IllegalStateException("expcetion during executing command: " + srcCommand + "; " + targetCommand,
+					e);
+		}
+	}
+
+	private static void redirect(InputStream src, OutputStream target) {
+		InputStreamReader srcOutput = new InputStreamReader(src);
+		OutputStreamWriter targetInput = new OutputStreamWriter(target);
+		try {
+			int value;
+			while ((value = srcOutput.read()) != -1) {
+				targetInput.write(value);
+				targetInput.flush(); // I'm pretty sure this isn't needed
+			}
+			srcOutput.close();
+			targetInput.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 }
