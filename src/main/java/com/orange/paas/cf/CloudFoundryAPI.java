@@ -1,4 +1,4 @@
-package com.orange.cf.operations;
+package com.orange.paas.cf;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,9 +34,10 @@ import org.slf4j.LoggerFactory;
 
 import com.github.zafarkhaja.semver.Version;
 import com.orange.model.CloudFoundryTarget;
+import com.orange.paas.PaaSAPI;
 
-public class PaaSClient {
-	private static final Logger logger = LoggerFactory.getLogger(PaaSClient.class);
+public class CloudFoundryAPI implements PaaSAPI{
+	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryAPI.class);
 	private static final Object processLock = new Object();
 	private static final Version SUPPORTED_API_VERSION = Version.valueOf("2.54.0");
 
@@ -45,7 +46,7 @@ public class PaaSClient {
 	private String spaceId;
 	private boolean compatible;
 
-	public PaaSClient(CloudFoundryTarget target) {
+	public CloudFoundryAPI(CloudFoundryTarget target) {
 		this.target = target;
 		this.cloudFoundryClient = SpringCloudFoundryClient.builder().host(target.getApi()).username(target.getUser())
 				.password(target.getPwd()).skipSslValidation(target.getSkipSslValidation()).build();

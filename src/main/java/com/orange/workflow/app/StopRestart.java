@@ -1,13 +1,13 @@
-package com.orange.strategy.app;
+package com.orange.workflow.app;
 
 import org.cloudfoundry.client.v3.packages.PackageType;
 import org.cloudfoundry.client.v3.packages.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.cf.operations.PaaSClient;
 import com.orange.model.Application;
 import com.orange.model.Step;
+import com.orange.paas.cf.CloudFoundryAPI;
 
 public class StopRestart extends Step {
 	private static final Logger logger = LoggerFactory.getLogger(StopRestart.class);
@@ -15,10 +15,10 @@ public class StopRestart extends Step {
 	private static final int waitDNS = 5; // wait DNS cache in min
 	private static final String processType = "web";
 
-	private PaaSClient client;
+	private CloudFoundryAPI client;
 	private Application application;
 
-	public StopRestart(PaaSClient client, Application application) {
+	public StopRestart(CloudFoundryAPI client, Application application) {
 		super(String.format("StopRestart %s.%s", client.getTargetName(), application.getName()));
 		this.client = client;
 		this.application = application;

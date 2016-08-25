@@ -5,13 +5,13 @@ import java.util.List;
 
 import org.cloudfoundry.client.v3.applications.ApplicationResource;
 
-import com.orange.cf.operations.PaaSClient;
 import com.orange.model.*;
-import com.orange.strategy.app.BlueGreen;
-import com.orange.strategy.app.Delete;
-import com.orange.strategy.app.Deploy;
-import com.orange.strategy.app.StopRestart;
-import com.orange.strategy.app.UpdateProperty;
+import com.orange.paas.cf.CloudFoundryAPI;
+import com.orange.workflow.app.BlueGreen;
+import com.orange.workflow.app.Delete;
+import com.orange.workflow.app.Deploy;
+import com.orange.workflow.app.StopRestart;
+import com.orange.workflow.app.UpdateProperty;
 
 public class WorkflowCalculator {
 	
@@ -33,7 +33,7 @@ public class WorkflowCalculator {
 				// TODO entity update order
 				Workflow updateSite = new ParallelWorkflow(
 						"parallel update each entity in the site " + target.getName());
-				PaaSClient client = new PaaSClient(target);
+				CloudFoundryAPI client = new CloudFoundryAPI(target);
 				updateSite.addSteps(deployNonExistApp(client));
 				for (Application application : getVersionChangedApp(client)) {
 					updateSite.addStep(new BlueGreen(client, application));
@@ -49,7 +49,7 @@ public class WorkflowCalculator {
 				// TODO entity update order
 				Workflow updateSite = new ParallelWorkflow(
 						"parallel update each entity in the site " + target.getName());
-				PaaSClient client = new PaaSClient(target);
+				CloudFoundryAPI client = new CloudFoundryAPI(target);
 				updateSite.addSteps(deployNonExistApp(client));
 				for (Application application : getVersionChangedApp(client)) {
 					updateSite.addStep(new UpdateProperty(client, application));
@@ -65,7 +65,7 @@ public class WorkflowCalculator {
 			Workflow cleanupSites = new ParallelWorkflow("clean all entities on all sites");
 			for (CloudFoundryTarget target : deploymentConfig.getTargets().values()) {
 				Workflow cleanupSite = new ParallelWorkflow("cleanup all entities on site " + target.getName());
-				PaaSClient client = new PaaSClient(target);
+				CloudFoundryAPI client = new CloudFoundryAPI(target);
 				for (ApplicationResource applicationResource : client.listSpaceApps()) {
 					cleanupSite.addStep(new Delete(client, applicationResource.getId()));
 				}
@@ -77,7 +77,7 @@ public class WorkflowCalculator {
 		}
 	}
 
-	private List<Step> deployNonExistApp(PaaSClient client) {
+	private List<Step> deployNonExistApp(CloudFoundryAPI client) {
 		// TODO deploy order
 		List<Step> steps = new LinkedList<>();
 		for (Application application : deploymentConfig.getApps().values()) {
@@ -89,7 +89,7 @@ public class WorkflowCalculator {
 		return steps;
 	}
 
-	private List<Application> getVersionChangedApp(PaaSClient client) {
+	private List<Application> getVersionChangedApp(CloudFoundryAPI client) {
 		List<Application> apps = new LinkedList<>();
 		for (Application application : deploymentConfig.getApps().values()) {
 			String appId = client.getAppId(application.getName());
@@ -111,7 +111,7 @@ public class WorkflowCalculator {
 	 *            PaaSClient of the cloud foundry target
 	 * @return
 	 */
-	private List<Step> deleteNonDesiredApp(PaaSClient client) {
+	private List<Step> deleteNonDesiredApp(CloudFoundryAPI client) {
 		List<Step> steps = new LinkedList<>();
 		for (ApplicationResource applicationResource : client.listSpaceApps()) {
 			if (!deploymentConfig.getApps().keySet().contains(applicationResource.getName())) {
@@ -132,7 +132,7 @@ public class WorkflowCalculator {
 		return deploymentConfig.getApps().get(appName);
 	}
 
-	private PaaSClient getClient(String targetName) {
-		return new PaaSClient(deploymentConfig.getTargets().get(targetName));
+	private CloudFoundryAPI getClient(String targetName) {
+		return new CloudFoundryAPI(deploymentConfig.getTargets().get(targetName));
 	}
 }

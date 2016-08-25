@@ -1,4 +1,4 @@
-package com.orange.strategy.app;
+package com.orange.workflow.app;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,19 +8,19 @@ import org.cloudfoundry.client.v3.packages.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.cf.operations.PaaSClient;
 import com.orange.model.Application;
 import com.orange.model.Step;
+import com.orange.paas.cf.CloudFoundryAPI;
 
 public class Deploy extends Step {
 	private static final String processType = "web";
 	private static final int timeout = 5;
 	private static final Logger logger = LoggerFactory.getLogger(Deploy.class);
 
-	private PaaSClient client;
+	private CloudFoundryAPI client;
 	private Application application;
 
-	public Deploy(PaaSClient client, Application application) {
+	public Deploy(CloudFoundryAPI client, Application application) {
 		super(String.format("Deploy %s.%s", client.getTargetName(), application.getName()));
 		this.client = client;
 		this.application = application;

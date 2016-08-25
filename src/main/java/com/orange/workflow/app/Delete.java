@@ -1,18 +1,18 @@
-package com.orange.strategy.app;
+package com.orange.workflow.app;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.cf.operations.PaaSClient;
 import com.orange.model.Step;
+import com.orange.paas.cf.CloudFoundryAPI;
 
 public class Delete extends Step {
 	private static final Logger logger = LoggerFactory.getLogger(Delete.class);
 
-	private PaaSClient client;
+	private CloudFoundryAPI client;
 	private String appId;
 
-	public Delete(PaaSClient client, String appId) {
+	public Delete(CloudFoundryAPI client, String appId) {
 		super(String.format("Delete %s.%s", client.getTargetName(), appId));
 		this.client = client;
 		this.appId = appId;

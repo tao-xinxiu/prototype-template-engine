@@ -1,4 +1,4 @@
-package com.orange.strategy.app;
+package com.orange.workflow.app;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,17 +6,17 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.cf.operations.PaaSClient;
 import com.orange.model.Application;
 import com.orange.model.Step;
+import com.orange.paas.cf.CloudFoundryAPI;
 
 public class UpdateProperty extends Step {
 	private static final Logger logger = LoggerFactory.getLogger(Delete.class);
 
-	private PaaSClient client;
+	private CloudFoundryAPI client;
 	private Application application;
 
-	public UpdateProperty(PaaSClient client, Application application) {
+	public UpdateProperty(CloudFoundryAPI client, Application application) {
 		super(String.format("UpdateProperty %s.%s", client.getTargetName(), application.getName()));
 		this.client = client;
 		this.application = application;
