@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import com.orange.model.Application;
-import com.orange.model.CloudFoundryTarget;
+import com.orange.model.PaaSTarget;
 import com.orange.model.DeploymentConfig;
 import com.orange.model.Requirement;
 import com.orange.model.Workflow;
@@ -20,7 +20,7 @@ public class Controller {
 
 	@RequestMapping(value = "/set", method = RequestMethod.POST, consumes = "application/json")
 	public @ResponseBody String setDeploymentConfig(@RequestBody DeploymentConfig deploymentConfig) {
-		for (Map.Entry<String,CloudFoundryTarget> entry: deploymentConfig.getTargets().entrySet()) {
+		for (Map.Entry<String,PaaSTarget> entry: deploymentConfig.getTargets().entrySet()) {
 			if (!entry.getValue().valid()) {
 				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for targets.");
 			}

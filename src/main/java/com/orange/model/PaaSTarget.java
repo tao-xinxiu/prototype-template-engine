@@ -1,6 +1,6 @@
 package com.orange.model;
 
-public class CloudFoundryTarget {
+public class PaaSTarget {
 	private String name;
 	private String api;
 	private String user;

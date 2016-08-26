@@ -4,24 +4,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.model.Step;
-import com.orange.paas.cf.CloudFoundryAPI;
+import com.orange.paas.PaaSAPI;
 
 public class Delete extends Step {
 	private static final Logger logger = LoggerFactory.getLogger(Delete.class);
 
-	private CloudFoundryAPI client;
+	private PaaSAPI api;
 	private String appId;
 
-	public Delete(CloudFoundryAPI client, String appId) {
-		super(String.format("Delete %s.%s", client.getTargetName(), appId));
-		this.client = client;
+	public Delete(PaaSAPI api, String appId) {
+		super(String.format("Delete %s.%s", api.getTargetName(), appId));
+		this.api = api;
 		this.appId = appId;
 	}
 
 	public void exec() {
-		logger.info("start {} app: {} on the target: {}", this.getClass().getName(), appId, client.getTargetName());
-		client.deleteApp(appId);
+		logger.info("start {} app: {} on the target: {}", this.getClass().getName(), appId, api.getTargetName());
+		api.deleteApp(appId);
 		logger.info("Step {} Done! App deleted with id: {} on the target: {}", this.getClass().getName(), appId,
-				client.getTargetName());
+				api.getTargetName());
 	}
 }

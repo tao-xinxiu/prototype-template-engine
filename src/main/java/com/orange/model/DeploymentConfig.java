@@ -3,14 +3,14 @@ package com.orange.model;
 import java.util.Map;
 
 public class DeploymentConfig {
-	private Map<String, CloudFoundryTarget> targets;
+	private Map<String, PaaSTarget> targets;
 	private Map<String, Application> apps;
 
-	public Map<String, CloudFoundryTarget> getTargets() {
+	public Map<String, PaaSTarget> getTargets() {
 		return targets;
 	}
 
-	public void setTargets(Map<String, CloudFoundryTarget> targets) {
+	public void setTargets(Map<String, PaaSTarget> targets) {
 		this.targets = targets;
 	}
 
