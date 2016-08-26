@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.cloudfoundry.client.v3.BuildpackData;
 import org.cloudfoundry.client.v3.Lifecycle;
+import org.cloudfoundry.client.v3.Type;
 import org.cloudfoundry.client.v3.applications.ApplicationResource;
 import org.cloudfoundry.client.v3.packages.PackageType;
 import org.cloudfoundry.client.v3.packages.State;
@@ -169,8 +171,9 @@ public class CloudFoundryAPI extends PaaSAPI {
 	}
 
 	@Override
-	public void updateApp(String appId, String name, Map<String, ? extends String> env, Lifecycle lifecycle) {
-		operations.updateApp(appId, name, env, lifecycle);
+	public void updateApp(String appId, Application appProperty) {
+		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(BuildpackData.builder().buildpack(appProperty.getBuildpack()).stack(appProperty.getStack()).build()).build();
+		operations.updateApp(appId, appProperty.getName(), appProperty.getEnv(), lifecycle);
 	}
 
 	@Override

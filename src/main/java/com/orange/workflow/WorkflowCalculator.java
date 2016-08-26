@@ -51,8 +51,10 @@ public class WorkflowCalculator {
 				PaaSAPI api = new CloudFoundryAPI(target);
 				updateSite.addSteps(deployNonExistApp(api));
 				for (Application application : getVersionChangedApp(api)) {
-					updateSite.addStep(new UpdateProperty(api, application));
-					updateSite.addStep(new StopRestart(api, application));
+					Workflow updateApp = new SerialWorkflow("serial update app " + application.getName() + " at target " + target.getName());
+					updateApp.addStep(new UpdateProperty(api, application));
+					updateApp.addStep(new StopRestart(api, application));
+					updateSite.addStep(updateApp);
 				}
 				updateSite.addSteps(deleteNonDesiredApp(api));
 				serialUpdateSites.addStep(updateSite);

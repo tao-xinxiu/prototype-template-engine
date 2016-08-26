@@ -1,9 +1,6 @@
 package com.orange.paas;
 
 import java.util.List;
-import java.util.Map;
-
-import org.cloudfoundry.client.v3.Lifecycle;
 
 import com.orange.model.Application;
 import com.orange.model.PaaSTarget;
@@ -36,8 +33,7 @@ public abstract class PaaSAPI {
 
 	public abstract void deleteApp(String appId);
 
-	//TODO param change to Application appProperty 
-	public abstract void updateApp(String appId, String name, Map<String, ? extends String> env, Lifecycle lifecycle);
+	public abstract void updateApp(String appId, Application appProperty);
 
 	public abstract String getLocalRouteId(String hostname);
 

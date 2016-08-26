@@ -1,8 +1,5 @@
 package com.orange.workflow.app;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +25,7 @@ public class UpdateProperty extends Step {
 				api.getTargetName());
 		String appId = api.getAppId(application.getName());
 		assert appId != null;
-		Map<String, String> env = new HashMap<String, String>();
-		env.put("APP_VERSION", application.getVersion());
-		api.updateApp(appId, null, env, null);
+		api.updateApp(appId, application);
 		logger.info("Step {} Done! App: {} on the target: {}", this.getClass().getName(), application,
 				api.getTargetName());
 	}
