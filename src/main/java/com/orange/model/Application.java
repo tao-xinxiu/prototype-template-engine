@@ -27,7 +27,8 @@ public class Application {
 
 	public void setVersion(String version) {
 		this.version = version;
-		env.put("APP_VERSION", version);
+		// update app version info in env
+		this.env.put("APP_VERSION", version);
 	}
 
 	public String getPath() {
@@ -60,6 +61,8 @@ public class Application {
 
 	public void setEnv(Map<String, String> env) {
 		this.env = env;
+		// add app version info into env
+		this.env.put("APP_VERSION", version);
 	}
 
 	public String getBuildpack() {
@@ -77,11 +80,11 @@ public class Application {
 	public void setStack(String stack) {
 		this.stack = stack;
 	}
-
+	
 	@Override
 	public String toString() {
-		return String.format("{name: %s; version: %s; path: %s; local_hostname: %s; global_hostname:%s}", name, version,
-				path, localHostname, globalHostname);
+		return String.format("{name: %s; version: %s; path: %s; local_hostname: %s; global_hostname:%s; env:%s}", name, version,
+				path, localHostname, globalHostname, env);
 	}
 
 	public boolean valid() {

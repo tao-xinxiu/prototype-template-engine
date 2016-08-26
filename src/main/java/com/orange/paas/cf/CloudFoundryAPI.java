@@ -1,9 +1,7 @@
 package com.orange.paas.cf;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.cloudfoundry.client.v3.BuildpackData;
 import org.cloudfoundry.client.v3.Lifecycle;
@@ -72,10 +70,8 @@ public class CloudFoundryAPI extends PaaSAPI {
 			return appId;
 		}
 		assert appId == null;
-		// TODO move, should be done during setting application property.
-		Map<String, String> env = new HashMap<String, String>();
-		env.put("APP_VERSION", appProperty.getVersion());
-		appId = operations.createApp(appProperty.getName(), env, null);
+		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(BuildpackData.builder().buildpack(appProperty.getBuildpack()).stack(appProperty.getStack()).build()).build();
+		appId = operations.createApp(appProperty.getName(), appProperty.getEnv(), lifecycle);
 		logger.info("app created with id: {}", appId);
 		return appId;
 	}
