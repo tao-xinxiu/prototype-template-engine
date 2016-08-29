@@ -36,6 +36,8 @@ public abstract class PaaSAPI {
 	public abstract void updateApp(String appId, Application appProperty);
 
 	public abstract String getLocalRouteId(String hostname);
+	
+	public abstract String getGlobalRouteId(String hostname);
 
 	public abstract String createLocalRouteIfNotExist(String hostname);
 

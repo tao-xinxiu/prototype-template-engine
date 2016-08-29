@@ -26,7 +26,6 @@ public class StopRestart extends Step {
 				api.getTargetName());
 		String appId = api.createAppIfNotExist(application);
 		
-		
 		String localRouteId = api.getLocalRouteId(application.getLocalHostname());
 		if (localRouteId == null) {
 			logger.info("local route not existed, no need to unmap");

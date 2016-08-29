@@ -104,6 +104,11 @@ public class CloudFoundryAPI extends PaaSAPI {
 	public String getLocalRouteId(String hostname) {
 		return operations.getLocalRouteId(hostname);
 	}
+	
+	@Override
+	public String getGlobalRouteId(String hostname) {
+		return operations.getGlobalRouteId(hostname);
+	}
 
 	@Override
 	public String createLocalRouteIfNotExist(String hostname) {
@@ -176,4 +181,5 @@ public class CloudFoundryAPI extends PaaSAPI {
 	public String getAppVersion(String appId) {
 		return (String) operations.getAppEnv(appId, "APP_VERSION");
 	}
+
 }
