@@ -34,7 +34,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 		String packageId = operations.createPackage(appId, PackageType.BITS, null);
 		logger.info("package created with id: {}", packageId);
 		logger.info("package uploading with timeout: {} minutes", timeout);
-		operations.uploadPackage(packageId, appProperty.getPath(), 1000 * 60 * timeout);
+		operations.uploadPackage(packageId, appProperty.getPath(), 60 * timeout);
 		logger.info("package uploaded");
 		while (operations.getPackageState(packageId) != State.READY) {
 			try {

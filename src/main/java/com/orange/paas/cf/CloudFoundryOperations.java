@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,7 +29,12 @@ import org.cloudfoundry.client.v3.droplets.*;
 import org.cloudfoundry.client.v3.packages.*;
 import org.cloudfoundry.client.v3.packages.State;
 import org.cloudfoundry.client.v3.processes.ProcessStatisticsResource;
-import org.cloudfoundry.spring.client.SpringCloudFoundryClient;
+import org.cloudfoundry.reactor.ConnectionContext;
+import org.cloudfoundry.reactor.DefaultConnectionContext;
+import org.cloudfoundry.reactor.ProxyConfiguration;
+import org.cloudfoundry.reactor.TokenProvider;
+import org.cloudfoundry.reactor.client.ReactorCloudFoundryClient;
+import org.cloudfoundry.reactor.tokenprovider.PasswordGrantTokenProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +42,7 @@ import com.github.zafarkhaja.semver.Version;
 import com.orange.model.PaaSTarget;
 
 public class CloudFoundryOperations {
-	//TODO move complicate operations code into CloudFoundryAPI
+	// TODO move complicate operations code into CloudFoundryAPI
 	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryOperations.class);
 	private static final Object processLock = new Object();
 	private static final Version SUPPORTED_API_VERSION = Version.valueOf("2.54.0");
@@ -48,8 +54,14 @@ public class CloudFoundryOperations {
 
 	public CloudFoundryOperations(PaaSTarget target) {
 		this.target = target;
-		this.cloudFoundryClient = SpringCloudFoundryClient.builder().host(target.getApi()).username(target.getUser())
-				.password(target.getPwd()).skipSslValidation(target.getSkipSslValidation()).build();
+		ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host("127.0.0.1").port(3128).build();
+		ConnectionContext connectionContext = DefaultConnectionContext.builder().apiHost(target.getApi()).skipSslValidation(target.getSkipSslValidation()).proxyConfiguration(proxyConfiguration).build();
+		TokenProvider tokenProvider = PasswordGrantTokenProvider.builder().password(target.getPwd())
+				.username(target.getUser()).build();
+		this.cloudFoundryClient = ReactorCloudFoundryClient.builder().connectionContext(connectionContext)
+				.tokenProvider(tokenProvider).build();
+		// SpringCloudFoundryClient.builder().host(target.getApi()).username(target.getUser())
+		// .password(target.getPwd()).skipSslValidation(target.getSkipSslValidation()).proxyHost("127.0.0.1").proxyPort(3128).build();
 		this.spaceId = requestSpaceId();
 		Version targetVersion = Version.valueOf(getApiVersion());
 		if (targetVersion.greaterThan(SUPPORTED_API_VERSION)) {
@@ -125,7 +137,7 @@ public class CloudFoundryOperations {
 			throw new IllegalStateException("expcetion during getting app id for: " + appName, e);
 		}
 	}
-	
+
 	public String getAppName(String appId) {
 		GetApplicationRequest request = GetApplicationRequest.builder().applicationId(appId).build();
 		GetApplicationResponse response = cloudFoundryClient.applicationsV3().get(request).block();
@@ -243,7 +255,7 @@ public class CloudFoundryOperations {
 		try {
 			UploadPackageRequest request = UploadPackageRequest.builder().packageId(packageId)
 					.bits(new FileInputStream(new File(packageBitsPath))).build();
-			cloudFoundryClient.packages().upload(request).block(timeout);
+			cloudFoundryClient.packages().upload(request).block(Duration.ofSeconds(timeout));
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("expcetion during uploading package with arg: " + packageId + "; " + packageBitsPath);
