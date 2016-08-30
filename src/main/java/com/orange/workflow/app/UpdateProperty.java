@@ -21,12 +21,12 @@ public class UpdateProperty extends Step {
 
 	@Override
 	public void exec() {
-		logger.info("start {} app: {} on the target: {}", this.getClass().getName(), application.getName(),
+		logger.info("start {} app: {} on the target: {}", this.getClass().getSimpleName(), application.getName(),
 				api.getTargetName());
 		String appId = api.getAppId(application.getName());
 		assert appId != null;
 		api.updateApp(appId, application);
-		logger.info("Step {} Done! App: {} on the target: {}", this.getClass().getName(), application,
+		logger.info("Step {} Done! App: {} on the target: {}", this.getClass().getSimpleName(), application,
 				api.getTargetName());
 	}
 

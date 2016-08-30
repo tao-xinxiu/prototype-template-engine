@@ -19,9 +19,9 @@ public class Delete extends Step {
 	}
 
 	public void exec() {
-		logger.info("start {} app: {} on the target: {}", this.getClass().getName(), appId, api.getTargetName());
+		logger.info("start {} app: {} on the target: {}", this.getClass().getSimpleName(), appId, api.getTargetName());
 		api.deleteApp(appId);
-		logger.info("Step {} Done! App deleted with id: {} on the target: {}", this.getClass().getName(), appId,
+		logger.info("Step {} Done! App deleted with id: {} on the target: {}", this.getClass().getSimpleName(), appId,
 				api.getTargetName());
 	}
 }

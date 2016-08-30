@@ -9,7 +9,7 @@ public class Application {
 	private String path;
 	private String localHostname;
 	private String globalHostname;
-	private Map<String, String> env = new HashMap<>(); 
+	private Map<String, String> env = new HashMap<>();
 	private String buildpack;
 	private String stack;
 
@@ -80,11 +80,11 @@ public class Application {
 	public void setStack(String stack) {
 		this.stack = stack;
 	}
-	
+
 	@Override
 	public String toString() {
-		return String.format("{name: %s; version: %s; path: %s; local_hostname: %s; global_hostname:%s; env:%s}", name, version,
-				path, localHostname, globalHostname, env);
+		return String.format("{name: %s; version: %s; path: %s; local_hostname: %s; global_hostname:%s; env:%s}", name,
+				version, path, localHostname, globalHostname, env);
 	}
 
 	public boolean valid() {
@@ -93,5 +93,20 @@ public class Application {
 		} else {
 			return false;
 		}
+	}
+
+	// for Jackson map json to object
+	public Application() {
+	}
+
+	public Application(Application application) {
+		this.name = application.name;
+		this.version = application.version;
+		this.path = application.path;
+		this.localHostname = application.localHostname;
+		this.globalHostname = application.globalHostname;
+		this.buildpack = application.buildpack;
+		this.stack = application.stack;
+		this.env = new HashMap<>(application.env);
 	}
 }

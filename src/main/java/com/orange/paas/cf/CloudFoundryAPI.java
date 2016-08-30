@@ -70,7 +70,9 @@ public class CloudFoundryAPI extends PaaSAPI {
 			return appId;
 		}
 		assert appId == null;
-		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(BuildpackData.builder().buildpack(appProperty.getBuildpack()).stack(appProperty.getStack()).build()).build();
+		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(
+				BuildpackData.builder().buildpack(appProperty.getBuildpack()).stack(appProperty.getStack()).build())
+				.build();
 		appId = operations.createApp(appProperty.getName(), appProperty.getEnv(), lifecycle);
 		logger.info("app created with id: {}", appId);
 		return appId;
@@ -79,7 +81,6 @@ public class CloudFoundryAPI extends PaaSAPI {
 	@Override
 	public void startAppAndWaitUntilRunning(String appId) {
 		operations.startApp(appId);
-		logger.info("app starting");
 		while (!operations.getProcessesState(appId, processType).contains("RUNNING")) {
 			try {
 				Thread.sleep(1000);
@@ -87,7 +88,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 				e.printStackTrace();
 			}
 		}
-		logger.info("app started");
+		logger.info("app {} at {} running", appId, target.getName());
 	}
 
 	@Override
@@ -104,7 +105,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 	public String getLocalRouteId(String hostname) {
 		return operations.getLocalRouteId(hostname);
 	}
-	
+
 	@Override
 	public String getGlobalRouteId(String hostname) {
 		return operations.getGlobalRouteId(hostname);
@@ -146,8 +147,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 			logger.info("route-mapping id found: {}", routeMappingId);
 			operations.deleteRouteMapping(routeMappingId);
 			logger.info("route unmapped", routeMappingId);
-		}
-		else {
+		} else {
 			logger.info("route-mapping not found");
 		}
 	}
@@ -165,7 +165,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 	public String getAppId(String appName) {
 		return operations.getAppId(appName);
 	}
-	
+
 	@Override
 	public String getAppName(String appId) {
 		return operations.getAppName(appId);
@@ -173,7 +173,9 @@ public class CloudFoundryAPI extends PaaSAPI {
 
 	@Override
 	public void updateApp(String appId, Application appProperty) {
-		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(BuildpackData.builder().buildpack(appProperty.getBuildpack()).stack(appProperty.getStack()).build()).build();
+		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(
+				BuildpackData.builder().buildpack(appProperty.getBuildpack()).stack(appProperty.getStack()).build())
+				.build();
 		operations.updateApp(appId, appProperty.getName(), appProperty.getEnv(), lifecycle);
 	}
 

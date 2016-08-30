@@ -20,7 +20,7 @@ public class Deploy extends Step {
 	}
 
 	public void exec() {
-		logger.info("start {} app: {} on the target: {}", this.getClass().getName(), application, api.getTargetName());
+		logger.info("start {} app: {} on the target: {}", this.getClass().getSimpleName(), application, api.getTargetName());
 		String appId = api.createAppIfNotExist(application);
 		api.prepareApp(appId, application);
 
@@ -35,7 +35,7 @@ public class Deploy extends Step {
 		api.createRouteMapping(appId, localRouteId);
 		logger.info("local route mapping created");
 
-		logger.info("Step {} Done! App: {} running on the target: {}", this.getClass().getName(), application,
+		logger.info("Step {} Done! App: {} running on the target: {}", this.getClass().getSimpleName(), application,
 				api.getTargetName());
 	}
 }

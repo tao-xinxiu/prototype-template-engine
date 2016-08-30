@@ -123,14 +123,13 @@ public class CloudFoundryOperations {
 			ListApplicationsRequest request = ListApplicationsRequest.builder().spaceId(spaceId).name(appName).build();
 			ListApplicationsResponse response = cloudFoundryClient.applicationsV3().list(request).block();
 			if (response.getResources().size() == 0) {
+				logger.info("CloudFoundryOperations.getAppId : Not found app with specific name {} in the space at target {}.", appName, target.getName());
 				return null;
 			}
 			assert response.getResources().size() == 1;
-			ApplicationResource appResource = response.getResources().get(0);
-			if (appResource != null) {
-				return appResource.getId();
-			}
-			return null;
+			String appId = response.getResources().get(0).getId();
+			logger.info("CloudFoundryOperations.getAppId : Got app id {} with specific name {} in the space at target {}.", appId, appName, target.getName());
+			return appId;
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("expcetion during getting app id for: " + appName);
@@ -199,6 +198,7 @@ public class CloudFoundryOperations {
 		try {
 			DeleteApplicationRequest request = DeleteApplicationRequest.builder().applicationId(appId).build();
 			cloudFoundryClient.applicationsV3().delete(request).block();
+			logger.info("App {} at {} deleted.", appId, target.getName());
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("expcetion during deleting app with id: " + appId);
@@ -210,6 +210,7 @@ public class CloudFoundryOperations {
 		try {
 			StartApplicationRequest request = StartApplicationRequest.builder().applicationId(appId).build();
 			cloudFoundryClient.applicationsV3().start(request).block();
+			logger.info("App {} at {} desired state changed to \"STARTED\".", appId, target.getName());
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("expcetion during starting app with id: " + appId);
@@ -221,6 +222,7 @@ public class CloudFoundryOperations {
 		try {
 			StopApplicationRequest request = StopApplicationRequest.builder().applicationId(appId).build();
 			cloudFoundryClient.applicationsV3().stop(request).block();
+			logger.info("App {} at {} desired state changed to \"STOPPED\".", appId, target.getName());
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("expcetion during stopping app with id: " + appId);
@@ -491,7 +493,10 @@ public class CloudFoundryOperations {
 
 	private void executeCommand(List<String> command) {
 		try {
-			ProcessBuilder processBuilder = new ProcessBuilder(command).inheritIO();
+			ProcessBuilder processBuilder = new ProcessBuilder(command); //.inheritIO();
+			if (System.getenv("DEBUG") != null) {
+				processBuilder.inheritIO();
+			}
 			Process process = processBuilder.start();
 			process.waitFor();
 			int existCode = process.exitValue();

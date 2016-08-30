@@ -1,5 +1,7 @@
 package com.orange.workflow.app;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,9 +13,7 @@ public class BlueGreen extends Step {
 	private PaaSAPI api;
 	private Application application;
 	
-	private static final Logger logger = LoggerFactory.getLogger(StopRestart.class);
-	private static final String greenAppSuffix = "-green";
-	private static final String greenRouteSuffix = "-green";
+	private static final Logger logger = LoggerFactory.getLogger(BlueGreen.class);
 
 	public BlueGreen(PaaSAPI api, Application application) {
 		super(String.format("BlueGreen %s.%s", api.getTargetName(), application.getName()));
@@ -22,35 +22,36 @@ public class BlueGreen extends Step {
 	}
 
 	public void exec() {
-		logger.info("start {} app: {} on the target: {}", this.getClass().getName(), application,
+		logger.info("start {} app: {} on the target: {}", this.getClass().getSimpleName(), application,
 				api.getTargetName());
-		String appOriginName = application.getName();
-		application.setName(appOriginName + greenAppSuffix);
-		String greenAppId = api.createAppIfNotExist(application);
-		api.prepareApp(greenAppId, application);
-		String greenRouteId = api.createLocalRouteIfNotExist(application.getLocalHostname() + greenRouteSuffix);
+		Application greenApp = new Application(application);
+		String greenAppSuffix = UUID.randomUUID().toString().replace("-", "");
+		greenApp.setName(application.getName() + greenAppSuffix);
+		
+		String greenAppId = api.createAppIfNotExist(greenApp);
+		api.prepareApp(greenAppId, greenApp);
+		String greenRouteId = api.createLocalRouteIfNotExist(greenApp.getLocalHostname() + greenAppSuffix);
 		api.createRouteMapping(greenAppId, greenRouteId);
 		logger.info("green app mapped to temporary local route");
 		api.startAppAndWaitUntilRunning(greenAppId);
 		
 		//TODO add test for green app
-		String localRouteId = api.getLocalRouteId(application.getLocalHostname());
+		String localRouteId = api.getLocalRouteId(greenApp.getLocalHostname());
 		api.createRouteMapping(greenAppId, localRouteId);
 		logger.info("green app mapped to app original local route");
-		String globalRouteId = api.getGlobalRouteId(application.getGlobalHostname());
+		String globalRouteId = api.getGlobalRouteId(greenApp.getGlobalHostname());
 		api.createRouteMapping(greenAppId, globalRouteId);
 		logger.info("green app mapped to app original global route");
 		
 		//TODO may insert further test from app origin route
 		api.deleteRouteMapping(greenAppId, greenRouteId);
 		logger.info("green app unmapped to temporary local route");
-		String blueAppId = api.getAppId(appOriginName);
+		String blueAppId = api.getAppId(application.getName());
 		api.deleteApp(blueAppId);
 		
-		application.setName(appOriginName);
 		api.updateApp(greenAppId, application);
 		
-		logger.info("Step {} Done! App: {} running on the target: {}", this.getClass().getName(), application,
+		logger.info("Step {} Done! App: {} running on the target: {}", this.getClass().getSimpleName(), application,
 				api.getTargetName());
 	}
 }
