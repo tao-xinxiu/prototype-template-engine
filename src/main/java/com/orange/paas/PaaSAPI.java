@@ -7,6 +7,7 @@ import com.orange.model.PaaSTarget;
 
 public abstract class PaaSAPI {
 	protected PaaSTarget target;
+	protected RouteFactory routeFactory;
 
 	public PaaSAPI(PaaSTarget target) {
 		this.target = target;
@@ -35,17 +36,29 @@ public abstract class PaaSAPI {
 
 	public abstract void updateApp(String appId, Application appProperty);
 	
-	public abstract String getLocalRouteId(String hostname);
+	public String getLocalRouteId(String hostname) {
+		return routeFactory.getRouteId(hostname, "local");
+	}
 	
-	public abstract String getGlobalRouteId(String hostname);
+	public String getGlobalRouteId(String hostname) {
+		return routeFactory.getRouteId(hostname, "global");
+	}
 
-	public abstract String createLocalRouteIfNotExist(String hostname);
+	public String createLocalRouteIfNotExist(String hostname) {
+		return routeFactory.createRouteIfNotExist(hostname, "local");
+	}
 
-	public abstract String createGlobalRouteIfNotExist(String hostname);
+	public String createGlobalRouteIfNotExist(String hostname) {
+		return routeFactory.createRouteIfNotExist(hostname, "global");
+	}
 
-	public abstract void createRouteMapping(String appId, String routeId);
+	public void createRouteMapping(String appId, String routeId) {
+		routeFactory.createRouteMapping(appId, routeId);
+	}
 
-	public abstract void deleteRouteMapping(String appId, String routeId);
+	public void deleteRouteMapping(String appId, String routeId) {
+		routeFactory.deleteRouteMapping(appId, routeId);
+	}
 
 	public abstract List<String> listSpaceAppsId();
 

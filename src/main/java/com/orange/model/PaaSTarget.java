@@ -1,5 +1,7 @@
 package com.orange.model;
 
+import java.util.Map;
+
 public class PaaSTarget {
 	private String name;
 	private String api;
@@ -8,8 +10,7 @@ public class PaaSTarget {
 	private String org;
 	private String space;
 	private boolean skipSslValidation;
-	private String localDomain;
-	private String globalDomain;
+	private Map<String, String> domains;
 
 	public String getName() {
 		return name;
@@ -72,29 +73,32 @@ public class PaaSTarget {
 	public void setSkipSslValidation(boolean skipSslValidation) {
 		this.skipSslValidation = skipSslValidation;
 	}
-
-	public String getLocalDomain() {
-		return localDomain;
+	
+	public Map<String, String> getDomains() {
+		return domains;
 	}
 
-	public void setLocalDomain(String localDomain) {
-		this.localDomain = localDomain;
-	}
-
-	public String getGlobalDomain() {
-		return globalDomain;
-	}
-
-	public void setGlobalDomain(String globalDomain) {
-		this.globalDomain = globalDomain;
+	public void setDomains(Map<String, String> domains) {
+		this.domains = domains;
 	}
 
 	public boolean valid() {
-		if (api != null && user != null && pwd != null && org != null && space != null && localDomain != null
-				&& globalDomain != null) {
+		if (api != null && user != null && pwd != null && org != null && space != null && validDomain()) {
 			return true;
 		} else {
 			return false;
+		}
+	}
+	
+	private boolean validDomain() {
+		if (domains == null) {
+			return false;
+		}
+		else if (domains.get("lcoal")== null || domains.get("global") == null) {
+			return false;
+		}
+		else {
+			return true;
 		}
 	}
 }

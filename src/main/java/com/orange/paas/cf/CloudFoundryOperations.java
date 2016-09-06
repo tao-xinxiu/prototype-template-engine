@@ -42,7 +42,6 @@ import com.github.zafarkhaja.semver.Version;
 import com.orange.model.PaaSTarget;
 
 public class CloudFoundryOperations {
-	// TODO move complicate operations code into CloudFoundryAPI
 	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryOperations.class);
 	private static final Object processLock = new Object();
 	private static final Version SUPPORTED_API_VERSION = Version.valueOf("2.54.0");
@@ -348,7 +347,7 @@ public class CloudFoundryOperations {
 		}
 	}
 
-	private String getDomainId(String domain) {
+	public String getDomainId(String domain) {
 		try {
 			ListDomainsRequest request = ListDomainsRequest.builder().name(domain).build();
 			ListDomainsResponse response = cloudFoundryClient.domains().list(request).block();
@@ -364,7 +363,7 @@ public class CloudFoundryOperations {
 		}
 	}
 
-	private String getRouteId(String domainId, String hostname) {
+	public String getRouteId(String hostname, String domainId) {
 		ListRoutesRequest request = ListRoutesRequest.builder().domainId(domainId).host(hostname).build();
 		ListRoutesResponse response = cloudFoundryClient.routes().list(request).block();
 		if (response.getResources().size() == 0) {
@@ -374,15 +373,7 @@ public class CloudFoundryOperations {
 		return response.getResources().get(0).getMetadata().getId();
 	}
 
-	public String getLocalRouteId(String hostname) {
-		return getRouteId(getDomainId(target.getLocalDomain()), hostname);
-	}
-
-	public String getGlobalRouteId(String hostname) {
-		return getRouteId(getDomainId(target.getGlobalDomain()), hostname);
-	}
-
-	private String createRoute(String domainId, String hostname) {
+	public String createRoute(String hostname, String domainId) {
 		try {
 			CreateRouteRequest request = CreateRouteRequest.builder().domainId(domainId).spaceId(spaceId).host(hostname)
 					.build();
@@ -390,18 +381,10 @@ public class CloudFoundryOperations {
 			return response.getMetadata().getId();
 		} catch (Exception e) {
 			e.printStackTrace();
-			logger.error("expcetion during creating local route with domainId: {}; hostname: {}", domainId, hostname);
+			logger.error("expcetion during creating route with domainId: {}; hostname: {}", domainId, hostname);
 			throw new IllegalStateException(String.format(
-					"expcetion during creating local route with domainId: {}; hostname: {}", domainId, hostname), e);
+					"expcetion during creating route with domainId: {}; hostname: {}", domainId, hostname), e);
 		}
-	}
-
-	public String createLocalRoute(String hostname) {
-		return createRoute(getDomainId(target.getLocalDomain()), hostname);
-	}
-
-	public String createGlobalRoute(String hostname) {
-		return createRoute(getDomainId(target.getGlobalDomain()), hostname);
 	}
 
 	public void createRouteMapping(String appId, String routeId) {

@@ -26,11 +26,12 @@ public class StopRestart extends Step {
 				api.getTargetName());
 		String appId = api.createAppIfNotExist(application);
 		
-		String localRouteId = api.getLocalRouteId(application.getLocalHostname());
+		String localHostname = application.getHostnames().get("local");
+		String localRouteId = api.getLocalRouteId(localHostname);
 		if (localRouteId == null) {
 			logger.info("local route not existed, no need to unmap");
 		} else {
-			logger.info("local route id found {} for hostname {}", localRouteId, application.getLocalHostname());
+			logger.info("local route id found {} for hostname {}", localRouteId, localHostname);
 			api.deleteRouteMapping(appId, localRouteId);
 			logger.info("local route unmapped");
 			logger.info("start waiting {} min for DNS cache", waitDNS);
@@ -44,7 +45,7 @@ public class StopRestart extends Step {
 		api.prepareApp(appId, application);
 		api.startAppAndWaitUntilRunning(appId);
 		
-		localRouteId = api.createLocalRouteIfNotExist(application.getLocalHostname());
+		localRouteId = api.createLocalRouteIfNotExist(localHostname);
 		api.createRouteMapping(appId, localRouteId);
 		logger.info("local route mapping created");
 		

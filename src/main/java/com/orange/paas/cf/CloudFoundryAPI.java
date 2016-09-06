@@ -26,11 +26,11 @@ public class CloudFoundryAPI extends PaaSAPI {
 	public CloudFoundryAPI(PaaSTarget target) {
 		super(target);
 		this.operations = new CloudFoundryOperations(target);
+		this.routeFactory = new CloudFoundryRouteFactory(target.getDomains(), operations);
 	}
 
 	@Override
 	public void prepareApp(String appId, Application appProperty) {
-		// TODO move log into operations
 		String packageId = operations.createPackage(appId, PackageType.BITS, null);
 		logger.info("package created with id: {}", packageId);
 		logger.info("package uploading with timeout: {} minutes", timeout);
@@ -100,58 +100,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 	public void deleteApp(String appId) {
 		operations.deleteApp(appId);
 	}
-
-	@Override
-	public String getLocalRouteId(String hostname) {
-		return operations.getLocalRouteId(hostname);
-	}
-
-	@Override
-	public String getGlobalRouteId(String hostname) {
-		return operations.getGlobalRouteId(hostname);
-	}
-
-	@Override
-	public String createLocalRouteIfNotExist(String hostname) {
-		String localRouteId = operations.getLocalRouteId(hostname);
-		if (localRouteId != null) {
-			logger.info("local route existed with id: {}", localRouteId);
-			return localRouteId;
-		}
-		localRouteId = operations.createLocalRoute(hostname);
-		logger.info("local route created with id: {}", localRouteId);
-		return localRouteId;
-	}
-
-	@Override
-	public String createGlobalRouteIfNotExist(String hostname) {
-		String globalRouteId = operations.getGlobalRouteId(hostname);
-		if (globalRouteId != null) {
-			logger.info("global route existed with id: {}", globalRouteId);
-			return globalRouteId;
-		}
-		globalRouteId = operations.createGlobalRoute(hostname);
-		logger.info("global route created with id: {}", globalRouteId);
-		return globalRouteId;
-	}
-
-	@Override
-	public void createRouteMapping(String appId, String routeId) {
-		operations.createRouteMapping(appId, routeId);
-	}
-
-	@Override
-	public void deleteRouteMapping(String appId, String routeId) {
-		String routeMappingId = operations.getRouteMappingId(appId, routeId);
-		if (routeMappingId != null) {
-			logger.info("route-mapping id found: {}", routeMappingId);
-			operations.deleteRouteMapping(routeMappingId);
-			logger.info("route unmapped", routeMappingId);
-		} else {
-			logger.info("route-mapping not found");
-		}
-	}
-
+	
 	@Override
 	public List<String> listSpaceAppsId() {
 		List<String> spaceAppsId = new ArrayList<String>();

@@ -7,8 +7,7 @@ public class Application {
 	private String name;
 	private String version;
 	private String path;
-	private String localHostname;
-	private String globalHostname;
+	private Map<String, String> hostnames;
 	private Map<String, String> env = new HashMap<>();
 	private String buildpack;
 	private String stack;
@@ -39,22 +38,6 @@ public class Application {
 		this.path = path;
 	}
 
-	public String getLocalHostname() {
-		return localHostname;
-	}
-
-	public void setLocalHostname(String localHostname) {
-		this.localHostname = localHostname;
-	}
-
-	public String getGlobalHostname() {
-		return globalHostname;
-	}
-
-	public void setGlobalHostname(String globalHostname) {
-		this.globalHostname = globalHostname;
-	}
-
 	public Map<String, String> getEnv() {
 		return env;
 	}
@@ -80,18 +63,38 @@ public class Application {
 	public void setStack(String stack) {
 		this.stack = stack;
 	}
+	
+	public Map<String, String> getHostnames() {
+		return hostnames;
+	}
+
+	public void setHostnames(Map<String, String> hostnames) {
+		this.hostnames = hostnames;
+	}
 
 	@Override
 	public String toString() {
-		return String.format("{name: %s; version: %s; path: %s; local_hostname: %s; global_hostname:%s; env:%s}", name,
-				version, path, localHostname, globalHostname, env);
+		return String.format("{name: %s; version: %s; path: %s; hostnames: %s; env:%s}", name,
+				version, path, hostnames, env);
 	}
 
 	public boolean valid() {
-		if (version != null && path != null && localHostname != null && globalHostname != null) {
+		if (version != null && path != null && validHostname()) {
 			return true;
 		} else {
 			return false;
+		}
+	}
+	
+	private boolean validHostname() {
+		if (hostnames == null) {
+			return false;
+		}
+		else if (hostnames.get("lcoal")== null || hostnames.get("global") == null) {
+			return false;
+		}
+		else {
+			return true;
 		}
 	}
 
@@ -103,8 +106,7 @@ public class Application {
 		this.name = application.name;
 		this.version = application.version;
 		this.path = application.path;
-		this.localHostname = application.localHostname;
-		this.globalHostname = application.globalHostname;
+		this.hostnames = new HashMap<>(application.hostnames);
 		this.buildpack = application.buildpack;
 		this.stack = application.stack;
 		this.env = new HashMap<>(application.env);

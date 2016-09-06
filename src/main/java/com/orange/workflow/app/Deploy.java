@@ -24,14 +24,14 @@ public class Deploy extends Step {
 		String appId = api.createAppIfNotExist(application);
 		api.prepareApp(appId, application);
 
-		String globalRouteId = api.createGlobalRouteIfNotExist(application.getGlobalHostname());
+		String globalRouteId = api.createGlobalRouteIfNotExist(application.getHostnames().get("global"));
 		api.createRouteMapping(appId, globalRouteId);
 		logger.info("global route mapping created");
 
 		api.startAppAndWaitUntilRunning(appId);
 
 		// local route (used by AWS Route 53) should be mapped after app running
-		String localRouteId = api.createLocalRouteIfNotExist(application.getLocalHostname());
+		String localRouteId = api.createLocalRouteIfNotExist(application.getHostnames().get("local"));
 		api.createRouteMapping(appId, localRouteId);
 		logger.info("local route mapping created");
 
