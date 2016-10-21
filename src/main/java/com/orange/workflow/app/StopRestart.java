@@ -24,30 +24,26 @@ public class StopRestart extends Step {
 	public void exec() {
 		logger.info("start {} app: {} on the target: {}", this.getClass().getSimpleName(), application,
 				api.getTargetName());
+		
 		String appId = api.createAppIfNotExist(application);
 		
 		String localHostname = application.getHostnames().get("local");
-		String localRouteId = api.getLocalRouteId(localHostname);
-		if (localRouteId == null) {
-			logger.info("local route not existed, no need to unmap");
-		} else {
-			logger.info("local route id found {} for hostname {}", localRouteId, localHostname);
-			api.deleteRouteMapping(appId, localRouteId);
-			logger.info("local route unmapped");
-			logger.info("start waiting {} min for DNS cache", waitDNS);
-			try {
-				Thread.sleep(waitDNS * 1000 * 60);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
+		String localRouteId = api.getRouteId(localHostname, "local");
+		api.deleteRouteMapping(appId, localRouteId);
+		
+		logger.info("start waiting {} min for DNS cache", waitDNS);
+		try {
+			Thread.sleep(waitDNS * 1000 * 60);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
 		}
 		
 		api.prepareApp(appId, application);
 		api.startAppAndWaitUntilRunning(appId);
 		
-		localRouteId = api.createLocalRouteIfNotExist(localHostname);
+		localRouteId = api.createRouteIfNotExist(localHostname, "local");
 		api.createRouteMapping(appId, localRouteId);
-		logger.info("local route mapping created");
+		
 		
 		logger.info("Step {} Done! App: {} running on the target: {}", this.getClass().getSimpleName(), application,
 				api.getTargetName());

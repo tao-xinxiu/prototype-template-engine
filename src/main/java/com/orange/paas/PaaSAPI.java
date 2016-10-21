@@ -9,8 +9,9 @@ public abstract class PaaSAPI {
 	protected PaaSTarget target;
 	protected RouteFactory routeFactory;
 
-	public PaaSAPI(PaaSTarget target) {
+	public PaaSAPI(PaaSTarget target, RouteFactory routeFactory) {
 		this.target = target;
+		this.routeFactory = routeFactory;
 	}
 
 	public String getTargetName() {
@@ -27,7 +28,7 @@ public abstract class PaaSAPI {
 	public abstract String createAppIfNotExist(Application appProperty);
 
 	public abstract void prepareApp(String appId, Application appProperty);
-
+	
 	public abstract void startAppAndWaitUntilRunning(String appId);
 
 	public abstract void stopApp(String appId);
@@ -36,20 +37,12 @@ public abstract class PaaSAPI {
 
 	public abstract void updateApp(String appId, Application appProperty);
 	
-	public String getLocalRouteId(String hostname) {
-		return routeFactory.getRouteId(hostname, "local");
+	public String getRouteId(String hostname, String domainKey) {
+		return routeFactory.getRouteId(hostname, domainKey);
 	}
 	
-	public String getGlobalRouteId(String hostname) {
-		return routeFactory.getRouteId(hostname, "global");
-	}
-
-	public String createLocalRouteIfNotExist(String hostname) {
-		return routeFactory.createRouteIfNotExist(hostname, "local");
-	}
-
-	public String createGlobalRouteIfNotExist(String hostname) {
-		return routeFactory.createRouteIfNotExist(hostname, "global");
+	public String createRouteIfNotExist(String hostname, String domainKey) {
+		return routeFactory.createRouteIfNotExist(hostname, domainKey);
 	}
 
 	public void createRouteMapping(String appId, String routeId) {
@@ -57,6 +50,9 @@ public abstract class PaaSAPI {
 	}
 
 	public void deleteRouteMapping(String appId, String routeId) {
+		if (routeId == null || appId == null) {
+			return;
+		}
 		routeFactory.deleteRouteMapping(appId, routeId);
 	}
 

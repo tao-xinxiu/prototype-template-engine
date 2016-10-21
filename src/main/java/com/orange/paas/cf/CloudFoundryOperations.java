@@ -243,7 +243,9 @@ public class CloudFoundryOperations {
 			CreatePackageRequest request = CreatePackageRequest.builder().applicationId(appId).type(type).data(data)
 					.build();
 			CreatePackageResponse response = cloudFoundryClient.packages().create(request).block();
-			return response.getId();
+			String packageId = response.getId();
+			logger.info("package (type: {}, data: {}) for app {} created with id: {}", type, data, appId, packageId);
+			return packageId;
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("expcetion during creating package with arg: " + appId + "; " + type + "; " + data);
@@ -256,7 +258,9 @@ public class CloudFoundryOperations {
 		try {
 			UploadPackageRequest request = UploadPackageRequest.builder().packageId(packageId)
 					.bits(new FileInputStream(new File(packageBitsPath))).build();
+			logger.info("package {} with bits path {} uploading with timeout: {} minutes", packageId, packageBitsPath, timeout);
 			cloudFoundryClient.packages().upload(request).block(Duration.ofSeconds(timeout));
+			logger.info("package {} with bits path {} uploaded", packageId, packageBitsPath);
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("expcetion during uploading package with arg: " + packageId + "; " + packageBitsPath);
@@ -293,7 +297,9 @@ public class CloudFoundryOperations {
 			StagePackageRequest request = StagePackageRequest.builder().packageId(packageId).environmentVariables(env)
 					.lifecycle(lifecycle).build();
 			StagePackageResponse response = cloudFoundryClient.packages().stage(request).block();
-			return response.getId();
+			String dropletId = response.getId();
+			logger.info("droplet created with id: {}", dropletId);
+			return dropletId;
 		} catch (Exception e) {
 			e.printStackTrace();
 			logger.error("expcetion during creating droplet with arg: " + packageId + "; " + env + "; " + lifecycle);
@@ -325,6 +331,7 @@ public class CloudFoundryOperations {
 					cfCliLogin();
 					executeCommand(Arrays.asList("cf", "curl", String.format("v3/apps/%s/droplets/current", appId),
 							"-X", "PUT", "-d", String.format("{\\\"droplet_guid\\\": \\\"%s\\\"}", dropletId)));
+					logger.info("droplet {} assigned to app {}", dropletId, appId);
 				}
 			}
 		} catch (Exception e) {

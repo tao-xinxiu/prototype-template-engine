@@ -24,18 +24,22 @@ public class CloudFoundryAPI extends PaaSAPI {
 	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryAPI.class);
 
 	public CloudFoundryAPI(PaaSTarget target) {
-		super(target);
+		super(target, new CloudFoundryRouteFactory(target));
 		this.operations = new CloudFoundryOperations(target);
-		this.routeFactory = new CloudFoundryRouteFactory(target.getDomains(), operations);
 	}
-
+	
 	@Override
 	public void prepareApp(String appId, Application appProperty) {
 		String packageId = operations.createPackage(appId, PackageType.BITS, null);
-		logger.info("package created with id: {}", packageId);
-		logger.info("package uploading with timeout: {} minutes", timeout);
-		operations.uploadPackage(packageId, appProperty.getPath(), 60 * timeout);
-		logger.info("package uploaded");
+		uploadPackageAndWaitUntilReady(packageId, appProperty.getPath());
+		String dropletId = operations.createDroplet(packageId, null, null);
+		createDropletAndWaitUntilStaged(dropletId);
+		operations.stopApp(appId); //app should be stopped before assigning current droplet
+		operations.assignDroplet(appId, dropletId);	
+	}
+	
+	private void uploadPackageAndWaitUntilReady(String packageId, String bitsPath) {
+		operations.uploadPackage(packageId, bitsPath, 60 * timeout);
 		while (operations.getPackageState(packageId) != State.READY) {
 			try {
 				Thread.sleep(1000);
@@ -44,9 +48,9 @@ public class CloudFoundryAPI extends PaaSAPI {
 			}
 		}
 		logger.info("package ready");
-
-		String dropletId = operations.createDroplet(packageId, null, null);
-		logger.info("droplet created with id: {}", dropletId);
+	}
+	
+	private void createDropletAndWaitUntilStaged(String dropletId) {
 		while (operations.getDropletState(dropletId) != org.cloudfoundry.client.v3.droplets.State.STAGED) {
 			try {
 				Thread.sleep(1000);
@@ -55,11 +59,6 @@ public class CloudFoundryAPI extends PaaSAPI {
 			}
 		}
 		logger.info("droplet staged");
-
-		operations.stopApp(appId);
-		logger.info("app stopped before assigning current droplet");
-		operations.assignDroplet(appId, dropletId);
-		logger.info("droplet assigned");
 	}
 
 	@Override

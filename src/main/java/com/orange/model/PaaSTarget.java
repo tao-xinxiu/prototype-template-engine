@@ -73,7 +73,7 @@ public class PaaSTarget {
 	public void setSkipSslValidation(boolean skipSslValidation) {
 		this.skipSslValidation = skipSslValidation;
 	}
-	
+
 	public Map<String, String> getDomains() {
 		return domains;
 	}
@@ -89,16 +89,21 @@ public class PaaSTarget {
 			return false;
 		}
 	}
-	
+
 	private boolean validDomain() {
 		if (domains == null) {
 			return false;
-		}
-		else if (domains.get("lcoal")== null || domains.get("global") == null) {
+		} else if (domains.get("local") == null || domains.get("global") == null) {
 			return false;
-		}
-		else {
+		} else {
 			return true;
 		}
+	}
+
+	@Override
+	public String toString() {
+		return String.format(
+				"{name: %s; api: %s; user: %s; pwd: %s; org:%s; space:%s; skipSslValidation:%s; domains:%s}", name, api,
+				user, pwd, org, space, skipSslValidation, domains);
 	}
 }

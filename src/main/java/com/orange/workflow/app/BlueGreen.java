@@ -30,16 +30,16 @@ public class BlueGreen extends Step {
 		
 		String greenAppId = api.createAppIfNotExist(greenApp);
 		api.prepareApp(greenAppId, greenApp);
-		String greenRouteId = api.createLocalRouteIfNotExist(greenApp.getHostnames().get("local") + greenAppSuffix);
+		String greenRouteId = api.createRouteIfNotExist(greenApp.getHostnames().get("local") + greenAppSuffix, "local");
 		api.createRouteMapping(greenAppId, greenRouteId);
 		logger.info("green app mapped to temporary local route");
 		api.startAppAndWaitUntilRunning(greenAppId);
 		
 		//TODO add test for green app
-		String localRouteId = api.getLocalRouteId(greenApp.getHostnames().get("local"));
+		String localRouteId = api.getRouteId(greenApp.getHostnames().get("local"), "local");
 		api.createRouteMapping(greenAppId, localRouteId);
 		logger.info("green app mapped to app original local route");
-		String globalRouteId = api.getGlobalRouteId(greenApp.getHostnames().get("global"));
+		String globalRouteId = api.getRouteId(greenApp.getHostnames().get("global"), "global");
 		api.createRouteMapping(greenAppId, globalRouteId);
 		logger.info("green app mapped to app original global route");
 		

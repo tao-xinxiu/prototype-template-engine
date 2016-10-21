@@ -29,14 +29,14 @@ public class Main {
 	public @ResponseBody String setDeploymentConfig(@RequestBody DeploymentConfig deploymentConfig) {
 		for (Map.Entry<String,PaaSTarget> entry: deploymentConfig.getTargets().entrySet()) {
 			if (!entry.getValue().valid()) {
-				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for targets.");
+				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for target: " + entry.getValue());
 			}
 			entry.getValue().setName(entry.getKey());
 		}
 		logger.info("DeploymentConfig targets valid");
 		for (Map.Entry<String,Application> entry: deploymentConfig.getApps().entrySet()) {
 			if (!entry.getValue().valid()) {
-				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for apps.");
+				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for app: " + entry.getValue());
 			}
 			entry.getValue().setName(entry.getKey());
 		}
