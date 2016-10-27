@@ -16,15 +16,18 @@ public class CloudFoundryRouteFactory extends RouteFactory {
 	}
 	
 	private String getDomainId(String domainKey) {
-		logger.error("domain {}", domains);
-		logger.error("local domain: {}; global domain: {}", this.domains.get("local"), this.domains.get("global")); 
 		return operations.getDomainId(this.domains.get(domainKey));
 	}
 	
 	@Override
 	public String getRouteId(String hostname, String domainKey) {
-		String routeId = operations.getRouteId(getDomainId(domainKey), hostname);
-		logger.info("{} route id {} found for hostname {}", domainKey, routeId, hostname);
+		String routeId = operations.getRouteId(hostname, getDomainId(domainKey));
+		if (routeId != null) {
+			logger.info("[{}] route with hostname [{}] existed with id: [{}]", domainKey, hostname, routeId);
+		}
+		else {
+			logger.info("[{}] route with hostname [{}] not existed", domainKey, hostname);
+		}
 		return routeId;
 	}
 
@@ -32,27 +35,28 @@ public class CloudFoundryRouteFactory extends RouteFactory {
 	public String createRouteIfNotExist(String hostname, String domainKey) {
 		String routeId = getRouteId(hostname, domainKey);
 		if (routeId != null) {
-			logger.info("{} route with hostname {} existed with id: {}", domainKey, hostname, routeId);
-			return routeId;
+			logger.info("[{}] route with hostname [{}] existed with id: [{}]", domainKey, hostname, routeId);
 		}
-		routeId = operations.createRoute(hostname, getDomainId(domainKey));
-		logger.info("{} route with hostname {} created with id: {}", domainKey, hostname, routeId);
+		else {
+			routeId = operations.createRoute(hostname, getDomainId(domainKey));
+			logger.info("[{}] route with hostname [{}] created with id: [{}]", domainKey, hostname, routeId);
+		}
 		return routeId;
 	}
 
 	@Override
 	public void createRouteMapping(String appId, String routeId) {
 		operations.createRouteMapping(appId, routeId);
-		logger.info("route {} mapped to the app {}", routeId, appId);
+		logger.info("route [{}] mapped to the app [{}]", routeId, appId);
 	}
 
 	@Override
 	public void deleteRouteMapping(String appId, String routeId) {
 		String routeMappingId = operations.getRouteMappingId(appId, routeId);
 		if (routeMappingId != null) {
-			logger.info("route-mapping id found: {}", routeMappingId);
+			logger.info("route-mapping id found: [{}]", routeMappingId);
 			operations.deleteRouteMapping(routeMappingId);
-			logger.info("route {} unmapped with app {}", routeId, appId);
+			logger.info("route [{}] unmapped with app [{}]", routeId, appId);
 		} else {
 			logger.info("route-mapping not found");
 		}
