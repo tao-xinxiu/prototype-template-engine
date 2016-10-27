@@ -53,8 +53,16 @@ public class CloudFoundryOperations {
 
 	public CloudFoundryOperations(PaaSTarget target) {
 		this.target = target;
-		ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host("127.0.0.1").port(3128).build();
-		ConnectionContext connectionContext = DefaultConnectionContext.builder().apiHost(target.getApi()).skipSslValidation(target.getSkipSslValidation()).proxyConfiguration(proxyConfiguration).build();
+		String proxy_host = System.getenv("proxy_host");
+		String proxy_port = System.getenv("proxy_port");
+		ConnectionContext connectionContext;
+		if (proxy_host != null && proxy_port != null) {
+			ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host).port(Integer.parseInt(proxy_port)).build();
+			connectionContext = DefaultConnectionContext.builder().apiHost(target.getApi()).skipSslValidation(target.getSkipSslValidation()).proxyConfiguration(proxyConfiguration).build();
+		}
+		else {
+			connectionContext = DefaultConnectionContext.builder().apiHost(target.getApi()).skipSslValidation(target.getSkipSslValidation()).build();
+		}
 		TokenProvider tokenProvider = PasswordGrantTokenProvider.builder().password(target.getPwd())
 				.username(target.getUser()).build();
 		this.cloudFoundryClient = ReactorCloudFoundryClient.builder().connectionContext(connectionContext)
