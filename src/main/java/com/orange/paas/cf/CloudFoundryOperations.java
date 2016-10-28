@@ -44,7 +44,8 @@ import com.orange.model.PaaSTarget;
 public class CloudFoundryOperations {
 	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryOperations.class);
 	private static final Object processLock = new Object();
-	private static final Version SUPPORTED_API_VERSION = Version.valueOf("2.54.0");
+	private static final Version SUPPORTED_API_VERSION = Version.valueOf("2.54.0"); // cf-java-client supported CF API version
+	private static final String path_CF_HOME_dir = "$HOME/cf_homes/"; 
 
 	private PaaSTarget target;
 	private CloudFoundryClient cloudFoundryClient;
@@ -94,8 +95,6 @@ public class CloudFoundryOperations {
 			ListOrganizationsResponse response = cloudFoundryClient.organizations().list(request).block();
 			return response.getResources().get(0).getMetadata().getId();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during getting org id");
 			throw new IllegalStateException("expcetion during getting org id", e);
 		}
 	}
@@ -107,8 +106,6 @@ public class CloudFoundryOperations {
 			ListSpacesResponse response = cloudFoundryClient.spaces().list(request).block();
 			return response.getResources().get(0).getMetadata().getId();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during getting space id");
 			throw new IllegalStateException("expcetion during getting space id", e);
 		}
 	}
@@ -119,8 +116,6 @@ public class CloudFoundryOperations {
 			ListApplicationsResponse response = cloudFoundryClient.applicationsV3().list(request).block();
 			return response.getResources();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during getting space apps");
 			throw new IllegalStateException("expcetion during getting space apps", e);
 		}
 	}
@@ -138,8 +133,6 @@ public class CloudFoundryOperations {
 			logger.info("CloudFoundryOperations.getAppId : Got app id {} with specific name {} in the space at target {}.", appId, appName, target.getName());
 			return appId;
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during getting app id for: " + appName);
 			throw new IllegalStateException("expcetion during getting app id for: " + appName, e);
 		}
 	}
@@ -181,8 +174,6 @@ public class CloudFoundryOperations {
 			CreateApplicationResponse response = cloudFoundryClient.applicationsV3().create(request).block();
 			return response.getId();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during creating app with arg: " + name + "; " + env + "; " + lifecycle);
 			throw new IllegalStateException(
 					"expcetion during creating app with arg: " + name + "; " + env + "; " + lifecycle, e);
 		}
@@ -194,8 +185,6 @@ public class CloudFoundryOperations {
 					.environmentVariables(env).lifecycle(lifecycle).build();
 			cloudFoundryClient.applicationsV3().update(request).block();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during updating app with arg: " + name + "; " + env + "; " + lifecycle);
 			throw new IllegalStateException(
 					"expcetion during updating app with arg: " + name + "; " + env + "; " + lifecycle, e);
 		}
@@ -207,8 +196,6 @@ public class CloudFoundryOperations {
 			cloudFoundryClient.applicationsV3().delete(request).block();
 			logger.info("App {} at {} deleted.", appId, target.getName());
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during deleting app with id: " + appId);
 			throw new IllegalStateException("expcetion during deleting app with id: " + appId, e);
 		}
 	}
@@ -219,8 +206,6 @@ public class CloudFoundryOperations {
 			cloudFoundryClient.applicationsV3().start(request).block();
 			logger.info("App {} at {} desired state changed to \"STARTED\".", appId, target.getName());
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during starting app with id: " + appId);
 			throw new IllegalStateException("expcetion during starting app with id: " + appId, e);
 		}
 	}
@@ -231,8 +216,6 @@ public class CloudFoundryOperations {
 			cloudFoundryClient.applicationsV3().stop(request).block();
 			logger.info("App {} at {} desired state changed to \"STOPPED\".", appId, target.getName());
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during stopping app with id: " + appId);
 			throw new IllegalStateException("expcetion during stopping app with id: " + appId, e);
 		}
 	}
@@ -255,8 +238,6 @@ public class CloudFoundryOperations {
 			logger.info("package (type: {}, data: {}) for app {} created with id: {}", type, data, appId, packageId);
 			return packageId;
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during creating package with arg: " + appId + "; " + type + "; " + data);
 			throw new IllegalStateException(
 					"expcetion during creating package with arg: " + appId + "; " + type + "; " + data, e);
 		}
@@ -266,12 +247,10 @@ public class CloudFoundryOperations {
 		try {
 			UploadPackageRequest request = UploadPackageRequest.builder().packageId(packageId)
 					.bits(new FileInputStream(new File(packageBitsPath))).build();
-			logger.info("package {} with bits path {} uploading with timeout: {} minutes", packageId, packageBitsPath, timeout);
+			logger.info("package {} with bits path {} uploading with timeout: {} seconds", packageId, packageBitsPath, timeout);
 			cloudFoundryClient.packages().upload(request).block(Duration.ofSeconds(timeout));
 			logger.info("package {} with bits path {} uploaded", packageId, packageBitsPath);
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during uploading package with arg: " + packageId + "; " + packageBitsPath);
 			throw new IllegalStateException(
 					"expcetion during uploading package with arg: " + packageId + "; " + packageBitsPath, e);
 		}
@@ -283,8 +262,6 @@ public class CloudFoundryOperations {
 			GetPackageResponse response = cloudFoundryClient.packages().get(request).block();
 			return response.getState();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during getting package with arg: " + packageId);
 			throw new IllegalStateException("expcetion during getting package with arg: " + packageId, e);
 		}
 	}
@@ -294,8 +271,6 @@ public class CloudFoundryOperations {
 			DeletePackageRequest request = DeletePackageRequest.builder().packageId(packageId).build();
 			cloudFoundryClient.packages().delete(request).block();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during deleting package with arg: " + packageId);
 			throw new IllegalStateException("expcetion during deleting package with arg: " + packageId, e);
 		}
 	}
@@ -309,8 +284,6 @@ public class CloudFoundryOperations {
 			logger.info("droplet created with id: {}", dropletId);
 			return dropletId;
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during creating droplet with arg: " + packageId + "; " + env + "; " + lifecycle);
 			throw new IllegalStateException(
 					"expcetion during creating droplet with arg: " + packageId + "; " + env + "; " + lifecycle, e);
 		}
@@ -321,8 +294,6 @@ public class CloudFoundryOperations {
 			DeleteDropletRequest request = DeleteDropletRequest.builder().dropletId(dropletId).build();
 			cloudFoundryClient.droplets().delete(request).block();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during deleting droplet with arg: " + dropletId);
 			throw new IllegalStateException("expcetion during deleting droplet with arg: " + dropletId, e);
 		}
 	}
@@ -343,8 +314,6 @@ public class CloudFoundryOperations {
 				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during assigning droplet with arg: " + appId + "; " + dropletId);
 			throw new IllegalStateException("expcetion during assigning droplet with arg: " + appId + "; " + dropletId,
 					e);
 		}
@@ -356,8 +325,6 @@ public class CloudFoundryOperations {
 			GetDropletResponse response = cloudFoundryClient.droplets().get(request).block();
 			return response.getState();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during getting droplet state with arg: " + dropletId);
 			throw new IllegalStateException("expcetion during getting droplet state with arg: " + dropletId, e);
 		}
 	}
@@ -372,8 +339,6 @@ public class CloudFoundryOperations {
 			assert response.getResources().size() == 1;
 			return response.getResources().get(0).getMetadata().getId();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during getting domain id with arg: " + domain);
 			throw new IllegalStateException("expcetion during getting domain id with arg: " + domain, e);
 		}
 	}
@@ -395,8 +360,6 @@ public class CloudFoundryOperations {
 			CreateRouteResponse response = cloudFoundryClient.routes().create(request).block();
 			return response.getMetadata().getId();
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during creating route with domainId: {}; hostname: {}", domainId, hostname);
 			throw new IllegalStateException(String.format(
 					"expcetion during creating route with domainId: {}; hostname: {}", domainId, hostname), e);
 		}
@@ -413,8 +376,6 @@ public class CloudFoundryOperations {
 								appId, routeId)));
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during creating route mapping with arg: " + appId + "; " + routeId);
 			throw new IllegalStateException(
 					"expcetion during creating route mapping with arg: " + appId + "; " + routeId, e);
 		}
@@ -431,8 +392,6 @@ public class CloudFoundryOperations {
 						Arrays.asList("jq", "-r", ".resources[].guid"));
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during getting route mapping with arg: " + appId + "; " + routeId);
 			throw new IllegalStateException(
 					"expcetion during getting route mapping with arg: " + appId + "; " + routeId, e);
 		}
@@ -447,9 +406,8 @@ public class CloudFoundryOperations {
 						"DELETE"));
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during deleting route mapping with arg: " + routeMappingId);
-			throw new IllegalStateException("expcetion during deleting route mapping with arg: " + routeMappingId, e);
+			throw new IllegalStateException(
+					String.format("expcetion in deleteRouteMapping with routeMappingId: [%s]", routeMappingId), e);
 		}
 	}
 
@@ -465,11 +423,8 @@ public class CloudFoundryOperations {
 			}
 			return states;
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during getting processes state for appId: {}; processType: {}", appId, processType);
-			throw new IllegalStateException(
-					"expcetion during getting processes state for appId: " + appId + "; processType: " + processType,
-					e);
+			throw new IllegalStateException(String
+					.format("expcetion in getProcessesState with appId [%s]; processType [%s]", appId, processType), e);
 		}
 	}
 
@@ -480,18 +435,21 @@ public class CloudFoundryOperations {
 			if (target.getSkipSslValidation()) {
 				loginCommand.add("--skip-ssl-validation");
 			}
+			mkdirs(path_CF_HOME_dir + target.getName());
 			executeCommand(loginCommand);
 		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during login to {} with cf cli.", target.getApi());
 			throw new IllegalStateException(String.format("expcetion during login to %s with cf cli.", target.getApi()),
 					e);
 		}
 	}
 
+	/**
+	 * execute a command, throw IllegalStateException in case of error or command not exist with 0.
+	 * @param command command to be executed with its args
+	 */
 	private void executeCommand(List<String> command) {
 		try {
-			ProcessBuilder processBuilder = new ProcessBuilder(command); //.inheritIO();
+			ProcessBuilder processBuilder = new ProcessBuilder(command);
 			if (System.getenv("DEBUG") != null) {
 				processBuilder.inheritIO();
 			}
@@ -499,12 +457,10 @@ public class CloudFoundryOperations {
 			process.waitFor();
 			int existCode = process.exitValue();
 			if (existCode != 0) {
-				throw new IllegalStateException("command exit with code: " + existCode);
+				throw new IllegalStateException(String.format("command [%s] exit with code: [%d]", command, existCode));
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error("expcetion during executing command: {}", command);
-			throw new IllegalStateException("expcetion during executing command: " + command, e);
+		} catch (IOException | InterruptedException e) {
+			throw new IllegalStateException(String.format("expcetion during executing command: [%s]", command), e);
 		}
 	}
 
@@ -519,15 +475,14 @@ public class CloudFoundryOperations {
 			targetProcess.waitFor();
 			int existCode = targetProcess.exitValue();
 			if (existCode != 0) {
-				throw new IllegalStateException("command exit with code: " + existCode);
+				throw new IllegalStateException(String.format("piped command [%s|%s] exit with code: [%d]", srcCommand,
+						targetCommand, existCode));
 			}
 			return new BufferedReader(new InputStreamReader(targetProcess.getInputStream())).lines()
 					.collect(Collectors.joining("\n"));
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.err.println("expcetion during executing command: " + srcCommand + "; " + targetCommand);
-			throw new IllegalStateException("expcetion during executing command: " + srcCommand + "; " + targetCommand,
-					e);
+		} catch (IOException | InterruptedException e) {
+			throw new IllegalStateException(
+					String.format("expcetion during executing piped command: [%s|%s]", srcCommand, targetCommand), e);
 		}
 	}
 
@@ -543,7 +498,12 @@ public class CloudFoundryOperations {
 			srcOutput.close();
 			targetInput.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new IllegalStateException("IOExpcetion during redirect", e);
 		}
+	}
+	
+	private static void mkdirs(String path) {
+		File f = new File(path);
+		f.mkdirs();
 	}
 }
