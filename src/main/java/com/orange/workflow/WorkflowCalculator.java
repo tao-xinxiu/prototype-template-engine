@@ -7,6 +7,7 @@ import com.orange.model.*;
 import com.orange.paas.PaaSAPI;
 import com.orange.paas.cf.CloudFoundryAPI;
 import com.orange.workflow.app.BlueGreen;
+import com.orange.workflow.app.Canary;
 import com.orange.workflow.app.Delete;
 import com.orange.workflow.app.Deploy;
 import com.orange.workflow.app.StopRestart;
@@ -24,12 +25,10 @@ public class WorkflowCalculator {
 
 	public Workflow getWorkflow() {
 		switch (require) {
-		case PERFORMANCE:
-		case SPEED:
+		case FAST:
 			// parallel blue green update
-			Workflow parallelUpdateSites = new ParallelWorkflow("paralle update sites");
+			Workflow fastUpdateSites = new ParallelWorkflow("parallel update sites");
 			for (PaaSTarget target : deploymentConfig.getTargets().values()) {
-				// TODO entity update order
 				Workflow updateSite = new ParallelWorkflow(
 						"parallel update each entity in the site " + target.getName());
 				PaaSAPI api = new CloudFoundryAPI(target);
@@ -38,14 +37,27 @@ public class WorkflowCalculator {
 					updateSite.addStep(new BlueGreen(api, application));
 				}
 				updateSite.addSteps(deleteNonDesiredApp(api));
-				parallelUpdateSites.addStep(updateSite);
+				fastUpdateSites.addStep(updateSite);
 			}
-			return parallelUpdateSites;
-		case RESOURCE:
-			// serial stop restart update
-			Workflow serialUpdateSites = new SerialWorkflow("serial update sites");
+			return fastUpdateSites;
+		case CAUTIOUS:
+			Workflow cautiousUpdateSites = new SerialWorkflow("serial update sites");
 			for (PaaSTarget target : deploymentConfig.getTargets().values()) {
-				// TODO entity update order
+				Workflow updateSite = new ParallelWorkflow(
+						"parallel update each entity in the site " + target.getName());
+				PaaSAPI api = new CloudFoundryAPI(target);
+				updateSite.addSteps(deployNonExistApp(api));
+				for (Application application : getVersionChangedApp(api)) {
+					updateSite.addStep(new Canary(api, application));
+				}
+				updateSite.addSteps(deleteNonDesiredApp(api));
+				cautiousUpdateSites.addStep(updateSite);
+			}
+			return cautiousUpdateSites;
+		case ECONOMICAL:
+			// serial stop restart update
+			Workflow economicalUpdateSites = new SerialWorkflow("serial update sites");
+			for (PaaSTarget target : deploymentConfig.getTargets().values()) {
 				Workflow updateSite = new ParallelWorkflow(
 						"parallel update each entity in the site " + target.getName());
 				PaaSAPI api = new CloudFoundryAPI(target);
@@ -57,9 +69,9 @@ public class WorkflowCalculator {
 					updateSite.addStep(updateApp);
 				}
 				updateSite.addSteps(deleteNonDesiredApp(api));
-				serialUpdateSites.addStep(updateSite);
+				economicalUpdateSites.addStep(updateSite);
 			}
-			return serialUpdateSites;
+			return economicalUpdateSites;
 		case TEST:
 			return getTestWorkflow();
 		case CLEANUP:
@@ -79,7 +91,6 @@ public class WorkflowCalculator {
 	}
 
 	private List<Step> deployNonExistApp(PaaSAPI api) {
-		// TODO deploy order
 		List<Step> steps = new LinkedList<>();
 		for (Application application : deploymentConfig.getApps().values()) {
 			String appId = api.getAppId(application.getName());

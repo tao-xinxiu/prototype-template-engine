@@ -19,22 +19,23 @@ import com.orange.model.Requirement;
 import com.orange.model.Workflow;
 import com.orange.workflow.WorkflowCalculator;
 
-@SpringBootApplication (exclude = {org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration.class})
+@SpringBootApplication(exclude = { org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration.class })
 @RestController
 public class Main {
 	private static final Logger logger = LoggerFactory.getLogger(Main.class);
 	static DeploymentConfig deploymentConfig;
+	static Requirement requirement;
 
 	@RequestMapping(value = "/set", method = RequestMethod.POST, consumes = "application/json")
 	public @ResponseBody String setDeploymentConfig(@RequestBody DeploymentConfig deploymentConfig) {
-		for (Map.Entry<String,PaaSTarget> entry: deploymentConfig.getTargets().entrySet()) {
+		for (Map.Entry<String, PaaSTarget> entry : deploymentConfig.getTargets().entrySet()) {
 			if (!entry.getValue().valid()) {
 				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for target: " + entry.getValue());
 			}
 			entry.getValue().setName(entry.getKey());
 		}
 		logger.info("DeploymentConfig targets valid");
-		for (Map.Entry<String,Application> entry: deploymentConfig.getApps().entrySet()) {
+		for (Map.Entry<String, Application> entry : deploymentConfig.getApps().entrySet()) {
 			if (!entry.getValue().valid()) {
 				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for app: " + entry.getValue());
 			}
@@ -47,14 +48,24 @@ public class Main {
 
 	@RequestMapping(value = "/update", method = RequestMethod.PUT)
 	public @ResponseBody String update(@RequestBody String require) throws InterruptedException {
-		Requirement requirement = Requirement.valueOf(require.toUpperCase());
+		requirement = Requirement.valueOf(require.toUpperCase());
 		assert deploymentConfig != null : "deploymentConfig not configured!";
 		Workflow workflow = new WorkflowCalculator(requirement, deploymentConfig).getWorkflow();
 		workflow.exec();
 		return "\n OK! \n";
 	}
-	
-    public static void main(String[] args) {
-        SpringApplication.run(Main.class, args);
-    }
+
+	@RequestMapping(value = "/commit", method = RequestMethod.PUT)
+	public @ResponseBody String commit() {
+		return "\n OK! \n";
+	}
+
+	@RequestMapping(value = "/rollback", method = RequestMethod.PUT)
+	public @ResponseBody String rollback() {
+		return "\n OK! \n";
+	}
+
+	public static void main(String[] args) {
+		SpringApplication.run(Main.class, args);
+	}
 }
