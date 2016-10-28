@@ -34,10 +34,7 @@ public class CloudFoundryRouteFactory extends RouteFactory {
 	@Override
 	public String createRouteIfNotExist(String hostname, String domainKey) {
 		String routeId = getRouteId(hostname, domainKey);
-		if (routeId != null) {
-			logger.info("[{}] route with hostname [{}] existed with id: [{}]", domainKey, hostname, routeId);
-		}
-		else {
+		if (routeId == null) {
 			routeId = operations.createRoute(hostname, getDomainId(domainKey));
 			logger.info("[{}] route with hostname [{}] created with id: [{}]", domainKey, hostname, routeId);
 		}

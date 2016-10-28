@@ -43,9 +43,8 @@ import com.orange.model.PaaSTarget;
 
 public class CloudFoundryOperations {
 	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryOperations.class);
-	private static final Object processLock = new Object();
 	private static final Version SUPPORTED_API_VERSION = Version.valueOf("2.54.0"); // cf-java-client supported CF API version
-	private static final String path_CF_HOME_dir = "$HOME/cf_homes/"; 
+	private static final String path_CF_HOME_dir = System.getProperty("user.home") + "/cf_homes/"; 
 
 	private PaaSTarget target;
 	private CloudFoundryClient cloudFoundryClient;
@@ -306,12 +305,10 @@ public class CloudFoundryOperations {
 				cloudFoundryClient.applicationsV3().assignDroplet(request).block();
 			} else {
 				// avoid multi thread is targeting multiple cf instances
-				synchronized (processLock) {
-					cfCliLogin();
-					executeCommand(Arrays.asList("cf", "curl", String.format("v3/apps/%s/droplets/current", appId),
-							"-X", "PUT", "-d", String.format("{\\\"droplet_guid\\\": \\\"%s\\\"}", dropletId)));
-					logger.info("droplet {} assigned to app {}", dropletId, appId);
-				}
+				cfCliLogin();
+				executeCFCliCommand(Arrays.asList("cf", "curl", String.format("v3/apps/%s/droplets/current", appId),
+						"-X", "PUT", "-d", String.format("{\\\"droplet_guid\\\": \\\"%s\\\"}", dropletId)));
+				logger.info("droplet {} assigned to app {}", dropletId, appId);
 			}
 		} catch (Exception e) {
 			throw new IllegalStateException("expcetion during assigning droplet with arg: " + appId + "; " + dropletId,
@@ -368,13 +365,11 @@ public class CloudFoundryOperations {
 	public void createRouteMapping(String appId, String routeId) {
 		try {
 			// avoid multi thread is targeting multiple cf instances
-			synchronized (processLock) {
-				cfCliLogin();
-				executeCommand(Arrays.asList("cf", "curl", "v3/route_mappings", "-X", "POST", "-d",
-						String.format(
-								"{\\\"relationships\\\": {\\\"app\\\": {\\\"guid\\\":\\\"%s\\\"},\\\"route\\\":{\\\"guid\\\":\\\"%s\\\"}}}",
-								appId, routeId)));
-			}
+			cfCliLogin();
+			executeCFCliCommand(Arrays.asList("cf", "curl", "v3/route_mappings", "-X", "POST", "-d",
+					String.format(
+							"{\\\"relationships\\\": {\\\"app\\\": {\\\"guid\\\":\\\"%s\\\"},\\\"route\\\":{\\\"guid\\\":\\\"%s\\\"}}}",
+							appId, routeId)));
 		} catch (Exception e) {
 			throw new IllegalStateException(
 					"expcetion during creating route mapping with arg: " + appId + "; " + routeId, e);
@@ -384,13 +379,11 @@ public class CloudFoundryOperations {
 	public String getRouteMappingId(String appId, String routeId) {
 		try {
 			// avoid multi thread is targeting multiple cf instances
-			synchronized (processLock) {
-				cfCliLogin();
-				return executePipedCommand(
-						Arrays.asList("cf", "curl",
-								String.format("v3/apps/%s/route_mappings?route_guids=%s", appId, routeId)),
-						Arrays.asList("jq", "-r", ".resources[].guid"));
-			}
+			cfCliLogin();
+			return executeCFCliPipedCommand(
+					Arrays.asList("cf", "curl",
+							String.format("v3/apps/%s/route_mappings?route_guids=%s", appId, routeId)),
+					Arrays.asList("jq", "-r", ".resources[].guid"));
 		} catch (Exception e) {
 			throw new IllegalStateException(
 					"expcetion during getting route mapping with arg: " + appId + "; " + routeId, e);
@@ -400,11 +393,9 @@ public class CloudFoundryOperations {
 	public void deleteRouteMapping(String routeMappingId) {
 		try {
 			// avoid multi thread is targeting multiple cf instances
-			synchronized (processLock) {
-				cfCliLogin();
-				executeCommand(Arrays.asList("cf", "curl", String.format("v3/route_mappings/%s", routeMappingId), "-X",
-						"DELETE"));
-			}
+			cfCliLogin();
+			executeCFCliCommand(
+					Arrays.asList("cf", "curl", String.format("v3/route_mappings/%s", routeMappingId), "-X", "DELETE"));
 		} catch (Exception e) {
 			throw new IllegalStateException(
 					String.format("expcetion in deleteRouteMapping with routeMappingId: [%s]", routeMappingId), e);
@@ -436,7 +427,7 @@ public class CloudFoundryOperations {
 				loginCommand.add("--skip-ssl-validation");
 			}
 			mkdirs(path_CF_HOME_dir + target.getName());
-			executeCommand(loginCommand);
+			executeCFCliCommand(loginCommand);
 		} catch (Exception e) {
 			throw new IllegalStateException(String.format("expcetion during login to %s with cf cli.", target.getApi()),
 					e);
@@ -447,12 +438,13 @@ public class CloudFoundryOperations {
 	 * execute a command, throw IllegalStateException in case of error or command not exist with 0.
 	 * @param command command to be executed with its args
 	 */
-	private void executeCommand(List<String> command) {
+	private void executeCFCliCommand(List<String> command) {
 		try {
 			ProcessBuilder processBuilder = new ProcessBuilder(command);
 			if (System.getenv("DEBUG") != null) {
 				processBuilder.inheritIO();
 			}
+			setCFHome(processBuilder);
 			Process process = processBuilder.start();
 			process.waitFor();
 			int existCode = process.exitValue();
@@ -464,10 +456,12 @@ public class CloudFoundryOperations {
 		}
 	}
 
-	private static String executePipedCommand(List<String> srcCommand, List<String> targetCommand) {
+	private String executeCFCliPipedCommand(List<String> srcCommand, List<String> targetCommand) {
 		try {
 			ProcessBuilder srcProcessBuilder = new ProcessBuilder(srcCommand);
 			ProcessBuilder targetProcessBuilder = new ProcessBuilder(targetCommand);
+			setCFHome(srcProcessBuilder);
+			setCFHome(targetProcessBuilder);
 			Process srcProcess = srcProcessBuilder.start();
 			Process targetProcess = targetProcessBuilder.start();
 			redirect(srcProcess.getInputStream(), targetProcess.getOutputStream());
@@ -503,7 +497,16 @@ public class CloudFoundryOperations {
 	}
 	
 	private static void mkdirs(String path) {
-		File f = new File(path);
-		f.mkdirs();
+		File file = new File(path);
+		if(!file.exists()){
+			file.mkdirs();
+		}
+		if (!file.exists()) {
+			throw new IllegalStateException(String.format("Creating directory [%s] failed", path));
+		}
+	}
+	
+	private void setCFHome(ProcessBuilder processBuilder) {
+		processBuilder.environment().put("CF_HOME", path_CF_HOME_dir + target.getName());
 	}
 }
