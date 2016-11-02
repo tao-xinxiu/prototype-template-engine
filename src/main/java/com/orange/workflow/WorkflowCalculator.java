@@ -34,7 +34,7 @@ public class WorkflowCalculator {
 				PaaSAPI api = new CloudFoundryAPI(target);
 				updateSite.addSteps(deployNonExistApp(api));
 				for (Application application : getVersionChangedApp(api)) {
-					updateSite.addStep(new BlueGreen(api, application));
+					updateSite.addStep(new BlueGreen(api, application).update());
 				}
 				updateSite.addSteps(deleteNonDesiredApp(api));
 				fastUpdateSites.addStep(updateSite);
@@ -64,8 +64,8 @@ public class WorkflowCalculator {
 				updateSite.addSteps(deployNonExistApp(api));
 				for (Application application : getVersionChangedApp(api)) {
 					Workflow updateApp = new SerialWorkflow("serial update app " + application.getName() + " at target " + target.getName());
-					updateApp.addStep(new UpdateProperty(api, application));
-					updateApp.addStep(new StopRestart(api, application));
+					updateApp.addStep(new UpdateProperty(api, application).update());
+					updateApp.addStep(new StopRestart(api, application).update());
 					updateSite.addStep(updateApp);
 				}
 				updateSite.addSteps(deleteNonDesiredApp(api));
@@ -80,7 +80,7 @@ public class WorkflowCalculator {
 				Workflow cleanupSite = new ParallelWorkflow("cleanup all entities on site " + target.getName());
 				PaaSAPI api = new CloudFoundryAPI(target);
 				for (String appId : api.listSpaceAppsId()) {
-					cleanupSite.addStep(new Delete(api, appId));
+					cleanupSite.addStep(new Delete(api, appId).update());
 				}
 				cleanupSites.addStep(cleanupSite);
 			}
@@ -95,7 +95,7 @@ public class WorkflowCalculator {
 		for (Application application : deploymentConfig.getApps().values()) {
 			String appId = api.getAppId(application.getName());
 			if (appId == null) { // app not exist
-				steps.add(new Deploy(api, application));
+				steps.add(new Deploy(api, application).update());
 			}
 		}
 		return steps;
@@ -127,7 +127,7 @@ public class WorkflowCalculator {
 		List<Step> steps = new LinkedList<>();
 		for (String appId : api.listSpaceAppsId()) {
 			if (!deploymentConfig.getApps().keySet().contains(api.getAppName(appId))) {
-				steps.add(new Delete(api, appId));
+				steps.add(new Delete(api, appId).update());
 			}
 		}
 		return steps;
@@ -135,8 +135,8 @@ public class WorkflowCalculator {
 
 	private Workflow getTestWorkflow() {
 		Workflow updateSites = new ParallelWorkflow("parallel update sites");
-		updateSites.addStep(new Deploy(getAPI("lz"), getApp("hello")));
-		updateSites.addStep(new Deploy(getAPI("obs"), getApp("hello")));
+		updateSites.addStep(new Deploy(getAPI("lz"), getApp("hello")).update());
+		updateSites.addStep(new Deploy(getAPI("obs"), getApp("hello")).update());
 		return updateSites;
 	}
 

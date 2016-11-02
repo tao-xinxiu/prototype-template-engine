@@ -16,8 +16,9 @@ public class SerialWorkflow extends Workflow {
 	@Override
 	public void exec() {
 		for (Step step : steps) {
+			logger.info("start {} ...", step);
 			step.exec();
+			logger.info("Step {} Done!", step);
 		}
-		logger.info("SerialWorkflow {} finished.", stepName);
 	}
 }

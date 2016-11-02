@@ -24,7 +24,6 @@ public class ParallelWorkflow extends Workflow {
 	@Override
 	public void exec() {
 		if (steps.size() == 0) {
-			logger.info("ParallelWorkflow {} finished.", stepName);
 			return;
 		}
 		ExecutorService executor = Executors.newFixedThreadPool(steps.size());
@@ -34,7 +33,9 @@ public class ParallelWorkflow extends Workflow {
 				@Override
 				public Void call() throws Exception {
 					Thread.currentThread().setName(step.toString());
+					logger.info("start {} ...", step);
 					step.exec();
+					logger.info("Step {} Done!", step);
 					return null;
 				}
 			});
@@ -50,6 +51,5 @@ public class ParallelWorkflow extends Workflow {
 		} catch (ExecutionException e) {
 			throw new IllegalStateException(e);
 		}
-		logger.info("ParallelWorkflow {} finished.", stepName);
 	}
 }

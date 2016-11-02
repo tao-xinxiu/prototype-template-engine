@@ -52,6 +52,7 @@ public class Main {
 		assert deploymentConfig != null : "deploymentConfig not configured!";
 		Workflow workflow = new WorkflowCalculator(requirement, deploymentConfig).getWorkflow();
 		workflow.exec();
+		logger.info("Workflow {} finished!", workflow);
 		return "\n OK! \n";
 	}
 
