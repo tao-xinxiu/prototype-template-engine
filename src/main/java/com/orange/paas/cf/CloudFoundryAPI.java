@@ -125,6 +125,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 				BuildpackData.builder().buildpack(appProperty.getBuildpack()).stack(appProperty.getStack()).build())
 				.build();
 		operations.updateApp(appId, appProperty.getName(), appProperty.getEnv(), lifecycle);
+		logger.info("app {} updated with name {}; env {}; lifecycle {}.", appId, appProperty.getName(), appProperty.getEnv(), lifecycle);
 	}
 
 	@Override

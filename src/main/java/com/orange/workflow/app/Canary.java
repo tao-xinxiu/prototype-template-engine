@@ -21,4 +21,22 @@ public class Canary {
 			}
 		};
 	}
+	
+	public Step commit() {
+		return new Step(String.format("commit Canary %s.%s", api.getTargetName(), application.getName())) {
+			@Override
+			public void exec() {
+				// TODO
+			}
+		};
+	}
+	
+	public Step rollback() {
+		return new Step(String.format("commit Canary %s.%s", api.getTargetName(), application.getName())) {
+			@Override
+			public void exec() {
+				// TODO
+			}
+		};
+	}
 }

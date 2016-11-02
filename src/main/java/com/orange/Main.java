@@ -23,34 +23,37 @@ import com.orange.workflow.WorkflowCalculator;
 @RestController
 public class Main {
 	private static final Logger logger = LoggerFactory.getLogger(Main.class);
-	static DeploymentConfig deploymentConfig;
-	static Requirement requirement;
+	static DeploymentConfig desiredState;
+	static WorkflowCalculator workflowCalculator;
 
 	@RequestMapping(value = "/set", method = RequestMethod.POST, consumes = "application/json")
-	public @ResponseBody String setDeploymentConfig(@RequestBody DeploymentConfig deploymentConfig) {
-		for (Map.Entry<String, PaaSTarget> entry : deploymentConfig.getTargets().entrySet()) {
+	public @ResponseBody String setDesiredState(@RequestBody DeploymentConfig desiredState) {
+		for (Map.Entry<String, PaaSTarget> entry : desiredState.getTargets().entrySet()) {
 			if (!entry.getValue().valid()) {
 				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for target: " + entry.getValue());
 			}
 			entry.getValue().setName(entry.getKey());
 		}
 		logger.info("DeploymentConfig targets valid");
-		for (Map.Entry<String, Application> entry : deploymentConfig.getApps().entrySet()) {
+		for (Map.Entry<String, Application> entry : desiredState.getApps().entrySet()) {
 			if (!entry.getValue().valid()) {
 				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for app: " + entry.getValue());
 			}
 			entry.getValue().setName(entry.getKey());
 		}
 		logger.info("DeploymentConfig apps valid");
-		Main.deploymentConfig = deploymentConfig;
+		Main.desiredState = desiredState;
 		return "\n OK! \n";
 	}
 
 	@RequestMapping(value = "/update", method = RequestMethod.PUT)
 	public @ResponseBody String update(@RequestBody String require) throws InterruptedException {
-		requirement = Requirement.valueOf(require.toUpperCase());
-		assert deploymentConfig != null : "deploymentConfig not configured!";
-		Workflow workflow = new WorkflowCalculator(requirement, deploymentConfig).getWorkflow();
+		Requirement requirement = Requirement.valueOf(require.toUpperCase());
+		if (desiredState == null) {
+			throw new IllegalStateException("desiredState not configured!");
+		}
+		workflowCalculator = new WorkflowCalculator(requirement, desiredState);
+		Workflow workflow = workflowCalculator.getUpdateWorkflow();
 		workflow.exec();
 		logger.info("Workflow {} finished!", workflow);
 		return "\n OK! \n";
@@ -58,11 +61,23 @@ public class Main {
 
 	@RequestMapping(value = "/commit", method = RequestMethod.PUT)
 	public @ResponseBody String commit() {
+		if (workflowCalculator == null) {
+			throw new IllegalStateException("update should be called before commit!");
+		}
+		Workflow workflow = workflowCalculator.getCommitWorkflow();
+		workflow.exec();
+		logger.info("Workflow {} finished!", workflow);
 		return "\n OK! \n";
 	}
 
 	@RequestMapping(value = "/rollback", method = RequestMethod.PUT)
 	public @ResponseBody String rollback() {
+		if (workflowCalculator == null) {
+			throw new IllegalStateException("update should be called before commit!");
+		}
+		Workflow workflow = workflowCalculator.getRollbackWorkflow();
+		workflow.exec();
+		logger.info("Workflow {} finished!", workflow);
 		return "\n OK! \n";
 	}
 

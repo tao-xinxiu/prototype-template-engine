@@ -93,7 +93,7 @@ public class PaaSTarget {
 	private boolean validDomain() {
 		if (domains == null) {
 			return false;
-		} else if (domains.get("local") == null || domains.get("global") == null) {
+		} else if (domains.get("local") == null || domains.get("global") == null || domains.get("tmp") == null) {
 			return false;
 		} else {
 			return true;

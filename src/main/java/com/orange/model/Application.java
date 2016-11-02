@@ -90,7 +90,7 @@ public class Application {
 		if (hostnames == null) {
 			return false;
 		}
-		else if (hostnames.get("local")== null || hostnames.get("global") == null) {
+		else if (hostnames.get("local")== null || hostnames.get("global") == null || hostnames.get("tmp") == null) {
 			return false;
 		}
 		else {
