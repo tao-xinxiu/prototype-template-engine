@@ -17,6 +17,7 @@ public class WorkflowCalculator {
 	private Requirement require;
 	private DeploymentConfig deploymentConfig;
 	private List<Application> updateApps;
+	private List<Application> missingApps;
 
 	public WorkflowCalculator(Requirement require, DeploymentConfig deploymentConfig) {
 		this.require = require;
@@ -41,7 +42,8 @@ public class WorkflowCalculator {
 			Workflow updateSite = new ParallelWorkflow(
 					"parallel update each entity in the site " + target.getName());
 			PaaSAPI api = new CloudFoundryAPI(target);
-			for (Application application : getMissingApp(api)) {
+			this.missingApps = getMissingApp(api);
+			for (Application application : missingApps) {
 				updateSite.addStep(new Deploy(api, application).update());
 			}
 			updateApps = getVersionChangedApp(api);
@@ -84,7 +86,6 @@ public class WorkflowCalculator {
 			Workflow commitSite = new ParallelWorkflow(
 					"parallel commit change of each entity in the site " + target.getName());
 			PaaSAPI api = new CloudFoundryAPI(target);
-			updateApps = getVersionChangedApp(api);
 			for (Application application : updateApps) {
 				switch (require) {
 				case FAST:
@@ -121,7 +122,6 @@ public class WorkflowCalculator {
 			Workflow rollbackSite = new ParallelWorkflow(
 					"parallel rollback change of each entity in the site " + target.getName());
 			PaaSAPI api = new CloudFoundryAPI(target);
-			updateApps = getVersionChangedApp(api);
 			for (Application application : updateApps) {
 				switch (require) {
 				case FAST:
@@ -134,7 +134,7 @@ public class WorkflowCalculator {
 					break;
 				}
 			}
-			for (Application application : getMissingApp(api)) {
+			for (Application application : missingApps) {
 				String appId = api.getAppId(application.getName());
 				rollbackSite.addStep(new Delete(api, appId).update());
 			}
