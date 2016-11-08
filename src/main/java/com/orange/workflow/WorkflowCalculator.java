@@ -16,14 +16,14 @@ import com.orange.workflow.app.UpdateProperty;
 public class WorkflowCalculator {
 	private Requirement require;
 	private DeploymentConfig deploymentConfig;
-	private Application application;
+	private Application desiredApp;
 	private boolean appVersionChanged;
 	private boolean appMissing;
 
 	public WorkflowCalculator(Requirement require, DeploymentConfig deploymentConfig) {
 		this.require = require;
 		this.deploymentConfig = deploymentConfig;
-		this.application = deploymentConfig.getApp();
+		this.desiredApp = deploymentConfig.getApp();
 	}
 
 	public Workflow getUpdateWorkflow() {
@@ -46,22 +46,22 @@ public class WorkflowCalculator {
 			PaaSAPI api = new CloudFoundryAPI(target);
 			this.appMissing = isMissingApp(api);
 			if(appMissing) {
-				updateSite.addStep(new Deploy(api, application).update());
+				updateSite.addStep(new Deploy(api, desiredApp).update());
 			}
 			this.appVersionChanged = isVersionChangedApp(api);
 			if(appVersionChanged) {
 				switch (require) {
 				case FAST:
-					updateSite.addStep(new BlueGreen(api, application).update());
+					updateSite.addStep(new BlueGreen(api, desiredApp).update());
 					break;
 				case CAUTIOUS:
-					updateSite.addStep(new Canary(api, application).update());
+					updateSite.addStep(new Canary(api, desiredApp).update());
 					break;
 				case ECONOMICAL:
 					Workflow updateApp = new SerialWorkflow(
-							String.format("serial update %s.%s", target.getName(), application.getName()));
-					updateApp.addStep(new UpdateProperty(api, application).update());
-					updateApp.addStep(new StopRestart(api, application).update());
+							String.format("serial update %s.%s", target.getName(), desiredApp.getName()));
+					updateApp.addStep(new UpdateProperty(api, desiredApp).update());
+					updateApp.addStep(new StopRestart(api, desiredApp).update());
 					updateSite.addStep(updateApp);
 					break;
 				default:
@@ -92,10 +92,10 @@ public class WorkflowCalculator {
 			if (appVersionChanged) {
 				switch (require) {
 				case FAST:
-					commitSite.addStep(new BlueGreen(api, application).commit());
+					commitSite.addStep(new BlueGreen(api, desiredApp).commit());
 					break;
 				case CAUTIOUS:
-					commitSite.addStep(new Canary(api, application).commit());
+					commitSite.addStep(new Canary(api, desiredApp).commit());
 					break;
 				default:
 					break;
@@ -128,17 +128,17 @@ public class WorkflowCalculator {
 			if (appVersionChanged) {
 				switch (require) {
 				case FAST:
-					rollbackSite.addStep(new BlueGreen(api, application).rollback());
+					rollbackSite.addStep(new BlueGreen(api, desiredApp).rollback());
 					break;
 				case CAUTIOUS:
-					rollbackSite.addStep(new Canary(api, application).rollback());
+					rollbackSite.addStep(new Canary(api, desiredApp).rollback());
 					break;
 				default:
 					break;
 				}
 			}
 			if (appMissing) {
-				String appId = api.getAppId(application.getName());
+				String appId = api.getAppId(desiredApp.getName());
 				rollbackSite.addStep(new Delete(api, appId).update());
 			}
 			rollbackSites.addStep(rollbackSite);
@@ -147,7 +147,7 @@ public class WorkflowCalculator {
 	}
 
 	private boolean isMissingApp(PaaSAPI api) {
-		String appId = api.getAppId(application.getName());
+		String appId = api.getAppId(desiredApp.getName());
 		if (appId == null) { // desired app not exist in the target PaaS
 			return true;
 		}
@@ -155,10 +155,10 @@ public class WorkflowCalculator {
 	}
 
 	private boolean isVersionChangedApp(PaaSAPI api) {
-		String appId = api.getAppId(application.getName());
+		String appId = api.getAppId(desiredApp.getName());
 		if (appId != null) { // app exist
 			String appVersion = (String) api.getAppVersion(appId);
-			if (!application.getVersion().equals(appVersion)) {
+			if (!desiredApp.getVersion().equals(appVersion)) {
 				return true;
 			}
 		}
@@ -177,8 +177,8 @@ public class WorkflowCalculator {
 		List<String> appIds = new LinkedList<>();
 		for (String appId : api.listSpaceAppsId()) {
 			String appName = api.getAppName(appId);
-			if (!application.getName().equals(appName)
-					&& !(application.getName() + application.getVersion()).equals(appName)) {
+			if (!desiredApp.getName().equals(appName)
+					&& !(desiredApp.getName() + desiredApp.getVersion()).equals(appName)) {
 				appIds.add(appId);
 			}
 		}

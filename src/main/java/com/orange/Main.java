@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.orange.model.DeploymentConfig;
 import com.orange.model.PaaSTarget;
 import com.orange.model.Requirement;
-import com.orange.model.Workflow;
+import com.orange.workflow.Workflow;
 import com.orange.workflow.WorkflowCalculator;
 
 @SpringBootApplication(exclude = { org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration.class })

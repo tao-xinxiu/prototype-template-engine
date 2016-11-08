@@ -1,20 +1,20 @@
 package com.orange.workflow.app;
 
 import com.orange.model.Application;
-import com.orange.model.Step;
 import com.orange.paas.PaaSAPI;
+import com.orange.workflow.Step;
 
 public class Canary {
 	private PaaSAPI api;
-	private Application application;
+	private Application desiredApp;
 	
 	public Canary(PaaSAPI api, Application application) {
 		this.api = api;
-		this.application = application;
+		this.desiredApp = application;
 	}
 	
 	public Step update() {
-		return new Step(String.format("Canary %s.%s", api.getTargetName(), application.getName())) {
+		return new Step(String.format("Canary %s.%s", api.getTargetName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
 				// TODO
@@ -23,7 +23,7 @@ public class Canary {
 	}
 	
 	public Step commit() {
-		return new Step(String.format("commit Canary %s.%s", api.getTargetName(), application.getName())) {
+		return new Step(String.format("commit Canary %s.%s", api.getTargetName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
 				// TODO
@@ -32,7 +32,7 @@ public class Canary {
 	}
 	
 	public Step rollback() {
-		return new Step(String.format("commit Canary %s.%s", api.getTargetName(), application.getName())) {
+		return new Step(String.format("commit Canary %s.%s", api.getTargetName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
 				// TODO

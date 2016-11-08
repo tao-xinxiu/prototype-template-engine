@@ -1,22 +1,22 @@
 package com.orange.workflow.app;
 
-import com.orange.model.Step;
 import com.orange.paas.PaaSAPI;
+import com.orange.workflow.Step;
 
 public class Delete {
 	private PaaSAPI api;
-	private String appId;
+	private String appIdToDelete;
 
 	public Delete(PaaSAPI api, String appId) {
 		this.api = api;
-		this.appId = appId;
+		this.appIdToDelete = appId;
 	}
 	
 	public Step update() {
-		return new Step(String.format("Delete %s.%s", api.getTargetName(), appId)) {
+		return new Step(String.format("Delete %s.%s", api.getTargetName(), appIdToDelete)) {
 			@Override
 			public void exec() {
-				api.deleteApp(appId);
+				api.deleteApp(appIdToDelete);
 			}
 		};
 	}

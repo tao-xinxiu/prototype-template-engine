@@ -1,4 +1,4 @@
-package com.orange.model;
+package com.orange.workflow;
 
 import java.util.LinkedList;
 import java.util.List;

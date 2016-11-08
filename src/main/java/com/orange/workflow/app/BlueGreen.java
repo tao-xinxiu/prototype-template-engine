@@ -1,65 +1,73 @@
 package com.orange.workflow.app;
 
 import com.orange.model.Application;
-import com.orange.model.Step;
 import com.orange.paas.PaaSAPI;
+import com.orange.workflow.Step;
 
 public class BlueGreen {
 	private PaaSAPI api;
-	private Application application;
+	private Application desiredApp;
 	
 	public BlueGreen(PaaSAPI api, Application application) {
 		this.api = api;
-		this.application = application;
+		this.desiredApp = application;
 	}
 	
+	/**
+	 * update app from initial state to the intermediate state (midApp)
+	 * @return
+	 */
 	public Step update() {
-		return new Step(String.format("BlueGreen %s.%s", api.getTargetName(), application.getName())) {
+		return new Step(String.format("BlueGreen %s.%s", api.getTargetName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
-				Application greenApp = new Application(application);
-				String greenAppName = application.getName() + application.getVersion();
-				greenApp.setName(greenAppName);
+				Application midApp = new Application(desiredApp);
+				String midAppName = desiredApp.getName() + desiredApp.getVersion();
+				midApp.setName(midAppName);
 				
-				String greenAppId = api.createAppIfNotExist(greenApp);
-				api.prepareApp(greenAppId, greenApp);
-				String greenRouteId = api.createRouteIfNotExist(greenApp.getHostnames().get("tmp"), "tmp");
-				api.createRouteMapping(greenAppId, greenRouteId);
-				//green app mapped to temporary local route
-				api.startAppAndWaitUntilRunning(greenAppId);
+				String midAppId = api.createAppIfNotExist(midApp);
+				api.prepareApp(midAppId, midApp);
+				String midRouteId = api.createRouteIfNotExist(midApp.getHostnames().get("tmp"), "tmp");
+				api.createRouteMapping(midAppId, midRouteId);
+				//midApp mapped to temporary local route
+				api.startAppAndWaitUntilRunning(midAppId);
 			}
 		};
 	}
 	
+	/**
+	 * update app from intermediate state to the desired state
+	 * @return
+	 */
 	public Step commit() {
-		return new Step(String.format("commit BlueGreen %s.%s", api.getTargetName(), application.getName())) {
+		return new Step(String.format("commit BlueGreen %s.%s", api.getTargetName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
-				String greenAppName = application.getName() + application.getVersion();
-				String greenAppId = api.getAppId(greenAppName);
-				// green app mapped to app original local and global route
+				String midAppName = desiredApp.getName() + desiredApp.getVersion();
+				String midAppId = api.getAppId(midAppName);
+				// midApp mapped to app original local and global route
 				// map first global route to ensure that global route correctly mapped when DNS detects it available
-				String globalRouteId = api.createRouteIfNotExist(application.getHostnames().get("global"), "global");
-				api.createRouteMapping(greenAppId, globalRouteId);
-				String localRouteId = api.createRouteIfNotExist(application.getHostnames().get("local"), "local");
-				api.createRouteMapping(greenAppId, localRouteId);
+				String globalRouteId = api.createRouteIfNotExist(desiredApp.getHostnames().get("global"), "global");
+				api.createRouteMapping(midAppId, globalRouteId);
+				String localRouteId = api.createRouteIfNotExist(desiredApp.getHostnames().get("local"), "local");
+				api.createRouteMapping(midAppId, localRouteId);
 				// unmap tmp route, delete old version app and rename new version app
-				String greenRouteId = api.getRouteId(application.getHostnames().get("tmp"), "tmp");
-				api.deleteRouteMapping(greenAppId, greenRouteId);
-				String blueAppId = api.getAppId(application.getName());
+				String midRouteId = api.getRouteId(desiredApp.getHostnames().get("tmp"), "tmp");
+				api.deleteRouteMapping(midAppId, midRouteId);
+				String blueAppId = api.getAppId(desiredApp.getName());
 				api.deleteApp(blueAppId);
-				api.updateApp(greenAppId, application);
+				api.updateApp(midAppId, desiredApp);
 			}
 		};
 	}
 	
 	public Step rollback() {
-		return new Step(String.format("rollback BlueGreen %s.%s", api.getTargetName(), application.getName())) {
+		return new Step(String.format("rollback BlueGreen %s.%s", api.getTargetName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
-				String greenAppName = application.getName() + application.getVersion();
-				String greenAppId = api.getAppId(greenAppName);
-				api.deleteApp(greenAppId);
+				String midAppName = desiredApp.getName() + desiredApp.getVersion();
+				String midAppId = api.getAppId(midAppName);
+				api.deleteApp(midAppId);
 			}
 		};
 	}

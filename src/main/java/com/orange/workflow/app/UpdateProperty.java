@@ -1,26 +1,26 @@
 package com.orange.workflow.app;
 
 import com.orange.model.Application;
-import com.orange.model.Step;
 import com.orange.paas.PaaSAPI;
+import com.orange.workflow.Step;
 
 public class UpdateProperty {
 
 	private PaaSAPI api;
-	private Application application;
+	private Application desiredApp;
 
 	public UpdateProperty(PaaSAPI api, Application application) {
 		this.api = api;
-		this.application = application;
+		this.desiredApp = application;
 	}
 	
 	public Step update() {
-		return new Step(String.format("UpdateProperty %s.%s", api.getTargetName(), application.getName())) {
+		return new Step(String.format("UpdateProperty %s.%s", api.getTargetName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
-				String appId = api.getAppId(application.getName());
+				String appId = api.getAppId(desiredApp.getName());
 				assert appId != null;
-				api.updateApp(appId, application);
+				api.updateApp(appId, desiredApp);
 			}
 		};
 	}

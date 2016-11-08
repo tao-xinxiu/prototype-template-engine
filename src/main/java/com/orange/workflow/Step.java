@@ -1,4 +1,4 @@
-package com.orange.model;
+package com.orange.workflow;
 
 public abstract class Step {
 	protected String stepName;
