@@ -150,10 +150,6 @@ public class CloudFoundryOperations {
 		return response.getEnvironmentVariables();
 	}
 
-	public Object getAppEnv(String appId, String envKey) {
-		return getAppEnv(appId).get(envKey);
-	}
-
 	/**
 	 * create a v3 app object
 	 * 

@@ -129,8 +129,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 	}
 
 	@Override
-	public String getAppVersion(String appId) {
-		return (String) operations.getAppEnv(appId, "APP_VERSION");
+	public Object getAppEnv(String appId, String envKey) {
+		return operations.getAppEnv(appId).get(envKey);
 	}
-
 }

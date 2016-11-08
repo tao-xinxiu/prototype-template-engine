@@ -28,7 +28,7 @@ public abstract class PaaSAPI {
 	public abstract String createAppIfNotExist(Application appProperty);
 
 	public abstract void prepareApp(String appId, Application appProperty);
-	
+
 	public abstract void startAppAndWaitUntilRunning(String appId);
 
 	public abstract void stopApp(String appId);
@@ -36,11 +36,11 @@ public abstract class PaaSAPI {
 	public abstract void deleteApp(String appId);
 
 	public abstract void updateApp(String appId, Application appProperty);
-	
+
 	public String getRouteId(String hostname, String domainKey) {
 		return routeFactory.getRouteId(hostname, domainKey);
 	}
-	
+
 	public String createRouteIfNotExist(String hostname, String domainKey) {
 		return routeFactory.createRouteIfNotExist(hostname, domainKey);
 	}
@@ -59,8 +59,12 @@ public abstract class PaaSAPI {
 	public abstract List<String> listSpaceAppsId();
 
 	public abstract String getAppId(String appName);
-	
+
 	public abstract String getAppName(String appId);
-	
-	public abstract String getAppVersion(String appId);
+
+	public abstract Object getAppEnv(String appId, String envKey);
+
+	public String getAppVersion(String appId) {
+		return (String) getAppEnv(appId, "APP_VERSION");
+	}
 }
