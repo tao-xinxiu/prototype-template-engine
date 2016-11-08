@@ -16,12 +16,14 @@ import com.orange.workflow.app.UpdateProperty;
 public class WorkflowCalculator {
 	private Requirement require;
 	private DeploymentConfig deploymentConfig;
-	private List<Application> updateApps;
-	private List<Application> missingApps;
+	private Application application;
+	private boolean appVersionChanged;
+	private boolean appMissing;
 
 	public WorkflowCalculator(Requirement require, DeploymentConfig deploymentConfig) {
 		this.require = require;
 		this.deploymentConfig = deploymentConfig;
+		this.application = deploymentConfig.getApp();
 	}
 
 	public Workflow getUpdateWorkflow() {
@@ -30,7 +32,8 @@ public class WorkflowCalculator {
 		case FAST:
 			updateSites = new ParallelWorkflow("parallel update sites");
 			break;
-		case CAUTIOUS: case ECONOMICAL:
+		case CAUTIOUS:
+		case ECONOMICAL:
 			updateSites = new SerialWorkflow("serial update sites");
 			break;
 		case CLEANUP:
@@ -39,15 +42,14 @@ public class WorkflowCalculator {
 			throw new IllegalStateException("not implemented requirement");
 		}
 		for (PaaSTarget target : deploymentConfig.getTargets().values()) {
-			Workflow updateSite = new ParallelWorkflow(
-					"parallel update each entity in the site " + target.getName());
+			Workflow updateSite = new ParallelWorkflow("parallel update each entity in the site " + target.getName());
 			PaaSAPI api = new CloudFoundryAPI(target);
-			this.missingApps = getMissingApp(api);
-			for (Application application : missingApps) {
+			this.appMissing = isMissingApp(api);
+			if(appMissing) {
 				updateSite.addStep(new Deploy(api, application).update());
 			}
-			updateApps = getVersionChangedApp(api);
-			for (Application application : updateApps) {
+			this.appVersionChanged = isVersionChangedApp(api);
+			if(appVersionChanged) {
 				switch (require) {
 				case FAST:
 					updateSite.addStep(new BlueGreen(api, application).update());
@@ -56,7 +58,8 @@ public class WorkflowCalculator {
 					updateSite.addStep(new Canary(api, application).update());
 					break;
 				case ECONOMICAL:
-					Workflow updateApp = new SerialWorkflow(String.format("serial update %s.%s", target.getName(), application.getName()));
+					Workflow updateApp = new SerialWorkflow(
+							String.format("serial update %s.%s", target.getName(), application.getName()));
 					updateApp.addStep(new UpdateProperty(api, application).update());
 					updateApp.addStep(new StopRestart(api, application).update());
 					updateSite.addStep(updateApp);
@@ -69,7 +72,7 @@ public class WorkflowCalculator {
 		}
 		return updateSites;
 	}
-	
+
 	public Workflow getCommitWorkflow() {
 		Workflow commitSites;
 		switch (require) {
@@ -86,7 +89,7 @@ public class WorkflowCalculator {
 			Workflow commitSite = new ParallelWorkflow(
 					"parallel commit change of each entity in the site " + target.getName());
 			PaaSAPI api = new CloudFoundryAPI(target);
-			for (Application application : updateApps) {
+			if (appVersionChanged) {
 				switch (require) {
 				case FAST:
 					commitSite.addStep(new BlueGreen(api, application).commit());
@@ -105,7 +108,7 @@ public class WorkflowCalculator {
 		}
 		return commitSites;
 	}
-	
+
 	public Workflow getRollbackWorkflow() {
 		Workflow rollbackSites;
 		switch (require) {
@@ -122,7 +125,7 @@ public class WorkflowCalculator {
 			Workflow rollbackSite = new ParallelWorkflow(
 					"parallel rollback change of each entity in the site " + target.getName());
 			PaaSAPI api = new CloudFoundryAPI(target);
-			for (Application application : updateApps) {
+			if (appVersionChanged) {
 				switch (require) {
 				case FAST:
 					rollbackSite.addStep(new BlueGreen(api, application).rollback());
@@ -134,7 +137,7 @@ public class WorkflowCalculator {
 					break;
 				}
 			}
-			for (Application application : missingApps) {
+			if (appMissing) {
 				String appId = api.getAppId(application.getName());
 				rollbackSite.addStep(new Delete(api, appId).update());
 			}
@@ -143,34 +146,28 @@ public class WorkflowCalculator {
 		return rollbackSites;
 	}
 
-	private List<Application> getMissingApp(PaaSAPI api) {
-		List<Application> apps = new LinkedList<>();
-		for (Application application : deploymentConfig.getApps().values()) {
-			String appId = api.getAppId(application.getName());
-			if (appId == null) { // desired app not exist in the target PaaS
-				apps.add(application);
-			}
+	private boolean isMissingApp(PaaSAPI api) {
+		String appId = api.getAppId(application.getName());
+		if (appId == null) { // desired app not exist in the target PaaS
+			return true;
 		}
-		return apps;
+		return false;
 	}
 
-	private List<Application> getVersionChangedApp(PaaSAPI api) {
-		List<Application> apps = new LinkedList<>();
-		for (Application application : deploymentConfig.getApps().values()) {
-			String appId = api.getAppId(application.getName());
-			if (appId != null) { // app exist
-				String appVersion = (String) api.getAppVersion(appId);
-				if (!application.getVersion().equals(appVersion)) {
-					apps.add(application);
-				}
+	private boolean isVersionChangedApp(PaaSAPI api) {
+		String appId = api.getAppId(application.getName());
+		if (appId != null) { // app exist
+			String appVersion = (String) api.getAppVersion(appId);
+			if (!application.getVersion().equals(appVersion)) {
+				return true;
 			}
 		}
-		return apps;
+		return false;
 	}
 
 	/**
-	 * get applications' id whose name are not contained in the desire
-	 * deployment config
+	 * get applications' id whose name are neither the name nor the temporal
+	 * name(name+version) of the app specified in the desire deployment config
 	 * 
 	 * @param api
 	 *            PaaSAPI of the target PaaS
@@ -180,15 +177,14 @@ public class WorkflowCalculator {
 		List<String> appIds = new LinkedList<>();
 		for (String appId : api.listSpaceAppsId()) {
 			String appName = api.getAppName(appId);
-			for (Application desiredApp : deploymentConfig.getApps().values()) {
-				if (!desiredApp.getName().equals(appName) && !(desiredApp.getName() + desiredApp.getVersion()).equals(appName)) {
-					appIds.add(appId);
-				}
+			if (!application.getName().equals(appName)
+					&& !(application.getName() + application.getVersion()).equals(appName)) {
+				appIds.add(appId);
 			}
 		}
 		return appIds;
 	}
-	
+
 	private Workflow getCleanupWorkflow() {
 		Workflow cleanupSites = new ParallelWorkflow("clean all entities on all sites");
 		for (PaaSTarget target : deploymentConfig.getTargets().values()) {

@@ -79,7 +79,7 @@ public class Application {
 	}
 
 	public boolean valid() {
-		if (version != null && path != null && validHostname()) {
+		if (name != null && version != null && path != null && validHostname()) {
 			return true;
 		} else {
 			return false;

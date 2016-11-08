@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.orange.model.Application;
 import com.orange.model.DeploymentConfig;
 import com.orange.model.PaaSTarget;
 import com.orange.model.Requirement;
@@ -35,13 +34,10 @@ public class Main {
 			entry.getValue().setName(entry.getKey());
 		}
 		logger.info("DeploymentConfig targets valid");
-		for (Map.Entry<String, Application> entry : desiredState.getApps().entrySet()) {
-			if (!entry.getValue().valid()) {
-				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for app: " + entry.getValue());
-			}
-			entry.getValue().setName(entry.getKey());
+		if (!desiredState.getApp().valid()) {
+			throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for app: " + desiredState.getApp().getName());
 		}
-		logger.info("DeploymentConfig apps valid");
+		logger.info("DeploymentConfig app valid");
 		Main.desiredState = desiredState;
 		return "\n OK! \n";
 	}

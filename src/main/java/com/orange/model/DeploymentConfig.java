@@ -4,7 +4,7 @@ import java.util.Map;
 
 public class DeploymentConfig {
 	private Map<String, PaaSTarget> targets;
-	private Map<String, Application> apps;
+	private Application app;
 
 	public Map<String, PaaSTarget> getTargets() {
 		return targets;
@@ -14,11 +14,13 @@ public class DeploymentConfig {
 		this.targets = targets;
 	}
 
-	public Map<String, Application> getApps() {
-		return apps;
+	public Application getApp() {
+		return app;
 	}
 
-	public void setApps(Map<String, Application> apps) {
-		this.apps = apps;
+	public void setApp(Application app) {
+		this.app = app;
 	}
+
+	
 }
