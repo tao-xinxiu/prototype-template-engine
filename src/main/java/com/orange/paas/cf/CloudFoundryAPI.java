@@ -17,15 +17,14 @@ import com.orange.model.PaaSSite;
 import com.orange.paas.PaaSAPI;
 
 public class CloudFoundryAPI extends PaaSAPI {
-	private CloudFoundryOperations operations;
-
 	private static final int timeout = 5;
 	private static final String processType = "web";
 	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryAPI.class);
-
+	private CloudFoundryOperations operations;
+	
 	public CloudFoundryAPI(PaaSSite site) {
 		super(site, new CloudFoundryRouteFactory(site));
-		this.operations = new CloudFoundryOperations(site.getAccessInfo());
+		this.operations = ((CloudFoundryRouteFactory)this.routeFactory).getOperations();
 	}
 	
 	@Override

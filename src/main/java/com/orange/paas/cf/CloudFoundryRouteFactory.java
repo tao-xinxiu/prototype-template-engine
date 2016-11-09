@@ -7,25 +7,28 @@ import com.orange.model.PaaSSite;
 import com.orange.paas.RouteFactory;
 
 public class CloudFoundryRouteFactory extends RouteFactory {
-	private CloudFoundryOperations operations;
 	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryRouteFactory.class);
+	private CloudFoundryOperations operations;
+
+	public CloudFoundryOperations getOperations() {
+		return operations;
+	}
 
 	public CloudFoundryRouteFactory(PaaSSite site) {
 		super(site);
 		this.operations = new CloudFoundryOperations(siteAccessInfo);
 	}
-	
+
 	private String getDomainId(String domainKey) {
 		return operations.getDomainId(this.domains.get(domainKey));
 	}
-	
+
 	@Override
 	public String getRouteId(String hostname, String domainKey) {
 		String routeId = operations.getRouteId(hostname, getDomainId(domainKey));
 		if (routeId != null) {
 			logger.info("[{}] route with hostname [{}] existed with id: [{}]", domainKey, hostname, routeId);
-		}
-		else {
+		} else {
 			logger.info("[{}] route with hostname [{}] not existed", domainKey, hostname);
 		}
 		return routeId;
