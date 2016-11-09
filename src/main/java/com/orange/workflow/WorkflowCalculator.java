@@ -1,5 +1,7 @@
 package com.orange.workflow;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -15,15 +17,17 @@ import com.orange.workflow.app.UpdateProperty;
 
 public class WorkflowCalculator {
 	private Requirement require;
-	private DeploymentConfig deploymentConfig;
+	private DeploymentConfig desiredState;
 	private Application desiredApp;
 	private boolean appVersionChanged;
 	private boolean appMissing;
+	private Collection<PaaSSite> managingSites;
 
-	public WorkflowCalculator(Requirement require, DeploymentConfig deploymentConfig) {
+	public WorkflowCalculator(Requirement require, DeploymentConfig desiredState, Collection<PaaSSite> managingSites) {
 		this.require = require;
-		this.deploymentConfig = deploymentConfig;
-		this.desiredApp = deploymentConfig.getApp();
+		this.desiredState = desiredState;
+		this.desiredApp = desiredState.getApp();
+		this.managingSites = managingSites;
 	}
 
 	public Workflow getUpdateWorkflow() {
@@ -41,7 +45,7 @@ public class WorkflowCalculator {
 		default:
 			throw new IllegalStateException("not implemented requirement");
 		}
-		for (PaaSSite site : deploymentConfig.getSites().values()) {
+		for (PaaSSite site : desiredState.getSites().values()) {
 			Workflow updateSite = new ParallelWorkflow("parallel update each entity in the site " + site.getName());
 			PaaSAPI api = new CloudFoundryAPI(site);
 			this.appMissing = isMissingApp(api);
@@ -85,7 +89,7 @@ public class WorkflowCalculator {
 		default:
 			throw new IllegalStateException("not implemented requirement");
 		}
-		for (PaaSSite site : deploymentConfig.getSites().values()) {
+		for (PaaSSite site : desiredState.getSites().values()) {
 			Workflow commitSite = new ParallelWorkflow(
 					"parallel commit change of each entity in the site " + site.getName());
 			PaaSAPI api = new CloudFoundryAPI(site);
@@ -106,6 +110,9 @@ public class WorkflowCalculator {
 			}
 			commitSites.addStep(commitSite);
 		}
+		for (PaaSSite notDesiredSite : getNotDesiredSites()) {
+			commitSites.addStep(getCleanupWorkflow(notDesiredSite));
+		}
 		return commitSites;
 	}
 
@@ -121,7 +128,7 @@ public class WorkflowCalculator {
 		default:
 			throw new IllegalStateException("not implemented requirement");
 		}
-		for (PaaSSite site : deploymentConfig.getSites().values()) {
+		for (PaaSSite site : desiredState.getSites().values()) {
 			Workflow rollbackSite = new ParallelWorkflow(
 					"parallel rollback change of each entity in the site " + site.getName());
 			PaaSAPI api = new CloudFoundryAPI(site);
@@ -184,17 +191,39 @@ public class WorkflowCalculator {
 		}
 		return appIds;
 	}
+	
+	private List<PaaSSite> getNotDesiredSites() {
+		List<PaaSSite> notDesiredSites = new ArrayList<>();
+		for (PaaSSite site : managingSites) {
+			String api = site.getAccessInfo().getApi();
+			boolean desired = false;
+			for (PaaSSite desiredSite : desiredState.getSites().values()) {
+				if (desiredSite.getAccessInfo().getApi().equals(api)) {
+					desired = true;
+					break;
+				}
+			}
+			if (!desired) {
+				notDesiredSites.add(site);
+			}
+		}
+		return notDesiredSites;
+	}
 
 	private Workflow getCleanupWorkflow() {
 		Workflow cleanupSites = new ParallelWorkflow("clean all entities on all sites");
-		for (PaaSSite site : deploymentConfig.getSites().values()) {
-			Workflow cleanupSite = new ParallelWorkflow("cleanup all entities on site " + site.getName());
-			PaaSAPI api = new CloudFoundryAPI(site);
-			for (String appId : api.listSpaceAppsId()) {
-				cleanupSite.addStep(new Delete(api, appId).update());
-			}
-			cleanupSites.addStep(cleanupSite);
+		for (PaaSSite site : desiredState.getSites().values()) {
+			cleanupSites.addStep(getCleanupWorkflow(site));
 		}
 		return cleanupSites;
+	}
+	
+	private Workflow getCleanupWorkflow(PaaSSite site) {
+		Workflow cleanupSite = new ParallelWorkflow("cleanup all entities on site " + site.getName());
+		PaaSAPI api = new CloudFoundryAPI(site);
+		for (String appId : api.listSpaceAppsId()) {
+			cleanupSite.addStep(new Delete(api, appId).update());
+		}
+		return cleanupSite;
 	}
 }

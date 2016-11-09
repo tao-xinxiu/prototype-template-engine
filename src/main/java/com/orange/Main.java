@@ -1,5 +1,6 @@
 package com.orange;
 
+import java.util.Collection;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -24,6 +25,7 @@ public class Main {
 	private static final Logger logger = LoggerFactory.getLogger(Main.class);
 	static DeploymentConfig desiredState;
 	static WorkflowCalculator workflowCalculator;
+	static Collection<PaaSSite> managingSites;
 
 	@RequestMapping(value = "/set", method = RequestMethod.POST, consumes = "application/json")
 	public @ResponseBody String setDesiredState(@RequestBody DeploymentConfig desiredState) {
@@ -41,6 +43,9 @@ public class Main {
 		}
 		logger.info("DeploymentConfig app valid");
 		Main.desiredState = desiredState;
+		if (managingSites == null) {
+			managingSites = desiredState.getSites().values();
+		}
 		return "\n OK! \n";
 	}
 
@@ -50,7 +55,7 @@ public class Main {
 		if (desiredState == null) {
 			throw new IllegalStateException("desiredState not configured!");
 		}
-		workflowCalculator = new WorkflowCalculator(requirement, desiredState);
+		workflowCalculator = new WorkflowCalculator(requirement, desiredState, managingSites);
 		Workflow workflow = workflowCalculator.getUpdateWorkflow();
 		workflow.exec();
 		logger.info("Workflow {} finished!", workflow);
@@ -65,6 +70,7 @@ public class Main {
 		Workflow workflow = workflowCalculator.getCommitWorkflow();
 		workflow.exec();
 		logger.info("Workflow {} finished!", workflow);
+		managingSites = desiredState.getSites().values();
 		return "\n OK! \n";
 	}
 
