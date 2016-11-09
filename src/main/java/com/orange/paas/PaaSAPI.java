@@ -3,19 +3,19 @@ package com.orange.paas;
 import java.util.List;
 
 import com.orange.model.Application;
-import com.orange.model.PaaSTarget;
+import com.orange.model.PaaSSite;
 
 public abstract class PaaSAPI {
-	protected PaaSTarget target;
+	protected PaaSSite site;
 	protected RouteFactory routeFactory;
 
-	public PaaSAPI(PaaSTarget target, RouteFactory routeFactory) {
-		this.target = target;
+	public PaaSAPI(PaaSSite site, RouteFactory routeFactory) {
+		this.site = site;
 		this.routeFactory = routeFactory;
 	}
 
-	public String getTargetName() {
-		return target.getName();
+	public String getSiteName() {
+		return site.getName();
 	}
 
 	/**
@@ -50,9 +50,6 @@ public abstract class PaaSAPI {
 	}
 
 	public void deleteRouteMapping(String appId, String routeId) {
-		if (routeId == null || appId == null) {
-			return;
-		}
 		routeFactory.deleteRouteMapping(appId, routeId);
 	}
 

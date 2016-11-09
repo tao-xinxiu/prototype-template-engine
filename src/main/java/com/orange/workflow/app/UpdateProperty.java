@@ -15,7 +15,7 @@ public class UpdateProperty {
 	}
 	
 	public Step update() {
-		return new Step(String.format("UpdateProperty %s.%s", api.getTargetName(), desiredApp.getName())) {
+		return new Step(String.format("UpdateProperty %s.%s", api.getSiteName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
 				String appId = api.getAppId(desiredApp.getName());

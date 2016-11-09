@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.model.Application;
-import com.orange.model.PaaSTarget;
+import com.orange.model.PaaSSite;
 import com.orange.paas.PaaSAPI;
 
 public class CloudFoundryAPI extends PaaSAPI {
@@ -23,9 +23,9 @@ public class CloudFoundryAPI extends PaaSAPI {
 	private static final String processType = "web";
 	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryAPI.class);
 
-	public CloudFoundryAPI(PaaSTarget target) {
-		super(target, new CloudFoundryRouteFactory(target));
-		this.operations = new CloudFoundryOperations(target);
+	public CloudFoundryAPI(PaaSSite site) {
+		super(site, new CloudFoundryRouteFactory(site));
+		this.operations = new CloudFoundryOperations(site.getAccessInfo());
 	}
 	
 	@Override
@@ -87,7 +87,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 				e.printStackTrace();
 			}
 		}
-		logger.info("app {} at {} running", appId, target.getName());
+		logger.info("app {} at {} running", appId, site.getName());
 	}
 
 	@Override

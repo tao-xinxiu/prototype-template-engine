@@ -41,9 +41,9 @@ public class WorkflowCalculator {
 		default:
 			throw new IllegalStateException("not implemented requirement");
 		}
-		for (PaaSTarget target : deploymentConfig.getTargets().values()) {
-			Workflow updateSite = new ParallelWorkflow("parallel update each entity in the site " + target.getName());
-			PaaSAPI api = new CloudFoundryAPI(target);
+		for (PaaSSite site : deploymentConfig.getSites().values()) {
+			Workflow updateSite = new ParallelWorkflow("parallel update each entity in the site " + site.getName());
+			PaaSAPI api = new CloudFoundryAPI(site);
 			this.appMissing = isMissingApp(api);
 			if(appMissing) {
 				updateSite.addStep(new Deploy(api, desiredApp).update());
@@ -59,7 +59,7 @@ public class WorkflowCalculator {
 					break;
 				case ECONOMICAL:
 					Workflow updateApp = new SerialWorkflow(
-							String.format("serial update %s.%s", target.getName(), desiredApp.getName()));
+							String.format("serial update %s.%s", site.getName(), desiredApp.getName()));
 					updateApp.addStep(new UpdateProperty(api, desiredApp).update());
 					updateApp.addStep(new StopRestart(api, desiredApp).update());
 					updateSite.addStep(updateApp);
@@ -85,10 +85,10 @@ public class WorkflowCalculator {
 		default:
 			throw new IllegalStateException("not implemented requirement");
 		}
-		for (PaaSTarget target : deploymentConfig.getTargets().values()) {
+		for (PaaSSite site : deploymentConfig.getSites().values()) {
 			Workflow commitSite = new ParallelWorkflow(
-					"parallel commit change of each entity in the site " + target.getName());
-			PaaSAPI api = new CloudFoundryAPI(target);
+					"parallel commit change of each entity in the site " + site.getName());
+			PaaSAPI api = new CloudFoundryAPI(site);
 			if (appVersionChanged) {
 				switch (require) {
 				case FAST:
@@ -121,10 +121,10 @@ public class WorkflowCalculator {
 		default:
 			throw new IllegalStateException("not implemented requirement");
 		}
-		for (PaaSTarget target : deploymentConfig.getTargets().values()) {
+		for (PaaSSite site : deploymentConfig.getSites().values()) {
 			Workflow rollbackSite = new ParallelWorkflow(
-					"parallel rollback change of each entity in the site " + target.getName());
-			PaaSAPI api = new CloudFoundryAPI(target);
+					"parallel rollback change of each entity in the site " + site.getName());
+			PaaSAPI api = new CloudFoundryAPI(site);
 			if (appVersionChanged) {
 				switch (require) {
 				case FAST:
@@ -148,7 +148,7 @@ public class WorkflowCalculator {
 
 	private boolean isMissingApp(PaaSAPI api) {
 		String appId = api.getAppId(desiredApp.getName());
-		if (appId == null) { // desired app not exist in the target PaaS
+		if (appId == null) { // desired app not exist in the target PaaS site
 			return true;
 		}
 		return false;
@@ -170,7 +170,7 @@ public class WorkflowCalculator {
 	 * name(name+version) of the app specified in the desire deployment config
 	 * 
 	 * @param api
-	 *            PaaSAPI of the target PaaS
+	 *            PaaSAPI of the target PaaS site
 	 * @return
 	 */
 	private List<String> getNotDesiredAppIds(PaaSAPI api) {
@@ -187,9 +187,9 @@ public class WorkflowCalculator {
 
 	private Workflow getCleanupWorkflow() {
 		Workflow cleanupSites = new ParallelWorkflow("clean all entities on all sites");
-		for (PaaSTarget target : deploymentConfig.getTargets().values()) {
-			Workflow cleanupSite = new ParallelWorkflow("cleanup all entities on site " + target.getName());
-			PaaSAPI api = new CloudFoundryAPI(target);
+		for (PaaSSite site : deploymentConfig.getSites().values()) {
+			Workflow cleanupSite = new ParallelWorkflow("cleanup all entities on site " + site.getName());
+			PaaSAPI api = new CloudFoundryAPI(site);
 			for (String appId : api.listSpaceAppsId()) {
 				cleanupSite.addStep(new Delete(api, appId).update());
 			}

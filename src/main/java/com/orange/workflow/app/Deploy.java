@@ -14,7 +14,7 @@ public class Deploy {
 	}
 
 	public Step update() {
-		return new Step(String.format("Deploy %s.%s", api.getTargetName(), desiredApp.getName())) {
+		return new Step(String.format("Deploy %s.%s", api.getSiteName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
 				String appId = api.createAppIfNotExist(desiredApp);

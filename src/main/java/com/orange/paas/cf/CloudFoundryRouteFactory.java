@@ -3,16 +3,16 @@ package com.orange.paas.cf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.model.PaaSTarget;
+import com.orange.model.PaaSSite;
 import com.orange.paas.RouteFactory;
 
 public class CloudFoundryRouteFactory extends RouteFactory {
 	private CloudFoundryOperations operations;
 	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryRouteFactory.class);
 
-	public CloudFoundryRouteFactory(PaaSTarget target) {
-		super(target.getDomains());
-		this.operations = new CloudFoundryOperations(target);
+	public CloudFoundryRouteFactory(PaaSSite site) {
+		super(site);
+		this.operations = new CloudFoundryOperations(siteAccessInfo);
 	}
 	
 	private String getDomainId(String domainKey) {
@@ -49,6 +49,9 @@ public class CloudFoundryRouteFactory extends RouteFactory {
 
 	@Override
 	public void deleteRouteMapping(String appId, String routeId) {
+		if (routeId == null || appId == null) {
+			return;
+		}
 		String routeMappingId = operations.getRouteMappingId(appId, routeId);
 		if (routeMappingId != null) {
 			logger.info("route-mapping id found: [{}]", routeMappingId);

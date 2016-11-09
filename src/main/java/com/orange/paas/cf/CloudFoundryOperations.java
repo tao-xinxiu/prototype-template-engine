@@ -39,47 +39,45 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.zafarkhaja.semver.Version;
-import com.orange.model.PaaSTarget;
+import com.orange.model.PaaSAccessInfo;
 
 public class CloudFoundryOperations {
 	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryOperations.class);
-	private static final Version SUPPORTED_API_VERSION = Version.valueOf("2.54.0"); // cf-java-client supported CF API version
-	private static final String path_CF_HOME_dir = System.getProperty("user.home") + "/cf_homes/"; 
+	// cf-java-client supported CF API version
+	private static final Version SUPPORTED_API_VERSION = Version.valueOf("2.54.0");
+	private static final String path_CF_HOME_dir = System.getProperty("user.home") + "/cf_homes/";
 
-	private PaaSTarget target;
+	private PaaSAccessInfo siteAccessInfo;
 	private CloudFoundryClient cloudFoundryClient;
 	private String spaceId;
 	private boolean compatible;
 
-	public CloudFoundryOperations(PaaSTarget target) {
-		this.target = target;
+	public CloudFoundryOperations(PaaSAccessInfo siteAccessInfo) {
+		this.siteAccessInfo = siteAccessInfo;
 		String proxy_host = System.getenv("proxy_host");
 		String proxy_port = System.getenv("proxy_port");
 		ConnectionContext connectionContext;
 		if (proxy_host != null && proxy_port != null) {
-			ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host).port(Integer.parseInt(proxy_port)).build();
-			connectionContext = DefaultConnectionContext.builder().apiHost(target.getApi()).skipSslValidation(target.getSkipSslValidation()).proxyConfiguration(proxyConfiguration).build();
+			ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host)
+					.port(Integer.parseInt(proxy_port)).build();
+			connectionContext = DefaultConnectionContext.builder().apiHost(siteAccessInfo.getApi())
+					.skipSslValidation(siteAccessInfo.getSkipSslValidation()).proxyConfiguration(proxyConfiguration)
+					.build();
+		} else {
+			connectionContext = DefaultConnectionContext.builder().apiHost(siteAccessInfo.getApi())
+					.skipSslValidation(siteAccessInfo.getSkipSslValidation()).build();
 		}
-		else {
-			connectionContext = DefaultConnectionContext.builder().apiHost(target.getApi()).skipSslValidation(target.getSkipSslValidation()).build();
-		}
-		TokenProvider tokenProvider = PasswordGrantTokenProvider.builder().password(target.getPwd())
-				.username(target.getUser()).build();
+		TokenProvider tokenProvider = PasswordGrantTokenProvider.builder().password(siteAccessInfo.getPwd())
+				.username(siteAccessInfo.getUser()).build();
 		this.cloudFoundryClient = ReactorCloudFoundryClient.builder().connectionContext(connectionContext)
 				.tokenProvider(tokenProvider).build();
-		// SpringCloudFoundryClient.builder().host(target.getApi()).username(target.getUser())
-		// .password(target.getPwd()).skipSslValidation(target.getSkipSslValidation()).proxyHost("127.0.0.1").proxyPort(3128).build();
 		this.spaceId = requestSpaceId();
-		Version targetVersion = Version.valueOf(getApiVersion());
-		if (targetVersion.greaterThan(SUPPORTED_API_VERSION)) {
+		Version siteVersion = Version.valueOf(getApiVersion());
+		if (siteVersion.greaterThan(SUPPORTED_API_VERSION)) {
 			compatible = false;
 		} else {
 			compatible = true;
 		}
-	}
-
-	public String getTargetName() {
-		return target.getName();
 	}
 
 	private String getApiVersion() {
@@ -90,7 +88,7 @@ public class CloudFoundryOperations {
 
 	private String requestOrgId() {
 		try {
-			ListOrganizationsRequest request = ListOrganizationsRequest.builder().name(target.getOrg()).build();
+			ListOrganizationsRequest request = ListOrganizationsRequest.builder().name(siteAccessInfo.getOrg()).build();
 			ListOrganizationsResponse response = cloudFoundryClient.organizations().list(request).block();
 			return response.getResources().get(0).getMetadata().getId();
 		} catch (Exception e) {
@@ -101,7 +99,7 @@ public class CloudFoundryOperations {
 	private String requestSpaceId() {
 		try {
 			ListSpacesRequest request = ListSpacesRequest.builder().organizationId(requestOrgId())
-					.name(target.getSpace()).build();
+					.name(siteAccessInfo.getSpace()).build();
 			ListSpacesResponse response = cloudFoundryClient.spaces().list(request).block();
 			return response.getResources().get(0).getMetadata().getId();
 		} catch (Exception e) {
@@ -124,12 +122,16 @@ public class CloudFoundryOperations {
 			ListApplicationsRequest request = ListApplicationsRequest.builder().spaceId(spaceId).name(appName).build();
 			ListApplicationsResponse response = cloudFoundryClient.applicationsV3().list(request).block();
 			if (response.getResources().size() == 0) {
-				logger.info("CloudFoundryOperations.getAppId : Not found app with specific name {} in the space at target {}.", appName, target.getName());
+				logger.info(
+						"CloudFoundryOperations.getAppId : Not found app with specific name {} in the space at site {}.",
+						appName, siteAccessInfo.getName());
 				return null;
 			}
 			assert response.getResources().size() == 1;
 			String appId = response.getResources().get(0).getId();
-			logger.info("CloudFoundryOperations.getAppId : Got app id {} with specific name {} in the space at target {}.", appId, appName, target.getName());
+			logger.info(
+					"CloudFoundryOperations.getAppId : Got app id {} with specific name {} in the space at site {}.",
+					appId, appName, siteAccessInfo.getName());
 			return appId;
 		} catch (Exception e) {
 			throw new IllegalStateException("expcetion during getting app id for: " + appName, e);
@@ -189,7 +191,7 @@ public class CloudFoundryOperations {
 		try {
 			DeleteApplicationRequest request = DeleteApplicationRequest.builder().applicationId(appId).build();
 			cloudFoundryClient.applicationsV3().delete(request).block();
-			logger.info("App {} at {} deleted.", appId, target.getName());
+			logger.info("App {} at {} deleted.", appId, siteAccessInfo.getName());
 		} catch (Exception e) {
 			throw new IllegalStateException("expcetion during deleting app with id: " + appId, e);
 		}
@@ -199,7 +201,7 @@ public class CloudFoundryOperations {
 		try {
 			StartApplicationRequest request = StartApplicationRequest.builder().applicationId(appId).build();
 			cloudFoundryClient.applicationsV3().start(request).block();
-			logger.info("App {} at {} desired state changed to \"STARTED\".", appId, target.getName());
+			logger.info("App {} at {} desired state changed to \"STARTED\".", appId, siteAccessInfo.getName());
 		} catch (Exception e) {
 			throw new IllegalStateException("expcetion during starting app with id: " + appId, e);
 		}
@@ -209,7 +211,7 @@ public class CloudFoundryOperations {
 		try {
 			StopApplicationRequest request = StopApplicationRequest.builder().applicationId(appId).build();
 			cloudFoundryClient.applicationsV3().stop(request).block();
-			logger.info("App {} at {} desired state changed to \"STOPPED\".", appId, target.getName());
+			logger.info("App {} at {} desired state changed to \"STOPPED\".", appId, siteAccessInfo.getName());
 		} catch (Exception e) {
 			throw new IllegalStateException("expcetion during stopping app with id: " + appId, e);
 		}
@@ -242,7 +244,8 @@ public class CloudFoundryOperations {
 		try {
 			UploadPackageRequest request = UploadPackageRequest.builder().packageId(packageId)
 					.bits(new FileInputStream(new File(packageBitsPath))).build();
-			logger.info("package {} with bits path {} uploading with timeout: {} seconds", packageId, packageBitsPath, timeout);
+			logger.info("package {} with bits path {} uploading with timeout: {} seconds", packageId, packageBitsPath,
+					timeout);
 			cloudFoundryClient.packages().upload(request).block(Duration.ofSeconds(timeout));
 			logger.info("package {} with bits path {} uploaded", packageId, packageBitsPath);
 		} catch (Exception e) {
@@ -300,7 +303,6 @@ public class CloudFoundryOperations {
 						.dropletId(dropletId).build();
 				cloudFoundryClient.applicationsV3().assignDroplet(request).block();
 			} else {
-				// avoid multi thread is targeting multiple cf instances
 				cfCliLogin();
 				executeCFCliCommand(Arrays.asList("cf", "curl", String.format("v3/apps/%s/droplets/current", appId),
 						"-X", "PUT", "-d", String.format("{\\\"droplet_guid\\\": \\\"%s\\\"}", dropletId)));
@@ -353,14 +355,13 @@ public class CloudFoundryOperations {
 			CreateRouteResponse response = cloudFoundryClient.routes().create(request).block();
 			return response.getMetadata().getId();
 		} catch (Exception e) {
-			throw new IllegalStateException(String.format(
-					"expcetion during creating route with domainId: {}; hostname: {}", domainId, hostname), e);
+			throw new IllegalStateException(String
+					.format("expcetion during creating route with domainId: {}; hostname: {}", domainId, hostname), e);
 		}
 	}
 
 	public void createRouteMapping(String appId, String routeId) {
 		try {
-			// avoid multi thread is targeting multiple cf instances
 			cfCliLogin();
 			executeCFCliCommand(Arrays.asList("cf", "curl", "v3/route_mappings", "-X", "POST", "-d",
 					String.format(
@@ -374,7 +375,6 @@ public class CloudFoundryOperations {
 
 	public String getRouteMappingId(String appId, String routeId) {
 		try {
-			// avoid multi thread is targeting multiple cf instances
 			cfCliLogin();
 			return executeCFCliPipedCommand(
 					Arrays.asList("cf", "curl",
@@ -388,7 +388,6 @@ public class CloudFoundryOperations {
 
 	public void deleteRouteMapping(String routeMappingId) {
 		try {
-			// avoid multi thread is targeting multiple cf instances
 			cfCliLogin();
 			executeCFCliCommand(
 					Arrays.asList("cf", "curl", String.format("v3/route_mappings/%s", routeMappingId), "-X", "DELETE"));
@@ -417,22 +416,26 @@ public class CloudFoundryOperations {
 
 	private void cfCliLogin() {
 		try {
-			List<String> loginCommand = new ArrayList<>(Arrays.asList("cf", "login", "-a", target.getApi(), "-u",
-					target.getUser(), "-p", target.getPwd(), "-o", target.getOrg(), "-s", target.getSpace()));
-			if (target.getSkipSslValidation()) {
+			List<String> loginCommand = new ArrayList<>(
+					Arrays.asList("cf", "login", "-a", siteAccessInfo.getApi(), "-u", siteAccessInfo.getUser(), "-p",
+							siteAccessInfo.getPwd(), "-o", siteAccessInfo.getOrg(), "-s", siteAccessInfo.getSpace()));
+			if (siteAccessInfo.getSkipSslValidation()) {
 				loginCommand.add("--skip-ssl-validation");
 			}
-			mkdirs(path_CF_HOME_dir + target.getName());
+			mkdirs(path_CF_HOME_dir + siteAccessInfo.getName());
 			executeCFCliCommand(loginCommand);
 		} catch (Exception e) {
-			throw new IllegalStateException(String.format("expcetion during login to %s with cf cli.", target.getApi()),
+			throw new IllegalStateException(String.format("expcetion during login to %s with cf cli.", siteAccessInfo.getName()),
 					e);
 		}
 	}
 
 	/**
-	 * execute a command, throw IllegalStateException in case of error or command not exist with 0.
-	 * @param command command to be executed with its args
+	 * execute a command, throw IllegalStateException in case of error or
+	 * command not exist with 0.
+	 * 
+	 * @param command
+	 *            command to be executed with its args
 	 */
 	private void executeCFCliCommand(List<String> command) {
 		try {
@@ -491,18 +494,18 @@ public class CloudFoundryOperations {
 			throw new IllegalStateException("IOExpcetion during redirect", e);
 		}
 	}
-	
+
 	private static void mkdirs(String path) {
 		File file = new File(path);
-		if(!file.exists()){
+		if (!file.exists()) {
 			file.mkdirs();
 		}
 		if (!file.exists()) {
 			throw new IllegalStateException(String.format("Creating directory [%s] failed", path));
 		}
 	}
-	
+
 	private void setCFHome(ProcessBuilder processBuilder) {
-		processBuilder.environment().put("CF_HOME", path_CF_HOME_dir + target.getName());
+		processBuilder.environment().put("CF_HOME", path_CF_HOME_dir + siteAccessInfo.getName());
 	}
 }

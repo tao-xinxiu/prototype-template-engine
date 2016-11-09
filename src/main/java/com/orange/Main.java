@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.orange.model.DeploymentConfig;
-import com.orange.model.PaaSTarget;
+import com.orange.model.PaaSSite;
 import com.orange.model.Requirement;
 import com.orange.workflow.Workflow;
 import com.orange.workflow.WorkflowCalculator;
@@ -27,13 +27,15 @@ public class Main {
 
 	@RequestMapping(value = "/set", method = RequestMethod.POST, consumes = "application/json")
 	public @ResponseBody String setDesiredState(@RequestBody DeploymentConfig desiredState) {
-		for (Map.Entry<String, PaaSTarget> entry : desiredState.getTargets().entrySet()) {
-			if (!entry.getValue().valid()) {
-				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for target: " + entry.getValue());
+		for (Map.Entry<String, PaaSSite> entry : desiredState.getSites().entrySet()) {
+			PaaSSite site = entry.getValue();
+			site.setName(entry.getKey());
+			if (!site.valid()) {
+				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for the PaaS site: " + site);
 			}
-			entry.getValue().setName(entry.getKey());
+			site.getAccessInfo().setName(entry.getKey());
 		}
-		logger.info("DeploymentConfig targets valid");
+		logger.info("DeploymentConfig sites valid");
 		if (!desiredState.getApp().valid()) {
 			throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for app: " + desiredState.getApp().getName());
 		}

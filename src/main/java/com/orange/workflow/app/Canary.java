@@ -14,7 +14,7 @@ public class Canary {
 	}
 	
 	public Step update() {
-		return new Step(String.format("Canary %s.%s", api.getTargetName(), desiredApp.getName())) {
+		return new Step(String.format("Canary %s.%s", api.getSiteName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
 				// TODO
@@ -23,7 +23,7 @@ public class Canary {
 	}
 	
 	public Step commit() {
-		return new Step(String.format("commit Canary %s.%s", api.getTargetName(), desiredApp.getName())) {
+		return new Step(String.format("commit Canary %s.%s", api.getSiteName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
 				// TODO
@@ -32,7 +32,7 @@ public class Canary {
 	}
 	
 	public Step rollback() {
-		return new Step(String.format("commit Canary %s.%s", api.getTargetName(), desiredApp.getName())) {
+		return new Step(String.format("commit Canary %s.%s", api.getSiteName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
 				// TODO

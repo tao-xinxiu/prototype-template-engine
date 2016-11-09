@@ -3,15 +3,15 @@ package com.orange.model;
 import java.util.Map;
 
 public class DeploymentConfig {
-	private Map<String, PaaSTarget> targets;
+	private Map<String, PaaSSite> sites;
 	private Application app;
 
-	public Map<String, PaaSTarget> getTargets() {
-		return targets;
+	public Map<String, PaaSSite> getSites() {
+		return sites;
 	}
 
-	public void setTargets(Map<String, PaaSTarget> targets) {
-		this.targets = targets;
+	public void setSites(Map<String, PaaSSite> sites) {
+		this.sites = sites;
 	}
 
 	public Application getApp() {

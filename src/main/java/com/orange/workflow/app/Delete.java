@@ -13,7 +13,7 @@ public class Delete {
 	}
 	
 	public Step update() {
-		return new Step(String.format("Delete %s.%s", api.getTargetName(), appIdToDelete)) {
+		return new Step(String.format("Delete %s.%s", api.getSiteName(), appIdToDelete)) {
 			@Override
 			public void exec() {
 				api.deleteApp(appIdToDelete);

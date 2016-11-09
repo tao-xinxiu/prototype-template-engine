@@ -18,7 +18,7 @@ public class BlueGreen {
 	 * @return
 	 */
 	public Step update() {
-		return new Step(String.format("BlueGreen %s.%s", api.getTargetName(), desiredApp.getName())) {
+		return new Step(String.format("BlueGreen %s.%s", api.getSiteName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
 				Application midApp = new Application(desiredApp);
@@ -40,7 +40,7 @@ public class BlueGreen {
 	 * @return
 	 */
 	public Step commit() {
-		return new Step(String.format("commit BlueGreen %s.%s", api.getTargetName(), desiredApp.getName())) {
+		return new Step(String.format("commit BlueGreen %s.%s", api.getSiteName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
 				String midAppName = desiredApp.getName() + desiredApp.getVersion();
@@ -62,7 +62,7 @@ public class BlueGreen {
 	}
 	
 	public Step rollback() {
-		return new Step(String.format("rollback BlueGreen %s.%s", api.getTargetName(), desiredApp.getName())) {
+		return new Step(String.format("rollback BlueGreen %s.%s", api.getSiteName(), desiredApp.getName())) {
 			@Override
 			public void exec() {
 				String midAppName = desiredApp.getName() + desiredApp.getVersion();
