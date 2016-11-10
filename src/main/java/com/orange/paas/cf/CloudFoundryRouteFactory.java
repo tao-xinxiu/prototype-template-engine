@@ -1,5 +1,8 @@
 package com.orange.paas.cf;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,4 +68,14 @@ public class CloudFoundryRouteFactory extends RouteFactory {
 		}
 	}
 
+	@Override
+	public List<String> listAppRoutes(String appId) {
+		List<String> appRoutes = new ArrayList<>();
+		for (String routeId : operations.listMappedRoutesId(appId)) {
+			String host = operations.getRouteHost(routeId);
+			String domain = operations.getDomainString(operations.getRouteDomainId(routeId));
+			appRoutes.add(String.format("%s.%s", host, domain));
+		}
+		return appRoutes;
+	}
 }

@@ -12,6 +12,7 @@ import org.cloudfoundry.client.v3.packages.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.orange.model.AppState;
 import com.orange.model.Application;
 import com.orange.model.PaaSSite;
 import com.orange.paas.PaaSAPI;
@@ -79,7 +80,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 	@Override
 	public void startAppAndWaitUntilRunning(String appId) {
 		operations.startApp(appId);
-		while (!operations.getProcessesState(appId, processType).contains("RUNNING")) {
+		while (!operations.listProcessesState(appId, processType).contains("RUNNING")) {
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
@@ -130,5 +131,21 @@ public class CloudFoundryAPI extends PaaSAPI {
 	@Override
 	public Object getAppEnv(String appId, String envKey) {
 		return operations.getAppEnv(appId).get(envKey);
+	}
+
+	@Override
+	public AppState getAppState(String appId) {
+		if (operations.listProcessesState(appId, processType).contains("RUNNING")) {
+			return AppState.RUNNING;
+		} else {
+			List<org.cloudfoundry.client.v3.droplets.State> dropletsState = operations.listAppDropletsState(appId);
+			if (dropletsState.contains(org.cloudfoundry.client.v3.droplets.State.STAGED)) {
+				return AppState.PREPARED;
+			} else if (dropletsState.contains(org.cloudfoundry.client.v3.droplets.State.FAILED)) {
+				return AppState.FAILED;
+			} else {
+				return AppState.CREATED;
+			}
+		}
 	}
 }

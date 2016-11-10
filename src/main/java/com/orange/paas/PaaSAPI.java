@@ -2,6 +2,7 @@ package com.orange.paas;
 
 import java.util.List;
 
+import com.orange.model.AppState;
 import com.orange.model.Application;
 import com.orange.model.PaaSSite;
 
@@ -52,6 +53,10 @@ public abstract class PaaSAPI {
 	public void deleteRouteMapping(String appId, String routeId) {
 		routeFactory.deleteRouteMapping(appId, routeId);
 	}
+	
+	public List<String> listAppRoutes(String appId) {
+		return routeFactory.listAppRoutes(appId);
+	}
 
 	public abstract List<String> listSpaceAppsId();
 
@@ -64,4 +69,6 @@ public abstract class PaaSAPI {
 	public String getAppVersion(String appId) {
 		return (String) getAppEnv(appId, "APP_VERSION");
 	}
+	
+	public abstract AppState getAppState(String appId); 
 }

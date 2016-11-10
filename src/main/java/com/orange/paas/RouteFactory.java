@@ -1,5 +1,6 @@
 package com.orange.paas;
 
+import java.util.List;
 import java.util.Map;
 
 import com.orange.model.PaaSAccessInfo;
@@ -21,4 +22,6 @@ public abstract class RouteFactory {
 	public abstract void createRouteMapping(String appId, String routeId);
 
 	public abstract void deleteRouteMapping(String appId, String routeId);
+	
+	public abstract List<String> listAppRoutes(String appId);
 }

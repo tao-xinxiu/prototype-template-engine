@@ -324,6 +324,25 @@ public class CloudFoundryOperations {
 		}
 	}
 
+	private List<DropletResource> listAppDroplets(String appId) {
+		ListApplicationDropletsRequest request = ListApplicationDropletsRequest.builder().applicationId(appId).build();
+		ListApplicationDropletsResponse response = cloudFoundryClient.applicationsV3().listDroplets(request).block();
+		return response.getResources();
+	}
+
+	public List<org.cloudfoundry.client.v3.droplets.State> listAppDropletsState(String appId) {
+		List<DropletResource> dropletResources = listAppDroplets(appId);
+		List<org.cloudfoundry.client.v3.droplets.State> dropletsState = new ArrayList<>();
+		if (dropletResources == null) {
+			return dropletsState;
+		} else {
+			for (DropletResource resource : dropletResources) {
+				dropletsState.add(resource.getState());
+			}
+		}
+		return dropletsState;
+	}
+
 	public String getDomainId(String domain) {
 		try {
 			ListDomainsRequest request = ListDomainsRequest.builder().name(domain).build();
@@ -335,6 +354,19 @@ public class CloudFoundryOperations {
 			return response.getResources().get(0).getMetadata().getId();
 		} catch (Exception e) {
 			throw new IllegalStateException("expcetion during getting domain id with arg: " + domain, e);
+		}
+	}
+
+	public String getDomainString(String domainId) {
+		if (domainId == null) {
+			return null;
+		}
+		GetDomainRequest request = GetDomainRequest.builder().domainId(domainId).build();
+		GetDomainResponse response = cloudFoundryClient.domains().get(request).block();
+		if (response.getEntity() == null) {
+			return null;
+		} else {
+			return response.getEntity().getName();
 		}
 	}
 
@@ -360,6 +392,40 @@ public class CloudFoundryOperations {
 		}
 	}
 
+	public String getRouteHost(String routeId) {
+		GetRouteRequest request = GetRouteRequest.builder().routeId(routeId).build();
+		GetRouteResponse response = cloudFoundryClient.routes().get(request).block();
+		if (response.getEntity() == null) {
+			return null;
+		} else {
+			return response.getEntity().getHost();
+		}
+	}
+
+	public String getRouteDomainId(String routeId) {
+		GetRouteRequest request = GetRouteRequest.builder().routeId(routeId).build();
+		GetRouteResponse response = cloudFoundryClient.routes().get(request).block();
+		if (response.getEntity() == null) {
+			return null;
+		} else {
+			return response.getEntity().getDomainId();
+		}
+	}
+
+	public String[] listMappedRoutesId(String appId) {
+		try {
+			cfCliLogin();
+			String routeslink = executeCFCliPipedCommand(
+					Arrays.asList("cf", "curl", String.format("v3/apps/%s/route_mappings", appId)),
+					Arrays.asList("jq", "-r", ".resources[]?.links?.route?.href"));
+			String routesId = routeslink.replace("/v2/routes/", "");
+			return routesId.split("\\r?\\n");
+		} catch (Exception e) {
+			throw new IllegalStateException(String.format("expcetion in listMappedRoutesId with appId: [%s]", appId),
+					e);
+		}
+	}
+
 	public void createRouteMapping(String appId, String routeId) {
 		try {
 			cfCliLogin();
@@ -379,7 +445,7 @@ public class CloudFoundryOperations {
 			return executeCFCliPipedCommand(
 					Arrays.asList("cf", "curl",
 							String.format("v3/apps/%s/route_mappings?route_guids=%s", appId, routeId)),
-					Arrays.asList("jq", "-r", ".resources[].guid"));
+					Arrays.asList("jq", "-r", ".resources[]?.guid"));
 		} catch (Exception e) {
 			throw new IllegalStateException(
 					"expcetion during getting route mapping with arg: " + appId + "; " + routeId, e);
@@ -397,13 +463,16 @@ public class CloudFoundryOperations {
 		}
 	}
 
-	public List<String> getProcessesState(String appId, String processType) {
+	public List<String> listProcessesState(String appId, String processType) {
 		try {
 			GetApplicationProcessStatisticsRequest request = GetApplicationProcessStatisticsRequest.builder()
 					.applicationId(appId).type(processType).build();
 			GetApplicationProcessStatisticsResponse response = cloudFoundryClient.applicationsV3()
 					.getProcessStatistics(request).block();
 			List<String> states = new ArrayList<>();
+			if (response.getResources() == null) {
+				return states;
+			}
 			for (ProcessStatisticsResource resource : response.getResources()) {
 				states.add(resource.getState());
 			}
@@ -425,8 +494,8 @@ public class CloudFoundryOperations {
 			mkdirs(path_CF_HOME_dir + siteAccessInfo.getName());
 			executeCFCliCommand(loginCommand);
 		} catch (Exception e) {
-			throw new IllegalStateException(String.format("expcetion during login to %s with cf cli.", siteAccessInfo.getName()),
-					e);
+			throw new IllegalStateException(
+					String.format("expcetion during login to %s with cf cli.", siteAccessInfo.getName()), e);
 		}
 	}
 
