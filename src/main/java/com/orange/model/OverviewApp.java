@@ -1,49 +1,38 @@
 package com.orange.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OverviewApp {
+	private String guid;
 	private String name;
-	private String version;
-	private AppState state; //TODO version & state may be specified to each droplet
 	private List<String> routes;
+	private List<OverviewDroplet> droplets;
 
-	public OverviewApp(String name, String version, AppState state, List<String> routes) {
+	public OverviewApp(String guid, String name, List<String> routes) {
+		this.guid = guid;
 		this.name = name;
-		this.version = version;
-		this.state = state;
 		this.routes = routes;
+		this.droplets = new ArrayList<>();
+	}
+
+	public String getGuid() {
+		return guid;
 	}
 
 	public String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getVersion() {
-		return version;
-	}
-
-	public void setVersion(String version) {
-		this.version = version;
-	}
-
-	public AppState getState() {
-		return state;
-	}
-
-	public void setState(AppState state) {
-		this.state = state;
-	}
-
 	public List<String> getRoutes() {
 		return routes;
 	}
 
-	public void setRoutes(List<String> routes) {
-		this.routes = routes;
+	public List<OverviewDroplet> getDroplets() {
+		return droplets;
+	}
+	
+	public void addOverviewDroplet(OverviewDroplet overviewDroplet) {
+		this.droplets.add(overviewDroplet);
 	}
 }

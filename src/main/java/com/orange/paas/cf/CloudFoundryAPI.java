@@ -12,7 +12,7 @@ import org.cloudfoundry.client.v3.packages.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.model.AppState;
+import com.orange.model.DropletState;
 import com.orange.model.Application;
 import com.orange.model.PaaSSite;
 import com.orange.paas.PaaSAPI;
@@ -22,22 +22,23 @@ public class CloudFoundryAPI extends PaaSAPI {
 	private static final String processType = "web";
 	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryAPI.class);
 	private CloudFoundryOperations operations;
-	
+
 	public CloudFoundryAPI(PaaSSite site) {
 		super(site, new CloudFoundryRouteFactory(site));
-		this.operations = ((CloudFoundryRouteFactory)this.routeFactory).getOperations();
+		this.operations = ((CloudFoundryRouteFactory) this.routeFactory).getOperations();
 	}
-	
+
 	@Override
 	public void prepareApp(String appId, Application appProperty) {
 		String packageId = operations.createPackage(appId, PackageType.BITS, null);
 		uploadPackageAndWaitUntilReady(packageId, appProperty.getPath());
 		String dropletId = operations.createDroplet(packageId, null, null);
 		createDropletAndWaitUntilStaged(dropletId);
-		operations.stopApp(appId); //app should be stopped before assigning current droplet
-		operations.assignDroplet(appId, dropletId);	
+		// app should be stopped before assigning current droplet
+		operations.stopApp(appId);
+		operations.assignDroplet(appId, dropletId);
 	}
-	
+
 	private void uploadPackageAndWaitUntilReady(String packageId, String bitsPath) {
 		operations.uploadPackage(packageId, bitsPath, 60 * timeout);
 		while (operations.getPackageState(packageId) != State.READY) {
@@ -49,7 +50,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 		}
 		logger.info("package ready");
 	}
-	
+
 	private void createDropletAndWaitUntilStaged(String dropletId) {
 		while (operations.getDropletState(dropletId) != org.cloudfoundry.client.v3.droplets.State.STAGED) {
 			try {
@@ -99,7 +100,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 	public void deleteApp(String appId) {
 		operations.deleteApp(appId);
 	}
-	
+
 	@Override
 	public List<String> listSpaceAppsId() {
 		List<String> spaceAppsId = new ArrayList<String>();
@@ -125,26 +126,39 @@ public class CloudFoundryAPI extends PaaSAPI {
 				BuildpackData.builder().buildpack(appProperty.getBuildpack()).stack(appProperty.getStack()).build())
 				.build();
 		operations.updateApp(appId, appProperty.getName(), appProperty.getEnv(), lifecycle);
-		logger.info("app {} updated with name {}; env {}; lifecycle {}.", appId, appProperty.getName(), appProperty.getEnv(), lifecycle);
+		logger.info("app {} updated with name {}; env {}; lifecycle {}.", appId, appProperty.getName(),
+				appProperty.getEnv(), lifecycle);
 	}
 
 	@Override
-	public Object getAppEnv(String appId, String envKey) {
-		return operations.getAppEnv(appId).get(envKey);
+	public Object getDropletEnv(String dropletId, String envKey) {
+		return operations.getDropletEnv(dropletId).get(envKey);
 	}
 
 	@Override
-	public AppState getAppState(String appId) {
-		if (operations.listProcessesState(appId, processType).contains("RUNNING")) {
-			return AppState.RUNNING;
+	public List<String> listAppDropletsId(String appId) {
+		return operations.listAppDropletsId(appId);
+	}
+
+	@Override
+	public DropletState getAppDropletState(String appId, String dropletId) {
+		if (appId == null || dropletId == null) {
+			throw new IllegalStateException(
+					String.format("Exception in getDropletState with appId [%s], dropletId [%s]", appId, dropletId));
+		}
+		if (dropletId.equals(operations.getCurrentDropletId(appId))
+				&& operations.listProcessesState(appId, processType).contains("RUNNING")) {
+			return DropletState.RUNNING;
 		} else {
-			List<org.cloudfoundry.client.v3.droplets.State> dropletsState = operations.listAppDropletsState(appId);
-			if (dropletsState.contains(org.cloudfoundry.client.v3.droplets.State.STAGED)) {
-				return AppState.PREPARED;
-			} else if (dropletsState.contains(org.cloudfoundry.client.v3.droplets.State.FAILED)) {
-				return AppState.FAILED;
-			} else {
-				return AppState.CREATED;
+			org.cloudfoundry.client.v3.droplets.State dropletState = operations.getDropletState(dropletId);
+			switch (dropletState) {
+			case STAGED:
+				return DropletState.STAGED;
+			case FAILED:
+			case EXPIRED:
+				return DropletState.FAILED;
+			default:// case PENDING: case STAGING:
+				return DropletState.CREATED;
 			}
 		}
 	}

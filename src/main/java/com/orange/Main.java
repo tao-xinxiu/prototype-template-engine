@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.orange.model.DeploymentConfig;
 import com.orange.model.OverviewApp;
+import com.orange.model.OverviewDroplet;
 import com.orange.model.OverviewSite;
 import com.orange.model.PaaSSite;
 import com.orange.model.Requirement;
@@ -39,13 +40,15 @@ public class Main {
 			PaaSSite site = entry.getValue();
 			site.setName(entry.getKey());
 			if (!site.valid()) {
-				throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for the PaaS site: " + site);
+				throw new IllegalStateException(
+						"DeploymentConfig not valid, missing mandatory property for the PaaS site: " + site);
 			}
 			site.getAccessInfo().setName(entry.getKey());
 		}
 		logger.info("DeploymentConfig sites valid");
 		if (!desiredState.getApp().valid()) {
-			throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for app: " + desiredState.getApp().getName());
+			throw new IllegalStateException("DeploymentConfig not valid, missing mandatory property for app: "
+					+ desiredState.getApp().getName());
 		}
 		logger.info("DeploymentConfig app valid");
 		Main.desiredState = desiredState;
@@ -90,19 +93,27 @@ public class Main {
 		logger.info("Workflow {} finished!", workflow);
 		return "\n OK! \n";
 	}
-	
+
 	@RequestMapping(value = "/current_state", method = RequestMethod.GET)
 	public @ResponseBody List<OverviewSite> getCurrentState() {
+		if (managingSites == null) {
+			throw new IllegalStateException("managingSites not configured!");
+		}
 		List<OverviewSite> overviewSites = new ArrayList<>();
 		for (PaaSSite site : managingSites) {
 			OverviewSite overviewSite = new OverviewSite(site);
 			PaaSAPI api = new CloudFoundryAPI(site);
 			for (String appId : api.listSpaceAppsId()) {
-				overviewSite.addOverviewApps(new OverviewApp(api.getAppName(appId), api.getAppVersion(appId), api.getAppState(appId), api.listAppRoutes(appId)));
+				OverviewApp overviewApp = new OverviewApp(appId, api.getAppName(appId), api.listAppRoutes(appId));
+				for (String dropletId : api.listAppDropletsId(appId)) {
+					overviewApp.addOverviewDroplet(new OverviewDroplet(dropletId, api.getDropletVersion(dropletId),
+							api.getAppDropletState(appId, dropletId)));
+				}
+				overviewSite.addOverviewApp(overviewApp);
 			}
 			overviewSites.add(overviewSite);
 		}
-		return overviewSites; 
+		return overviewSites;
 	}
 
 	public static void main(String[] args) {

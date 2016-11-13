@@ -20,7 +20,7 @@ public class OverviewSite {
 		return overviewApps;
 	}
 
-	public void addOverviewApps(OverviewApp overviewApp) {
+	public void addOverviewApp(OverviewApp overviewApp) {
 		this.overviewApps.add(overviewApp);
 	}
 }

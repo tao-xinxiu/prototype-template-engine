@@ -49,11 +49,11 @@ public class WorkflowCalculator {
 			Workflow updateSite = new ParallelWorkflow("parallel update each entity in the site " + site.getName());
 			PaaSAPI api = new CloudFoundryAPI(site);
 			this.appMissing = isMissingApp(api);
-			if(appMissing) {
+			if (appMissing) {
 				updateSite.addStep(new Deploy(api, desiredApp).update());
 			}
 			this.appVersionChanged = isVersionChangedApp(api);
-			if(appVersionChanged) {
+			if (appVersionChanged) {
 				switch (require) {
 				case FAST:
 					updateSite.addStep(new BlueGreen(api, desiredApp).update());
@@ -164,10 +164,13 @@ public class WorkflowCalculator {
 	private boolean isVersionChangedApp(PaaSAPI api) {
 		String appId = api.getAppId(desiredApp.getName());
 		if (appId != null) { // app exist
-			String appVersion = (String) api.getAppVersion(appId);
-			if (!desiredApp.getVersion().equals(appVersion)) {
-				return true;
+			boolean desiredVersionExist = false;
+			for (String dropletId : api.listAppDropletsId(appId)) {
+				if (desiredApp.getVersion().equals(api.getDropletVersion(dropletId))) {
+					desiredVersionExist = true;
+				}
 			}
+			return !desiredVersionExist;
 		}
 		return false;
 	}
@@ -191,7 +194,7 @@ public class WorkflowCalculator {
 		}
 		return appIds;
 	}
-	
+
 	private List<PaaSSite> getNotDesiredSites() {
 		List<PaaSSite> notDesiredSites = new ArrayList<>();
 		for (PaaSSite site : managingSites) {
@@ -217,7 +220,7 @@ public class WorkflowCalculator {
 		}
 		return cleanupSites;
 	}
-	
+
 	private Workflow getCleanupWorkflow(PaaSSite site) {
 		Workflow cleanupSite = new ParallelWorkflow("cleanup all entities on site " + site.getName());
 		PaaSAPI api = new CloudFoundryAPI(site);

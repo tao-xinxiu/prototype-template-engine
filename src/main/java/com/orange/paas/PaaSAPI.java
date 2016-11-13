@@ -2,7 +2,7 @@ package com.orange.paas;
 
 import java.util.List;
 
-import com.orange.model.AppState;
+import com.orange.model.DropletState;
 import com.orange.model.Application;
 import com.orange.model.PaaSSite;
 
@@ -64,11 +64,13 @@ public abstract class PaaSAPI {
 
 	public abstract String getAppName(String appId);
 
-	public abstract Object getAppEnv(String appId, String envKey);
-
-	public String getAppVersion(String appId) {
-		return (String) getAppEnv(appId, "APP_VERSION");
+	public abstract Object getDropletEnv(String dropletId, String envKey);
+	
+	public String getDropletVersion(String dropletId) {
+		return (String) getDropletEnv(dropletId, "APP_VERSION");
 	}
 	
-	public abstract AppState getAppState(String appId); 
+	public abstract List<String> listAppDropletsId(String appId);
+	
+	public abstract DropletState getAppDropletState(String appId, String dropletId);
 }

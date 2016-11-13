@@ -152,6 +152,12 @@ public class CloudFoundryOperations {
 		return response.getEnvironmentVariables();
 	}
 
+	public Map<String, Object> getDropletEnv(String dropletId) {
+		GetDropletRequest request = GetDropletRequest.builder().dropletId(dropletId).build();
+		GetDropletResponse response = cloudFoundryClient.droplets().get(request).block();
+		return response.getEnvironmentVariables();
+	}
+
 	/**
 	 * create a v3 app object
 	 * 
@@ -324,23 +330,24 @@ public class CloudFoundryOperations {
 		}
 	}
 
-	private List<DropletResource> listAppDroplets(String appId) {
+	public List<String> listAppDropletsId(String appId) {
 		ListApplicationDropletsRequest request = ListApplicationDropletsRequest.builder().applicationId(appId).build();
 		ListApplicationDropletsResponse response = cloudFoundryClient.applicationsV3().listDroplets(request).block();
-		return response.getResources();
+		List<String> dropletsId = new ArrayList<>();
+		List<DropletResource> dropletResources = response.getResources();
+		if (response.getResources() == null)
+			return dropletsId;
+		for (DropletResource resource : dropletResources) {
+			dropletsId.add(resource.getId());
+		}
+		return dropletsId;
 	}
 
-	public List<org.cloudfoundry.client.v3.droplets.State> listAppDropletsState(String appId) {
-		List<DropletResource> dropletResources = listAppDroplets(appId);
-		List<org.cloudfoundry.client.v3.droplets.State> dropletsState = new ArrayList<>();
-		if (dropletResources == null) {
-			return dropletsState;
-		} else {
-			for (DropletResource resource : dropletResources) {
-				dropletsState.add(resource.getState());
-			}
-		}
-		return dropletsState;
+	public String getCurrentDropletId(String appId) {
+		cfCliLogin();
+		return executeCFCliPipedCommand(
+				Arrays.asList("cf", "curl", String.format("v3/apps/%s/droplets/current", appId)),
+				Arrays.asList("jq", "-r", ".guid"));
 	}
 
 	public String getDomainId(String domain) {
