@@ -12,9 +12,7 @@ import org.cloudfoundry.client.v3.packages.State;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.model.DropletState;
-import com.orange.model.Application;
-import com.orange.model.PaaSSite;
+import com.orange.model.*;
 import com.orange.paas.PaaSAPI;
 
 public class CloudFoundryAPI extends PaaSAPI {
@@ -161,5 +159,19 @@ public class CloudFoundryAPI extends PaaSAPI {
 				return DropletState.CREATED;
 			}
 		}
+	}
+
+	@Override
+	public OverviewSite getOverviewSite() {
+		OverviewSite overviewSite = new OverviewSite(site);
+		for (String appId : listSpaceAppsId()) {
+			OverviewApp overviewApp = new OverviewApp(appId, getAppName(appId), listAppRoutes(appId));
+			for (String dropletId : listAppDropletsId(appId)) {
+				overviewApp.addOverviewDroplet(new OverviewDroplet(dropletId, getDropletVersion(dropletId),
+						getAppDropletState(appId, dropletId)));
+			}
+			overviewSite.addOverviewApp(overviewApp);
+		}
+		return overviewSite;
 	}
 }

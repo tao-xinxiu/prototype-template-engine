@@ -16,12 +16,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.orange.model.DeploymentConfig;
-import com.orange.model.OverviewApp;
-import com.orange.model.OverviewDroplet;
 import com.orange.model.OverviewSite;
 import com.orange.model.PaaSSite;
 import com.orange.model.Requirement;
-import com.orange.paas.PaaSAPI;
 import com.orange.paas.cf.CloudFoundryAPI;
 import com.orange.workflow.Workflow;
 import com.orange.workflow.WorkflowCalculator;
@@ -101,17 +98,7 @@ public class Main {
 		}
 		List<OverviewSite> overviewSites = new ArrayList<>();
 		for (PaaSSite site : managingSites) {
-			OverviewSite overviewSite = new OverviewSite(site);
-			PaaSAPI api = new CloudFoundryAPI(site);
-			for (String appId : api.listSpaceAppsId()) {
-				OverviewApp overviewApp = new OverviewApp(appId, api.getAppName(appId), api.listAppRoutes(appId));
-				for (String dropletId : api.listAppDropletsId(appId)) {
-					overviewApp.addOverviewDroplet(new OverviewDroplet(dropletId, api.getDropletVersion(dropletId),
-							api.getAppDropletState(appId, dropletId)));
-				}
-				overviewSite.addOverviewApp(overviewApp);
-			}
-			overviewSites.add(overviewSite);
+			overviewSites.add(new CloudFoundryAPI(site).getOverviewSite());
 		}
 		return overviewSites;
 	}

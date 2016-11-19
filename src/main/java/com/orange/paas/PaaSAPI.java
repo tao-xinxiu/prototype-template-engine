@@ -2,9 +2,7 @@ package com.orange.paas;
 
 import java.util.List;
 
-import com.orange.model.DropletState;
-import com.orange.model.Application;
-import com.orange.model.PaaSSite;
+import com.orange.model.*;
 
 public abstract class PaaSAPI {
 	protected PaaSSite site;
@@ -73,4 +71,6 @@ public abstract class PaaSAPI {
 	public abstract List<String> listAppDropletsId(String appId);
 	
 	public abstract DropletState getAppDropletState(String appId, String dropletId);
+	
+	public abstract OverviewSite getOverviewSite();
 }
