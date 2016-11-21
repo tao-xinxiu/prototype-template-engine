@@ -25,7 +25,6 @@ public class ComparatorTest {
 	private static final String appRouteProd = "prod.route.app.hello";
 	private static final String dropletGuidDev = "guid-dev-droplet-hello-v1.0.1";
 	private static final String dropletGuidProd1 = "guid-prod-droplet-hello-v1.0.0";
-	private static final String dropletGuidProd2 = "guid-prod-droplet-hello-v1.0.1";
 	private static final String sitePrepod = "preprod";
 
 	@Test
@@ -108,7 +107,7 @@ public class ComparatorTest {
 	}
 	
 	private OverviewApp prodNewApp() {
-		OverviewDroplet dropletProdNew = new OverviewDroplet(dropletGuidProd2, appVersion2, DropletState.RUNNING);
+		OverviewDroplet dropletProdNew = new OverviewDroplet(null, appVersion2, DropletState.RUNNING);
 		return new OverviewApp(null, appName, Arrays.asList(appRouteGlobal, appRouteProd),
 				Arrays.asList(dropletProdNew));
 	}
