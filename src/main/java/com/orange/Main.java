@@ -1,9 +1,8 @@
 package com.orange;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +15,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.orange.model.DeploymentConfig;
-import com.orange.model.OverviewSite;
+import com.orange.model.Overview;
 import com.orange.model.PaaSSite;
 import com.orange.model.Requirement;
 import com.orange.paas.cf.CloudFoundryAPI;
+import com.orange.state.Comparator;
 import com.orange.workflow.Workflow;
 import com.orange.workflow.WorkflowCalculator;
 
@@ -91,16 +91,23 @@ public class Main {
 		return "\n OK! \n";
 	}
 
-	@RequestMapping(value = "/current_state", method = RequestMethod.GET)
-	public @ResponseBody List<OverviewSite> getCurrentState() {
-		if (managingSites == null) {
-			throw new IllegalStateException("managingSites not configured!");
+	@RequestMapping(value = "/current_state", method = RequestMethod.PUT)
+	public @ResponseBody Overview getCurrentState(@RequestBody Collection<PaaSSite> managingSites) {
+		Main.managingSites = managingSites;
+		return getCurrentState();
+	}
+
+	@RequestMapping(value = "/change", method = RequestMethod.PUT)
+	public @ResponseBody void change(@RequestBody Overview desiredState) {
+		Comparator comparator = new Comparator(getCurrentState(), desiredState);
+		if (!comparator.valide()) {
+			throw new IllegalStateException("Get current_state for all the sites to be managed first.");
 		}
-		List<OverviewSite> overviewSites = new ArrayList<>();
-		for (PaaSSite site : managingSites) {
-			overviewSites.add(new CloudFoundryAPI(site).getOverviewSite());
-		}
-		return overviewSites;
+	}
+
+	private Overview getCurrentState() {
+		return new Overview(managingSites.parallelStream()
+				.collect(Collectors.toMap(site -> site, site -> new CloudFoundryAPI(site).getOverviewSite())));
 	}
 
 	public static void main(String[] args) {

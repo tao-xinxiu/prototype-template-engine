@@ -2,6 +2,7 @@ package com.orange.paas.cf;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.cloudfoundry.client.v3.BuildpackData;
 import org.cloudfoundry.client.v3.Lifecycle;
@@ -161,17 +162,16 @@ public class CloudFoundryAPI extends PaaSAPI {
 		}
 	}
 
+	//TODO decrease number of request to get all info for current state
 	@Override
-	public OverviewSite getOverviewSite() {
-		OverviewSite overviewSite = new OverviewSite(site);
-		for (String appId : listSpaceAppsId()) {
-			OverviewApp overviewApp = new OverviewApp(appId, getAppName(appId), listAppRoutes(appId));
-			for (String dropletId : listAppDropletsId(appId)) {
-				overviewApp.addOverviewDroplet(new OverviewDroplet(dropletId, getDropletVersion(dropletId),
-						getAppDropletState(appId, dropletId)));
-			}
-			overviewSite.addOverviewApp(overviewApp);
-		}
-		return overviewSite;
+	public List<OverviewApp> getOverviewSite() {
+		return listSpaceAppsId().parallelStream().map(
+				appId -> new OverviewApp(appId, getAppName(appId), listAppRoutes(appId), listOverviewDroplets(appId)))
+				.collect(Collectors.toList());
+	}
+
+	private List<OverviewDroplet> listOverviewDroplets(String appId) {
+		return listAppDropletsId(appId).parallelStream().map(dropletId -> new OverviewDroplet(dropletId,
+				getDropletVersion(dropletId), getAppDropletState(appId, dropletId))).collect(Collectors.toList());
 	}
 }

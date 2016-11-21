@@ -72,5 +72,5 @@ public abstract class PaaSAPI {
 	
 	public abstract DropletState getAppDropletState(String appId, String dropletId);
 	
-	public abstract OverviewSite getOverviewSite();
+	public abstract List<OverviewApp> getOverviewSite();
 }
