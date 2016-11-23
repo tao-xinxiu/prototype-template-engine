@@ -144,8 +144,9 @@ public class CloudFoundryAPI extends PaaSAPI {
 	}
 
 	@Override
-	public Map<String, Object> listDropletEnv(String dropletId) {
-		return operations.getDropletEnv(dropletId);
+	// get user provided droplet env
+	public Map<String, Object> listDropletEnv(String appId, String dropletId) {
+		return operations.getDropletEnv(appId, dropletId);
 	}
 
 	@Override

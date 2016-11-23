@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.cloudfoundry.client.CloudFoundryClient;
@@ -152,10 +153,21 @@ public class CloudFoundryOperations {
 		return response.getEnvironmentVariables();
 	}
 
-	public Map<String, Object> getDropletEnv(String dropletId) {
+	public Map<String, Object> getDropletEnv(String appId, String dropletId) {
+		Set<String> userProvidedEnvKey = getUserEnvKey(appId);
+		return getCompleteDropletEnv(dropletId).entrySet().stream()
+				.filter(entry -> userProvidedEnvKey.contains(entry.getKey()))
+				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+	}
+
+	public Map<String, Object> getCompleteDropletEnv(String dropletId) {
 		GetDropletRequest request = GetDropletRequest.builder().dropletId(dropletId).build();
 		GetDropletResponse response = cloudFoundryClient.droplets().get(request).block();
 		return response.getEnvironmentVariables();
+	}
+
+	private Set<String> getUserEnvKey(String appId) {
+		return getAppEnv(appId).keySet();
 	}
 
 	/**

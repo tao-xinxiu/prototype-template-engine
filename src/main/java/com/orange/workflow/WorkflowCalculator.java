@@ -166,7 +166,7 @@ public class WorkflowCalculator {
 		if (appId != null) { // app exist
 			boolean desiredVersionExist = false;
 			for (String dropletId : api.listAppDropletsId(appId)) {
-				if (desiredApp.getVersion().equals(api.getDropletVersion(dropletId))) {
+				if (desiredApp.getVersion().equals(api.getDropletVersion(appId, dropletId))) {
 					desiredVersionExist = true;
 				}
 			}

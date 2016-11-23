@@ -27,6 +27,7 @@ public abstract class PaaSAPI {
 	 * @return
 	 */
 	public abstract String createAppIfNotExist(Application appProperty);
+
 	public abstract String createApp(OverviewApp app);
 
 	public abstract void prepareApp(String appId, Application appProperty);
@@ -54,7 +55,7 @@ public abstract class PaaSAPI {
 	public void deleteRouteMapping(String appId, String routeId) {
 		routeFactory.deleteRouteMapping(appId, routeId);
 	}
-	
+
 	public List<String> listAppRoutes(String appId) {
 		return routeFactory.listAppRoutes(appId);
 	}
@@ -65,26 +66,27 @@ public abstract class PaaSAPI {
 
 	public abstract String getAppName(String appId);
 
-	public abstract Map<String, Object> listDropletEnv(String dropletId);
-	
-	public String getDropletVersion(String dropletId) {
-		return (String) listDropletEnv(dropletId).get("APP_VERSION");
+	public abstract Map<String, Object> listDropletEnv(String appId, String dropletId);
+
+	public String getDropletVersion(String appId, String dropletId) {
+		return (String) listDropletEnv(appId, dropletId).get("APP_VERSION");
 	}
-	
+
 	public abstract List<String> listAppDropletsId(String appId);
-	
+
 	public abstract DropletState getAppDropletState(String appId, String dropletId);
-	
+
 	// TODO decrease number of request to get all info for current state
-	public OverviewSite getOverviewSite(){
+	public OverviewSite getOverviewSite() {
 		return new OverviewSite(listSpaceAppsId().parallelStream().map(
 				appId -> new OverviewApp(appId, getAppName(appId), listAppRoutes(appId), listOverviewDroplets(appId)))
 				.collect(Collectors.toList()));
 	}
-	
+
 	private List<OverviewDroplet> listOverviewDroplets(String appId) {
-		return listAppDropletsId(appId).parallelStream().map(dropletId -> new OverviewDroplet(dropletId,
-				getDropletVersion(dropletId), getAppDropletState(appId, dropletId), listDropletEnv(dropletId)))
+		return listAppDropletsId(appId).parallelStream()
+				.map(dropletId -> new OverviewDroplet(dropletId, getDropletVersion(appId, dropletId),
+						getAppDropletState(appId, dropletId), listDropletEnv(appId, dropletId)))
 				.collect(Collectors.toList());
 	}
 }
