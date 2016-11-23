@@ -1,26 +1,54 @@
 package com.orange.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class OverviewDroplet {
 	private String guid;
 	private String version;
 	private DropletState state;
+	private Map<String, Object> env = new HashMap<>();
 
-	public OverviewDroplet(String guid, String version, DropletState state) {
+	public OverviewDroplet() {
+	}
+
+	public OverviewDroplet(String guid, String version, DropletState state, Map<String, Object> env) {
 		this.guid = guid;
 		this.version = version;
 		this.state = state;
+		this.env = env;
 	}
 
 	public String getGuid() {
 		return guid;
 	}
 
+	public void setGuid(String guid) {
+		this.guid = guid;
+	}
+
 	public String getVersion() {
 		return version;
 	}
 
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
 	public DropletState getState() {
 		return state;
+	}
+
+	public void setState(DropletState state) {
+		this.state = state;
+	}
+
+	public Map<String, Object> getEnv() {
+		return env;
+	}
+
+	public void setEnv(Map<String, Object> env) {
+		this.env = env;
 	}
 
 	@Override

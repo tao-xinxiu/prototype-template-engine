@@ -16,14 +16,10 @@ public class Comparator {
 		this.desiredState = desiredState;
 	}
 
-	// Comparator is valide iff currentState and desiredState are for the same
+	// Comparator is valid iff currentState and desiredState are for the same
 	// PaaS sites.
-	public boolean valide() {
-		if (currentState.size() != desiredState.size()) {
-			return false;
-		} else {
-			return currentState.listPaaSSites().equals(desiredState.listPaaSSites());
-		}
+	public boolean valid() {
+		return currentState.listPaaSSites().equals(desiredState.listPaaSSites());
 	}
 
 	/**
@@ -34,8 +30,8 @@ public class Comparator {
 	 * @return
 	 */
 	public List<OverviewApp> getAddedApp(PaaSSite site) {
-		return desiredState.getOverviewApps(site).stream().filter(app -> app.getGuid() == null)
-				.collect(Collectors.toList());
+		return desiredState.getOverviewSite(site.getName()).getOverviewApps().stream()
+				.filter(app -> app.getGuid() == null).collect(Collectors.toList());
 	}
 
 	/**
@@ -46,9 +42,9 @@ public class Comparator {
 	 * @return
 	 */
 	public List<OverviewApp> getRemovedApp(PaaSSite site) {
-		List<String> desiredAppIds = desiredState.getOverviewApps(site).stream().map(OverviewApp::getGuid)
-				.collect(Collectors.toList());
-		return currentState.getOverviewApps(site).stream()
+		List<String> desiredAppIds = desiredState.getOverviewSite(site.getName()).getOverviewApps().stream()
+				.map(OverviewApp::getGuid).collect(Collectors.toList());
+		return currentState.getOverviewSite(site.getName()).getOverviewApps().stream()
 				.filter(currentApp -> !desiredAppIds.contains(currentApp.getGuid())).collect(Collectors.toList());
 	}
 

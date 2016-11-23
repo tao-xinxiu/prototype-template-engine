@@ -1,6 +1,8 @@
 package com.orange.paas;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.orange.model.*;
 
@@ -25,6 +27,7 @@ public abstract class PaaSAPI {
 	 * @return
 	 */
 	public abstract String createAppIfNotExist(Application appProperty);
+	public abstract String createApp(OverviewApp app);
 
 	public abstract void prepareApp(String appId, Application appProperty);
 
@@ -62,15 +65,26 @@ public abstract class PaaSAPI {
 
 	public abstract String getAppName(String appId);
 
-	public abstract Object getDropletEnv(String dropletId, String envKey);
+	public abstract Map<String, Object> listDropletEnv(String dropletId);
 	
 	public String getDropletVersion(String dropletId) {
-		return (String) getDropletEnv(dropletId, "APP_VERSION");
+		return (String) listDropletEnv(dropletId).get("APP_VERSION");
 	}
 	
 	public abstract List<String> listAppDropletsId(String appId);
 	
 	public abstract DropletState getAppDropletState(String appId, String dropletId);
 	
-	public abstract List<OverviewApp> getOverviewSite();
+	// TODO decrease number of request to get all info for current state
+	public OverviewSite getOverviewSite(){
+		return new OverviewSite(listSpaceAppsId().parallelStream().map(
+				appId -> new OverviewApp(appId, getAppName(appId), listAppRoutes(appId), listOverviewDroplets(appId)))
+				.collect(Collectors.toList()));
+	}
+	
+	private List<OverviewDroplet> listOverviewDroplets(String appId) {
+		return listAppDropletsId(appId).parallelStream().map(dropletId -> new OverviewDroplet(dropletId,
+				getDropletVersion(dropletId), getAppDropletState(appId, dropletId), listDropletEnv(dropletId)))
+				.collect(Collectors.toList());
+	}
 }

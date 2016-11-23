@@ -1,43 +1,60 @@
 package com.orange.model;
 
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 public class Overview {
-	private Map<PaaSSite, List<OverviewApp>> overviewSites;
+	private Map<String, PaaSSite> sites = new HashMap<>();
+	private Map<String, OverviewSite> overviewSites = new HashMap<>();
 
-	public Overview(Map<PaaSSite, List<OverviewApp>> overviewSites) {
+	public Overview(Map<String, PaaSSite> sites, Map<String, OverviewSite> overviewSites) {
+		this.sites = sites;
 		this.overviewSites = overviewSites;
+		assert valid();
 	}
 
 	public Overview() {
-		this.overviewSites = new HashMap<>();
 	}
 
-	public void addPaaSSite(PaaSSite site, List<OverviewApp> overviewApps) {
-		overviewSites.put(site, overviewApps);
+	public void addPaaSSite(PaaSSite site, OverviewSite overviewApps) {
+		assert site != null && overviewApps != null;
+		sites.put(site.getName(), site);
+		overviewSites.put(site.getName(), overviewApps);
 	}
 
-	public Map<PaaSSite, List<OverviewApp>> getOverviewSites() {
+	public Map<String, PaaSSite> getSites() {
+		return sites;
+	}
+
+	public void setSites(Map<String, PaaSSite> sites) {
+		this.sites = sites;
+	}
+
+	public Map<String, OverviewSite> getOverviewSites() {
 		return overviewSites;
 	}
 
-	public List<OverviewApp> getOverviewApps(PaaSSite site) {
-		return overviewSites.get(site);
+	public void setOverviewSites(Map<String, OverviewSite> overviewSites) {
+		this.overviewSites = overviewSites;
+	}
+
+	public OverviewSite getOverviewSite(String siteName) {
+		return overviewSites.get(siteName);
 	}
 
 	public Set<PaaSSite> listPaaSSites() {
-		return overviewSites.keySet();
+		return new HashSet<>(sites.values());
 	}
 
-	/**
-	 * number of PaaSSite, List<OverviewApp> mappings, i.e. number of PaaSSite
-	 * 
-	 * @return
-	 */
-	public int size() {
-		return overviewSites.size();
+	public boolean valid() {
+		if (sites == null) {
+			return overviewSites == null;
+		} else if (sites.keySet() == null) {
+			return overviewSites.keySet() == null;
+		} else {
+			return sites.keySet().equals(overviewSites.keySet());
+		}
 	}
 }

@@ -2,7 +2,7 @@ package com.orange.paas.cf;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 import org.cloudfoundry.client.v3.BuildpackData;
 import org.cloudfoundry.client.v3.Lifecycle;
@@ -78,6 +78,20 @@ public class CloudFoundryAPI extends PaaSAPI {
 	}
 
 	@Override
+	public String createApp(OverviewApp app) {
+		String appId = operations.getAppId(app.getName());
+		if (appId != null) {
+			logger.info("app existed with id: {}", appId);
+			return appId;
+		}
+		assert appId == null;
+		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).build();
+		appId = operations.createApp(app.getName(), null, lifecycle);
+		logger.info("app created with id: {}", appId);
+		return appId;
+	}
+
+	@Override
 	public void startAppAndWaitUntilRunning(String appId) {
 		operations.startApp(appId);
 		while (!operations.listProcessesState(appId, processType).contains("RUNNING")) {
@@ -130,8 +144,8 @@ public class CloudFoundryAPI extends PaaSAPI {
 	}
 
 	@Override
-	public Object getDropletEnv(String dropletId, String envKey) {
-		return operations.getDropletEnv(dropletId).get(envKey);
+	public Map<String, Object> listDropletEnv(String dropletId) {
+		return operations.getDropletEnv(dropletId);
 	}
 
 	@Override
@@ -160,18 +174,5 @@ public class CloudFoundryAPI extends PaaSAPI {
 				return DropletState.CREATED;
 			}
 		}
-	}
-
-	//TODO decrease number of request to get all info for current state
-	@Override
-	public List<OverviewApp> getOverviewSite() {
-		return listSpaceAppsId().parallelStream().map(
-				appId -> new OverviewApp(appId, getAppName(appId), listAppRoutes(appId), listOverviewDroplets(appId)))
-				.collect(Collectors.toList());
-	}
-
-	private List<OverviewDroplet> listOverviewDroplets(String appId) {
-		return listAppDropletsId(appId).parallelStream().map(dropletId -> new OverviewDroplet(dropletId,
-				getDropletVersion(dropletId), getAppDropletState(appId, dropletId))).collect(Collectors.toList());
 	}
 }

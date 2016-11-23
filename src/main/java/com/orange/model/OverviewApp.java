@@ -6,16 +6,18 @@ import java.util.List;
 public class OverviewApp {
 	private String guid;
 	private String name;
-	private List<String> routes;
-	private List<OverviewDroplet> droplets;
+	private List<String> routes = new ArrayList<>();
+	private List<OverviewDroplet> droplets = new ArrayList<>();
+
+	public OverviewApp() {
+	}
 
 	public OverviewApp(String guid, String name, List<String> routes) {
 		this.guid = guid;
 		this.name = name;
 		this.routes = routes;
-		this.droplets = new ArrayList<>();
 	}
-	
+
 	public OverviewApp(String guid, String name, List<String> routes, List<OverviewDroplet> droplets) {
 		this.guid = guid;
 		this.name = name;
@@ -27,18 +29,34 @@ public class OverviewApp {
 		return guid;
 	}
 
+	public void setGuid(String guid) {
+		this.guid = guid;
+	}
+
 	public String getName() {
 		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public List<String> getRoutes() {
 		return routes;
 	}
 
+	public void setRoutes(List<String> routes) {
+		this.routes = routes;
+	}
+
 	public List<OverviewDroplet> getDroplets() {
 		return droplets;
 	}
-	
+
+	public void setDroplets(List<OverviewDroplet> droplets) {
+		this.droplets = droplets;
+	}
+
 	public void addOverviewDroplet(OverviewDroplet overviewDroplet) {
 		this.droplets.add(overviewDroplet);
 	}
@@ -85,6 +103,5 @@ public class OverviewApp {
 			return false;
 		return true;
 	}
-	
-	
+
 }

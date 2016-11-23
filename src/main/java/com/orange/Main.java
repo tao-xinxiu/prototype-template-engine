@@ -16,10 +16,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.orange.model.DeploymentConfig;
 import com.orange.model.Overview;
+import com.orange.model.OverviewApp;
+import com.orange.model.OverviewSite;
 import com.orange.model.PaaSSite;
 import com.orange.model.Requirement;
+import com.orange.paas.PaaSAPI;
 import com.orange.paas.cf.CloudFoundryAPI;
 import com.orange.state.Comparator;
+import com.orange.workflow.ParallelWorkflow;
+import com.orange.workflow.StepCalculator;
 import com.orange.workflow.Workflow;
 import com.orange.workflow.WorkflowCalculator;
 
@@ -100,14 +105,29 @@ public class Main {
 	@RequestMapping(value = "/change", method = RequestMethod.PUT)
 	public @ResponseBody void change(@RequestBody Overview desiredState) {
 		Comparator comparator = new Comparator(getCurrentState(), desiredState);
-		if (!comparator.valide()) {
+		if (!comparator.valid()) {
 			throw new IllegalStateException("Get current_state for all the sites to be managed first.");
 		}
+		Workflow updateSites = new ParallelWorkflow("parallel update sites");
+		for (PaaSSite site : managingSites) {
+			Workflow updateSite = new ParallelWorkflow(
+					String.format("parallel update site %s entities", site.getName()));
+			PaaSAPI api = new CloudFoundryAPI(site);
+			for (OverviewApp overviewApp : comparator.getAddedApp(site)) {
+				updateSite.addStep(StepCalculator.addApp(api, overviewApp));
+			}
+			updateSites.addStep(updateSite);
+		}
+		updateSites.exec();
+		logger.info("Workflow {} finished!", updateSites);
 	}
 
 	private Overview getCurrentState() {
-		return new Overview(managingSites.parallelStream()
-				.collect(Collectors.toMap(site -> site, site -> new CloudFoundryAPI(site).getOverviewSite())));
+		Map<String, PaaSSite> sites = managingSites.stream()
+				.collect(Collectors.toMap(site -> site.getName(), site -> site));
+		Map<String, OverviewSite> overviewSites = managingSites.parallelStream()
+				.collect(Collectors.toMap(site -> site.getName(), site -> new CloudFoundryAPI(site).getOverviewSite()));
+		return new Overview(sites, overviewSites);
 	}
 
 	public static void main(String[] args) {
