@@ -82,11 +82,7 @@ public class CloudFoundryRouteFactory extends RouteFactory {
 	@Override
 	public void mapAppRoutes(String appId, List<String> routes) {
 		for (String route : routes) {
-			System.out.println("--------------------------");
-			System.out.println(route);
 			String[] routeSplit = route.split("\\.", 2);
-			System.out.println(routeSplit[0]);
-			System.out.println(routeSplit[1]);
 			if (routeSplit.length != 2) {
 				throw new IllegalStateException(String.format("route [%s] format error", route));
 			}
@@ -94,7 +90,7 @@ public class CloudFoundryRouteFactory extends RouteFactory {
 			String domain = routeSplit[1];
 			if (!domains.containsValue(domain)) {
 				throw new IllegalStateException(String.format(
-						"The domain [%s] of the route [%s] is not contained in the site specification", domain, route));
+						"The domain [%s] of the route [%s] is not contained in the site [%s] specification", domain, route, siteAccessInfo.getName()));
 			}
 			String domainId = operations.getDomainId(domain);
 			String routeId = operations.getRouteId(hostname, domainId);
