@@ -103,7 +103,7 @@ public class Main {
 	}
 
 	@RequestMapping(value = "/change", method = RequestMethod.PUT)
-	public @ResponseBody void change(@RequestBody Overview desiredState) {
+	public @ResponseBody Overview change(@RequestBody Overview desiredState) {
 		Comparator comparator = new Comparator(getCurrentState(), desiredState);
 		if (!comparator.valid()) {
 			throw new IllegalStateException("Get current_state for all the sites to be managed first.");
@@ -123,6 +123,7 @@ public class Main {
 		}
 		updateSites.exec();
 		logger.info("Workflow {} finished!", updateSites);
+		return getCurrentState();
 	}
 
 	private Overview getCurrentState() {
