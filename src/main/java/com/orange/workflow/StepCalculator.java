@@ -6,7 +6,7 @@ import com.orange.paas.PaaSAPI;
 
 public class StepCalculator {
 	public static Step addApp(PaaSAPI api, OverviewApp app) {
-		return new Step("createApp at " + api.getSiteName()) {
+		return new Step(String.format("addApp %s at %s", app.getName(), api.getSiteName())) {
 			@Override
 			public void exec() {
 				assert app.getDroplets().size() == 1;
@@ -24,6 +24,15 @@ public class StepCalculator {
 				default:
 					throw new IllegalStateException("Abnormal desired droplet state");
 				}
+			}
+		};
+	}
+
+	public static Step removeApp(PaaSAPI api, OverviewApp app) {
+		return new Step(String.format("removeApp %s at %s", app.getName(), api.getSiteName())) {
+			@Override
+			public void exec() {
+				api.deleteApp(app.getGuid());
 			}
 		};
 	}

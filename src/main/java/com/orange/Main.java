@@ -113,8 +113,11 @@ public class Main {
 			Workflow updateSite = new ParallelWorkflow(
 					String.format("parallel update site %s entities", site.getName()));
 			PaaSAPI api = new CloudFoundryAPI(site);
-			for (OverviewApp overviewApp : comparator.getAddedApp(site)) {
-				updateSite.addStep(StepCalculator.addApp(api, overviewApp));
+			for (OverviewApp app : comparator.getAddedApp(site)) {
+				updateSite.addStep(StepCalculator.addApp(api, app));
+			}
+			for (OverviewApp app : comparator.getRemovedApp(site)) {
+				updateSite.addStep(StepCalculator.removeApp(api, app));
 			}
 			updateSites.addStep(updateSite);
 		}
