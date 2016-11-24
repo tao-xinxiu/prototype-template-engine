@@ -26,7 +26,8 @@ public class BlueGreen {
 				midApp.setName(midAppName);
 				
 				String midAppId = api.createAppIfNotExist(midApp);
-				api.prepareApp(midAppId, midApp);
+				String midDropletId = api.prepareApp(midAppId, midApp);
+				api.assignDroplet(midAppId, midDropletId);
 				String midRouteId = api.createRouteIfNotExist(midApp.getHostnames().get("tmp"), "tmp");
 				api.createRouteMapping(midAppId, midRouteId);
 				//midApp mapped to temporary local route

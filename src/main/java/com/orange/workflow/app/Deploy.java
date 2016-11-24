@@ -18,8 +18,9 @@ public class Deploy {
 			@Override
 			public void exec() {
 				String appId = api.createAppIfNotExist(desiredApp);
-				api.prepareApp(appId, desiredApp);
-
+				String dropletId = api.prepareApp(appId, desiredApp);
+				api.assignDroplet(appId, dropletId);
+				
 				String globalRouteId = api.createRouteIfNotExist(desiredApp.getHostnames().get("global"), "global");
 				api.createRouteMapping(appId, globalRouteId);
 

@@ -153,11 +153,11 @@ public class CloudFoundryOperations {
 		return response.getEnvironmentVariables();
 	}
 
-	public Map<String, Object> getDropletEnv(String appId, String dropletId) {
+	public Map<String, String> getDropletEnv(String appId, String dropletId) {
 		Set<String> userProvidedEnvKey = getUserEnvKey(appId);
 		return getCompleteDropletEnv(dropletId).entrySet().stream()
 				.filter(entry -> userProvidedEnvKey.contains(entry.getKey()))
-				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue().toString()));
 	}
 
 	public Map<String, Object> getCompleteDropletEnv(String dropletId) {
@@ -438,6 +438,9 @@ public class CloudFoundryOperations {
 					Arrays.asList("cf", "curl", String.format("v3/apps/%s/route_mappings", appId)),
 					Arrays.asList("jq", "-r", ".resources[]?.links?.route?.href"));
 			String routesId = routeslink.replace("/v2/routes/", "");
+			if (routesId==null || routesId.replace(" ", "").equals("")) {
+				return new String[]{};
+			}
 			return routesId.split("\\r?\\n");
 		} catch (Exception e) {
 			throw new IllegalStateException(String.format("expcetion in listMappedRoutesId with appId: [%s]", appId),

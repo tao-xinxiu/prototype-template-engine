@@ -36,7 +36,8 @@ public class StopRestart {
 					e1.printStackTrace();
 				}
 				
-				api.prepareApp(appId, desiredApp);
+				String dropletId = api.prepareApp(appId, desiredApp);
+				api.assignDroplet(appId, dropletId);
 				api.startAppAndWaitUntilRunning(appId);
 				
 				localRouteId = api.createRouteIfNotExist(localHostname, "local");

@@ -18,6 +18,10 @@ public abstract class PaaSAPI {
 	public String getSiteName() {
 		return site.getName();
 	}
+	
+	public Map<String, String> getDomains() {
+		return routeFactory.domains;
+	}
 
 	/**
 	 * create an app and return its id, if an app with specific name existed,
@@ -28,9 +32,7 @@ public abstract class PaaSAPI {
 	 */
 	public abstract String createAppIfNotExist(Application appProperty);
 
-	public abstract String createApp(OverviewApp app);
-
-	public abstract void prepareApp(String appId, Application appProperty);
+	public abstract String prepareApp(String appId, Application appProperty);
 
 	public abstract void startAppAndWaitUntilRunning(String appId);
 
@@ -66,7 +68,7 @@ public abstract class PaaSAPI {
 
 	public abstract String getAppName(String appId);
 
-	public abstract Map<String, Object> listDropletEnv(String appId, String dropletId);
+	public abstract Map<String, String> listDropletEnv(String appId, String dropletId);
 
 	public String getDropletVersion(String appId, String dropletId) {
 		return (String) listDropletEnv(appId, dropletId).get("APP_VERSION");
@@ -85,8 +87,20 @@ public abstract class PaaSAPI {
 
 	private List<OverviewDroplet> listOverviewDroplets(String appId) {
 		return listAppDropletsId(appId).parallelStream()
-				.map(dropletId -> new OverviewDroplet(dropletId, getDropletVersion(appId, dropletId),
+				.map(dropletId -> new OverviewDroplet(dropletId, getDropletVersion(appId, dropletId), null,
 						getAppDropletState(appId, dropletId), listDropletEnv(appId, dropletId)))
 				.collect(Collectors.toList());
 	}
+	
+	public abstract String createAppWithOneDroplet(OverviewApp app);
+
+	// upload the package and stage the droplet
+	public abstract String createDroplet(String appId, OverviewDroplet droplet);
+
+	public abstract void assignDroplet(String appId, String dropletId);
+	
+	public void mapAppRoutes (String appId, List<String> routes) {
+		routeFactory.mapAppRoutes(appId, routes);
+	}
+
 }

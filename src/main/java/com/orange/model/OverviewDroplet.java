@@ -6,15 +6,17 @@ import java.util.Map;
 public class OverviewDroplet {
 	private String guid;
 	private String version;
+	private String path;
 	private DropletState state;
-	private Map<String, Object> env = new HashMap<>();
+	private Map<String, String> env = new HashMap<>();
 
 	public OverviewDroplet() {
 	}
 
-	public OverviewDroplet(String guid, String version, DropletState state, Map<String, Object> env) {
+	public OverviewDroplet(String guid, String version, String path, DropletState state, Map<String, String> env) {
 		this.guid = guid;
 		this.version = version;
+		this.path = path;
 		this.state = state;
 		this.env = env;
 	}
@@ -35,6 +37,14 @@ public class OverviewDroplet {
 		this.version = version;
 	}
 
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
+	}
+
 	public DropletState getState() {
 		return state;
 	}
@@ -43,11 +53,11 @@ public class OverviewDroplet {
 		this.state = state;
 	}
 
-	public Map<String, Object> getEnv() {
+	public Map<String, String> getEnv() {
 		return env;
 	}
 
-	public void setEnv(Map<String, Object> env) {
+	public void setEnv(Map<String, String> env) {
 		this.env = env;
 	}
 

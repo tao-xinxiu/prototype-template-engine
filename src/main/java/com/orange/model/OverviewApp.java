@@ -60,6 +60,15 @@ public class OverviewApp {
 	public void addOverviewDroplet(OverviewDroplet overviewDroplet) {
 		this.droplets.add(overviewDroplet);
 	}
+	
+	public void valid() {
+		for (String route : routes) {
+			String[] routeSplit = route.split(".",2);
+			if (routeSplit.length != 2) {
+				throw new IllegalStateException(String.format("App [%s] route [%s] format error", name, route));
+			}
+		}
+	}
 
 	@Override
 	public int hashCode() {

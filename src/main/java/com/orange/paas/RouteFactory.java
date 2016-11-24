@@ -22,6 +22,8 @@ public abstract class RouteFactory {
 	public abstract void createRouteMapping(String appId, String routeId);
 
 	public abstract void deleteRouteMapping(String appId, String routeId);
-	
+
 	public abstract List<String> listAppRoutes(String appId);
+
+	public abstract void mapAppRoutes(String appId, List<String> routes);
 }

@@ -28,11 +28,25 @@ public class CloudFoundryAPI extends PaaSAPI {
 	}
 
 	@Override
-	public void prepareApp(String appId, Application appProperty) {
+	public String prepareApp(String appId, Application appProperty) {
 		String packageId = operations.createPackage(appId, PackageType.BITS, null);
 		uploadPackageAndWaitUntilReady(packageId, appProperty.getPath());
 		String dropletId = operations.createDroplet(packageId, null, null);
 		createDropletAndWaitUntilStaged(dropletId);
+		return dropletId;
+	}
+	
+	@Override
+	public String createDroplet(String appId, OverviewDroplet droplet){
+		String packageId = operations.createPackage(appId, PackageType.BITS, null);
+		uploadPackageAndWaitUntilReady(packageId, droplet.getPath());
+		String dropletId = operations.createDroplet(packageId, null, null);
+		createDropletAndWaitUntilStaged(dropletId);
+		return dropletId;
+	}
+
+	@Override
+	public void assignDroplet(String appId, String dropletId) {
 		// app should be stopped before assigning current droplet
 		operations.stopApp(appId);
 		operations.assignDroplet(appId, dropletId);
@@ -78,15 +92,19 @@ public class CloudFoundryAPI extends PaaSAPI {
 	}
 
 	@Override
-	public String createApp(OverviewApp app) {
+	public String createAppWithOneDroplet(OverviewApp app) {
+		assert app.getDroplets().size() == 1;
+		OverviewDroplet droplet = app.getDroplets().get(0);
 		String appId = operations.getAppId(app.getName());
 		if (appId != null) {
 			logger.info("app existed with id: {}", appId);
 			return appId;
 		}
 		assert appId == null;
-		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).build();
-		appId = operations.createApp(app.getName(), null, lifecycle);
+		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(
+				BuildpackData.builder().build())
+				.build();
+		appId = operations.createApp(app.getName(), droplet.getEnv(), lifecycle);
 		logger.info("app created with id: {}", appId);
 		return appId;
 	}
@@ -145,7 +163,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 
 	@Override
 	// get user provided droplet env
-	public Map<String, Object> listDropletEnv(String appId, String dropletId) {
+	public Map<String, String> listDropletEnv(String appId, String dropletId) {
 		return operations.getDropletEnv(appId, dropletId);
 	}
 

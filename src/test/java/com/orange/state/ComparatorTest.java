@@ -28,6 +28,7 @@ public class ComparatorTest {
 	private static final String dropletGuidDev = "guid-dev-droplet-hello-v1.0.1";
 	private static final String dropletGuidProd1 = "guid-prod-droplet-hello-v1.0.0";
 	private static final String sitePrepod = "preprod";
+	private static final String dropletPathProd = "/tmp/hello-v1.0.1";
 
 	@Test
 	public void should_valid_with_same_sites_in_two_states() {
@@ -95,19 +96,19 @@ public class ComparatorTest {
 	}
 	
 	private OverviewApp devApp() {
-		OverviewDroplet dropletDev = new OverviewDroplet(dropletGuidDev, appVersion2, DropletState.RUNNING, new HashMap<>());
+		OverviewDroplet dropletDev = new OverviewDroplet(dropletGuidDev, appVersion2, null, DropletState.RUNNING, new HashMap<>());
 		return new OverviewApp(appGuidDev, appName, Arrays.asList(appRouteGlobal, appRouteDev),
 				Arrays.asList(dropletDev));
 	}
 	
 	private OverviewApp prodOldApp() {
-		OverviewDroplet dropletProdOld = new OverviewDroplet(dropletGuidProd1, appVersion1, DropletState.RUNNING, new HashMap<>());
+		OverviewDroplet dropletProdOld = new OverviewDroplet(dropletGuidProd1, appVersion1, null, DropletState.RUNNING, new HashMap<>());
 		return new OverviewApp(appGuidProd, appName, Arrays.asList(appRouteGlobal, appRouteProd),
 				Arrays.asList(dropletProdOld));
 	}
 	
 	private OverviewApp prodNewApp() {
-		OverviewDroplet dropletProdNew = new OverviewDroplet(null, appVersion2, DropletState.RUNNING, new HashMap<>());
+		OverviewDroplet dropletProdNew = new OverviewDroplet(null, appVersion2, dropletPathProd, DropletState.RUNNING, new HashMap<>());
 		return new OverviewApp(null, appName, Arrays.asList(appRouteGlobal, appRouteProd),
 				Arrays.asList(dropletProdNew));
 	}
