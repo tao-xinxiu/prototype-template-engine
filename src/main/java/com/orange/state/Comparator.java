@@ -1,10 +1,14 @@
 package com.orange.state;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.orange.model.Overview;
 import com.orange.model.OverviewApp;
+import com.orange.model.OverviewDroplet;
 import com.orange.model.PaaSSite;
 
 public class Comparator {
@@ -48,4 +52,19 @@ public class Comparator {
 				.filter(currentApp -> !desiredAppIds.contains(currentApp.getGuid())).collect(Collectors.toList());
 	}
 
+	public Map<OverviewApp, OverviewApp> getChangedApp(PaaSSite site) {
+		Map<OverviewApp, OverviewApp> changedApps = new HashMap<>();
+		List<OverviewApp> currentApps = currentState.getOverviewSite(site.getName()).getOverviewApps();
+		List<OverviewApp> desiredApps = desiredState.getOverviewSite(site.getName()).getOverviewApps();
+		for (OverviewApp currentApp : currentApps) {
+			for (OverviewApp desiredApp : desiredApps) {
+				if (currentApp.getGuid().equals(desiredApp.getGuid()) && !currentApp.equals(desiredApp)) {
+					changedApps.put(currentApp, desiredApp);
+				}
+			}
+		}
+		return changedApps;
+	}
+	
+	
 }

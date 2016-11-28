@@ -65,7 +65,9 @@ public class OverviewDroplet {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((env == null) ? 0 : env.hashCode());
 		result = prime * result + ((guid == null) ? 0 : guid.hashCode());
+		result = prime * result + ((path == null) ? 0 : path.hashCode());
 		result = prime * result + ((state == null) ? 0 : state.hashCode());
 		result = prime * result + ((version == null) ? 0 : version.hashCode());
 		return result;
@@ -80,10 +82,20 @@ public class OverviewDroplet {
 		if (getClass() != obj.getClass())
 			return false;
 		OverviewDroplet other = (OverviewDroplet) obj;
+		if (env == null) {
+			if (other.env != null)
+				return false;
+		} else if (!env.equals(other.env))
+			return false;
 		if (guid == null) {
 			if (other.guid != null)
 				return false;
 		} else if (!guid.equals(other.guid))
+			return false;
+		if (path == null) {
+			if (other.path != null)
+				return false;
+		} else if (!path.equals(other.path))
 			return false;
 		if (state != other.state)
 			return false;

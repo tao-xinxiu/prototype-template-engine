@@ -131,6 +131,7 @@ public class Main {
 				.collect(Collectors.toMap(site -> site.getName(), site -> site));
 		Map<String, OverviewSite> overviewSites = managingSites.parallelStream()
 				.collect(Collectors.toMap(site -> site.getName(), site -> new CloudFoundryAPI(site).getOverviewSite()));
+		logger.info("Got current state!");
 		return new Overview(sites, overviewSites);
 	}
 
