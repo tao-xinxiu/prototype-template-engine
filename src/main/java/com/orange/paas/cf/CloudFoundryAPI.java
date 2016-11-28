@@ -171,9 +171,14 @@ public class CloudFoundryAPI extends PaaSAPI {
 
 	@Override
 	public void updateApp(OverviewApp app, Map<String, String> env) {
-		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(BuildpackData.builder().build()).build();
-		operations.updateApp(app.getGuid(), app.getName(), env, lifecycle);
-		logger.info("app {} updated with name {}; env {}; lifecycle {}.", app.getGuid(), app.getName(), env, lifecycle);
+		operations.updateApp(app.getGuid(), app.getName(), env, null);
+		logger.info("app {} updated with name {}; env {}.", app.getGuid(), app.getName(), env);
+	}
+	
+	@Override
+	public void updateApp(OverviewApp app) {
+		operations.updateApp(app.getGuid(), app.getName(), null, null);
+		logger.info("app {} updated with name {}.", app.getGuid(), app.getName());
 	}
 
 	@Override

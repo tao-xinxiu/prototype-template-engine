@@ -22,6 +22,7 @@ import com.orange.model.PaaSSite;
 import com.orange.model.Requirement;
 import com.orange.paas.PaaSAPI;
 import com.orange.paas.cf.CloudFoundryAPI;
+import com.orange.state.AppComparator;
 import com.orange.state.SiteComparator;
 import com.orange.workflow.ParallelWorkflow;
 import com.orange.workflow.StepCalculator;
@@ -119,6 +120,11 @@ public class Main {
 			}
 			for (OverviewApp app : comparator.getRemovedApp()) {
 				updateSite.addStep(StepCalculator.removeApp(api, app));
+			}
+			for (AppComparator appComparator : comparator.getAppComparators()) {
+				if (appComparator.isNameUpdated()) {
+					updateSite.addStep(StepCalculator.updateAppName(api, appComparator.getDesiredApp()));
+				}
 			}
 			updateSites.addStep(updateSite);
 		}

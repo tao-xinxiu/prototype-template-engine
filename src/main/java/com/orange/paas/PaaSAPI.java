@@ -45,6 +45,8 @@ public abstract class PaaSAPI {
 	public abstract void updateApp(String appId, Application appProperty);
 
 	public abstract void updateApp(OverviewApp app, Map<String, String> env);
+	
+	public abstract void updateApp(OverviewApp app);
 
 	public String getRouteId(String hostname, String domainKey) {
 		return routeFactory.getRouteId(hostname, domainKey);
