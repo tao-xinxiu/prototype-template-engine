@@ -107,4 +107,9 @@ public class OverviewDroplet {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return "OverviewDroplet [guid=" + guid + ", version=" + version + ", path=" + path + ", state=" + state
+				+ ", env=" + env + "]";
+	}
 }

@@ -201,7 +201,9 @@ public class CloudFoundryOperations {
 			cloudFoundryClient.applicationsV3().update(request).block();
 		} catch (Exception e) {
 			throw new IllegalStateException(
-					"expcetion during updating app with arg: " + name + "; " + env + "; " + lifecycle, e);
+					String.format("expcetion during updating app with appId: [%s]; name:[]; env:[]; lifecycle:[].",
+							appId, name, env, lifecycle),
+					e);
 		}
 	}
 
@@ -438,8 +440,8 @@ public class CloudFoundryOperations {
 					Arrays.asList("cf", "curl", String.format("v3/apps/%s/route_mappings", appId)),
 					Arrays.asList("jq", "-r", ".resources[]?.links?.route?.href"));
 			String routesId = routeslink.replace("/v2/routes/", "");
-			if (routesId==null || routesId.replace(" ", "").equals("")) {
-				return new String[]{};
+			if (routesId == null || routesId.replace(" ", "").equals("")) {
+				return new String[] {};
 			}
 			return routesId.split("\\r?\\n");
 		} catch (Exception e) {

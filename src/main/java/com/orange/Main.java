@@ -22,7 +22,7 @@ import com.orange.model.PaaSSite;
 import com.orange.model.Requirement;
 import com.orange.paas.PaaSAPI;
 import com.orange.paas.cf.CloudFoundryAPI;
-import com.orange.state.Comparator;
+import com.orange.state.SiteComparator;
 import com.orange.workflow.ParallelWorkflow;
 import com.orange.workflow.StepCalculator;
 import com.orange.workflow.Workflow;
@@ -104,19 +104,20 @@ public class Main {
 
 	@RequestMapping(value = "/change", method = RequestMethod.PUT)
 	public @ResponseBody Overview change(@RequestBody Overview desiredState) {
-		Comparator comparator = new Comparator(getCurrentState(), desiredState);
-		if (!comparator.valid()) {
+		Overview currentState = getCurrentState();
+		if (!currentState.listPaaSSites().equals(desiredState.listPaaSSites())) {
 			throw new IllegalStateException("Get current_state for all the sites to be managed first.");
 		}
 		Workflow updateSites = new ParallelWorkflow("parallel update sites");
 		for (PaaSSite site : managingSites) {
 			Workflow updateSite = new ParallelWorkflow(
 					String.format("parallel update site %s entities", site.getName()));
+			SiteComparator comparator = new SiteComparator(currentState.getOverviewSite(site.getName()), desiredState.getOverviewSite(site.getName()));
 			PaaSAPI api = new CloudFoundryAPI(site);
-			for (OverviewApp app : comparator.getAddedApp(site)) {
+			for (OverviewApp app : comparator.getAddedApp()) {
 				updateSite.addStep(StepCalculator.addApp(api, app));
 			}
-			for (OverviewApp app : comparator.getRemovedApp(site)) {
+			for (OverviewApp app : comparator.getRemovedApp()) {
 				updateSite.addStep(StepCalculator.removeApp(api, app));
 			}
 			updateSites.addStep(updateSite);

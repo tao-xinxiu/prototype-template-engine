@@ -18,7 +18,7 @@ public abstract class PaaSAPI {
 	public String getSiteName() {
 		return site.getName();
 	}
-	
+
 	public Map<String, String> getDomains() {
 		return routeFactory.domains;
 	}
@@ -31,6 +31,8 @@ public abstract class PaaSAPI {
 	 * @return
 	 */
 	public abstract String createAppIfNotExist(Application appProperty);
+	
+	public abstract String createAppIfNotExist(OverviewApp app);
 
 	public abstract String prepareApp(String appId, Application appProperty);
 
@@ -41,6 +43,8 @@ public abstract class PaaSAPI {
 	public abstract void deleteApp(String appId);
 
 	public abstract void updateApp(String appId, Application appProperty);
+
+	public abstract void updateApp(OverviewApp app, Map<String, String> env);
 
 	public String getRouteId(String hostname, String domainKey) {
 		return routeFactory.getRouteId(hostname, domainKey);
@@ -91,16 +95,15 @@ public abstract class PaaSAPI {
 						getAppDropletState(appId, dropletId), listDropletEnv(appId, dropletId)))
 				.collect(Collectors.toList());
 	}
-	
+
 	public abstract String createAppWithOneDroplet(OverviewApp app);
 
 	// upload the package and stage the droplet
-	public abstract String createDroplet(String appId, OverviewDroplet droplet);
+	public abstract String prepareDroplet(String appId, OverviewDroplet droplet);
 
 	public abstract void assignDroplet(String appId, String dropletId);
-	
-	public void mapAppRoutes (String appId, List<String> routes) {
+
+	public void mapAppRoutes(String appId, List<String> routes) {
 		routeFactory.mapAppRoutes(appId, routes);
 	}
-
 }

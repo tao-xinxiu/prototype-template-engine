@@ -9,20 +9,22 @@ public class StepCalculator {
 		return new Step(String.format("addApp %s at %s", app.getName(), api.getSiteName())) {
 			@Override
 			public void exec() {
-				assert app.getDroplets().size() == 1;
-				OverviewDroplet droplet = app.getDroplets().get(0);
-				String appId = api.createAppWithOneDroplet(app);
-				String dropletId = api.createDroplet(appId, droplet);
-				switch (droplet.getState()) {
-				case STAGED:
-					break;
-				case RUNNING:
-					api.assignDroplet(appId, dropletId);
-					api.startAppAndWaitUntilRunning(appId);
-					api.mapAppRoutes(appId, app.getRoutes());
-					break;
-				default:
-					throw new IllegalStateException("Abnormal desired droplet state");
+				String appId = api.createAppIfNotExist(app);
+				app.setGuid(appId);
+				for (OverviewDroplet droplet : app.getDroplets()) {
+					api.updateApp(app, droplet.getEnv());
+					String dropletId = api.prepareDroplet(appId, droplet);
+					switch (droplet.getState()) {
+					case STAGED:
+						break;
+					case RUNNING:
+						api.assignDroplet(appId, dropletId);
+						api.startAppAndWaitUntilRunning(appId);
+						api.mapAppRoutes(appId, app.getRoutes());
+						break;
+					default:
+						throw new IllegalStateException("Abnormal desired droplet state");
+					}
 				}
 			}
 		};

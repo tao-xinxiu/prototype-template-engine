@@ -113,4 +113,8 @@ public class OverviewApp {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return "OverviewApp [guid=" + guid + ", name=" + name + ", routes=" + routes + ", droplets=" + droplets + "]";
+	}
 }

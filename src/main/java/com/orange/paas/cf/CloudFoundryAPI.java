@@ -37,7 +37,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 	}
 
 	@Override
-	public String createDroplet(String appId, OverviewDroplet droplet) {
+	public String prepareDroplet(String appId, OverviewDroplet droplet) {
 		String packageId = operations.createPackage(appId, PackageType.BITS, null);
 		uploadPackageAndWaitUntilReady(packageId, droplet.getPath());
 		String dropletId = operations.createDroplet(packageId, null, null);
@@ -104,6 +104,18 @@ public class CloudFoundryAPI extends PaaSAPI {
 		logger.info("app created with id: {}", appId);
 		return appId;
 	}
+	
+	@Override
+	public String createAppIfNotExist(OverviewApp app) {
+		String appId = operations.getAppId(app.getName());
+		if (appId != null) {
+			throw new IllegalStateException(String.format("app existed with id: [%s]", appId));
+		}
+		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(BuildpackData.builder().build()).build();
+		appId = operations.createApp(app.getName(), null, lifecycle);
+		logger.info("app created with id: {}", appId);
+		return appId;
+	}
 
 	@Override
 	public void startAppAndWaitUntilRunning(String appId) {
@@ -155,6 +167,13 @@ public class CloudFoundryAPI extends PaaSAPI {
 		operations.updateApp(appId, appProperty.getName(), appProperty.getEnv(), lifecycle);
 		logger.info("app {} updated with name {}; env {}; lifecycle {}.", appId, appProperty.getName(),
 				appProperty.getEnv(), lifecycle);
+	}
+
+	@Override
+	public void updateApp(OverviewApp app, Map<String, String> env) {
+		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(BuildpackData.builder().build()).build();
+		operations.updateApp(app.getGuid(), app.getName(), env, lifecycle);
+		logger.info("app {} updated with name {}; env {}; lifecycle {}.", app.getGuid(), app.getName(), env, lifecycle);
 	}
 
 	@Override
