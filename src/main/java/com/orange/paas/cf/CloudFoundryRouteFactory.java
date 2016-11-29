@@ -83,15 +83,11 @@ public class CloudFoundryRouteFactory extends RouteFactory {
 	@Override
 	public void mapAppRoutes(String appId, List<Route> routes) {
 		for (Route route : routes) {
-			if (!domains.containsValue(route.getDomain())) {
-				throw new IllegalStateException(String.format(
-						"The domain [%s] of the route [%s] is not contained in the site [%s] specification",
-						route.getDomain(), route, siteAccessInfo.getName()));
-			}
+			validRoute(route);
 			String domainId = operations.getDomainId(route.getDomain());
 			String routeId = operations.getRouteId(route.getHostname(), domainId);
 			if (routeId == null) {
-				operations.createRoute(route.getHostname(), domainId);
+				routeId = operations.createRoute(route.getHostname(), domainId);
 			}
 			operations.createRouteMapping(appId, routeId);
 			logger.info("route [{}] mapped to the app [{}]", routeId, appId);
@@ -100,7 +96,25 @@ public class CloudFoundryRouteFactory extends RouteFactory {
 
 	@Override
 	public void unmapAppRoutes(String appId, List<Route> routes) {
-		// TODO
+		for (Route route : routes) {
+			validRoute(route);
+			String domainId = operations.getDomainId(route.getDomain());
+			String routeId = operations.getRouteId(route.getHostname(), domainId);
+			if (routeId != null) {
+				String routeMappingId = operations.getRouteMappingId(appId, routeId);
+				if (routeMappingId != null) {
+					operations.deleteRouteMapping(routeMappingId);
+				}
+			}
+			logger.info("route [{}] unmapped from the app [{}]", routeId, appId);
+		}
 	}
 
+	private void validRoute(Route route) {
+		if (!domains.containsValue(route.getDomain())) {
+			throw new IllegalStateException(
+					String.format("The domain [%s] of the route [%s] is not contained in the site [%s] specification",
+							route.getDomain(), route, siteAccessInfo.getName()));
+		}
+	}
 }

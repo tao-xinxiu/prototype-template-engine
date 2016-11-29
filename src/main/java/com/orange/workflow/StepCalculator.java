@@ -1,7 +1,10 @@
 package com.orange.workflow;
 
+import java.util.List;
+
 import com.orange.model.OverviewApp;
 import com.orange.model.OverviewDroplet;
+import com.orange.model.Route;
 import com.orange.paas.PaaSAPI;
 
 public class StepCalculator {
@@ -49,12 +52,20 @@ public class StepCalculator {
 		};
 	}
 
-	public static Step updateAppRoutes(PaaSAPI api, OverviewApp desiredApp) {
-		return new Step(String.format("updateApp [%s] routes to %s at %s", desiredApp.getGuid(), desiredApp.getRoutes(),
-				api.getSiteName())) {
+	public static Step addAppRoutes(PaaSAPI api, String appId, List<Route> addedRoutes) {
+		return new Step(String.format("map routes [%s] to %s at %s", addedRoutes, appId, api.getSiteName())) {
 			@Override
 			public void exec() {
-				
+				api.mapAppRoutes(appId, addedRoutes);
+			}
+		};
+	}
+
+	public static Step removeAppRoutes(PaaSAPI api, String appId, List<Route> removedRoutes) {
+		return new Step(String.format("unmap routes [%s] from %s at %s", removedRoutes, appId, api.getSiteName())) {
+			@Override
+			public void exec() {
+				api.unmapAppRoutes(appId, removedRoutes);
 			}
 		};
 	}

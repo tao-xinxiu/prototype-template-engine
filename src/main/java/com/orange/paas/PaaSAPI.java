@@ -108,4 +108,8 @@ public abstract class PaaSAPI {
 	public void mapAppRoutes(String appId, List<Route> routes) {
 		routeFactory.mapAppRoutes(appId, routes);
 	}
+	
+	public void unmapAppRoutes(String appId, List<Route> routes) {
+		routeFactory.unmapAppRoutes(appId, routes);
+	}
 }
