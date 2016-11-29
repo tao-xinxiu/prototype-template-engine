@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.orange.model.PaaSAccessInfo;
 import com.orange.model.PaaSSite;
+import com.orange.model.Route;
 
 public abstract class RouteFactory {
 	protected PaaSAccessInfo siteAccessInfo;
@@ -23,7 +24,21 @@ public abstract class RouteFactory {
 
 	public abstract void deleteRouteMapping(String appId, String routeId);
 
-	public abstract List<String> listAppRoutes(String appId);
+	public abstract List<Route> listAppRoutes(String appId);
 
-	public abstract void mapAppRoutes(String appId, List<String> routes);
+	/**
+	 * create routes if not exist, and map routes to the app
+	 * 
+	 * @param appId
+	 * @param routes
+	 */
+	public abstract void mapAppRoutes(String appId, List<Route> routes);
+
+	/**
+	 * unmap routes to the app and delete routes
+	 * 
+	 * @param appId
+	 * @param routes
+	 */
+	public abstract void unmapAppRoutes(String appId, List<Route> routes);
 }

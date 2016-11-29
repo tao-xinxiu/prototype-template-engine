@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.model.PaaSSite;
+import com.orange.model.Route;
 import com.orange.paas.RouteFactory;
 
 public class CloudFoundryRouteFactory extends RouteFactory {
@@ -69,36 +70,37 @@ public class CloudFoundryRouteFactory extends RouteFactory {
 	}
 
 	@Override
-	public List<String> listAppRoutes(String appId) {
-		List<String> appRoutes = new ArrayList<>();
+	public List<Route> listAppRoutes(String appId) {
+		List<Route> appRoutes = new ArrayList<>();
 		for (String routeId : operations.listMappedRoutesId(appId)) {
 			String host = operations.getRouteHost(routeId);
 			String domain = operations.getDomainString(operations.getRouteDomainId(routeId));
-			appRoutes.add(String.format("%s.%s", host, domain));
+			appRoutes.add(new Route(host, domain));
 		}
 		return appRoutes;
 	}
 
 	@Override
-	public void mapAppRoutes(String appId, List<String> routes) {
-		for (String route : routes) {
-			String[] routeSplit = route.split("\\.", 2);
-			if (routeSplit.length != 2) {
-				throw new IllegalStateException(String.format("route [%s] format error", route));
-			}
-			String hostname = routeSplit[0];
-			String domain = routeSplit[1];
-			if (!domains.containsValue(domain)) {
+	public void mapAppRoutes(String appId, List<Route> routes) {
+		for (Route route : routes) {
+			if (!domains.containsValue(route.getDomain())) {
 				throw new IllegalStateException(String.format(
-						"The domain [%s] of the route [%s] is not contained in the site [%s] specification", domain, route, siteAccessInfo.getName()));
+						"The domain [%s] of the route [%s] is not contained in the site [%s] specification",
+						route.getDomain(), route, siteAccessInfo.getName()));
 			}
-			String domainId = operations.getDomainId(domain);
-			String routeId = operations.getRouteId(hostname, domainId);
+			String domainId = operations.getDomainId(route.getDomain());
+			String routeId = operations.getRouteId(route.getHostname(), domainId);
 			if (routeId == null) {
-				operations.createRoute(hostname, domainId);
+				operations.createRoute(route.getHostname(), domainId);
 			}
 			operations.createRouteMapping(appId, routeId);
 			logger.info("route [{}] mapped to the app [{}]", routeId, appId);
 		}
 	}
+
+	@Override
+	public void unmapAppRoutes(String appId, List<Route> routes) {
+		// TODO
+	}
+
 }

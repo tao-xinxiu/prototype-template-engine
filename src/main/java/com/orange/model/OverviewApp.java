@@ -2,23 +2,24 @@ package com.orange.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OverviewApp {
 	private String guid;
 	private String name;
-	private List<String> routes = new ArrayList<>();
+	private List<Route> routes = new ArrayList<>();
 	private List<OverviewDroplet> droplets = new ArrayList<>();
 
 	public OverviewApp() {
 	}
 
-	public OverviewApp(String guid, String name, List<String> routes) {
+	public OverviewApp(String guid, String name, List<Route> routes) {
 		this.guid = guid;
 		this.name = name;
 		this.routes = routes;
 	}
 
-	public OverviewApp(String guid, String name, List<String> routes, List<OverviewDroplet> droplets) {
+	public OverviewApp(String guid, String name, List<Route> routes, List<OverviewDroplet> droplets) {
 		this.guid = guid;
 		this.name = name;
 		this.routes = routes;
@@ -42,11 +43,11 @@ public class OverviewApp {
 	}
 
 	public List<String> getRoutes() {
-		return routes;
+		return routes.stream().map(Route::toString).collect(Collectors.toList());
 	}
 
 	public void setRoutes(List<String> routes) {
-		this.routes = routes;
+		this.routes = routes.stream().map(Route::new).collect(Collectors.toList());
 	}
 
 	public List<OverviewDroplet> getDroplets() {
@@ -56,20 +57,15 @@ public class OverviewApp {
 	public void setDroplets(List<OverviewDroplet> droplets) {
 		this.droplets = droplets;
 	}
+	
+	public List<Route> listRoutes() {
+		return routes;
+	}
 
 	public void addOverviewDroplet(OverviewDroplet overviewDroplet) {
 		this.droplets.add(overviewDroplet);
 	}
 	
-	public void valid() {
-		for (String route : routes) {
-			String[] routeSplit = route.split(".",2);
-			if (routeSplit.length != 2) {
-				throw new IllegalStateException(String.format("App [%s] route [%s] format error", name, route));
-			}
-		}
-	}
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;

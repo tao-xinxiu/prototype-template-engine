@@ -64,7 +64,7 @@ public abstract class PaaSAPI {
 		routeFactory.deleteRouteMapping(appId, routeId);
 	}
 
-	public List<String> listAppRoutes(String appId) {
+	public List<Route> listAppRoutes(String appId) {
 		return routeFactory.listAppRoutes(appId);
 	}
 
@@ -105,7 +105,7 @@ public abstract class PaaSAPI {
 
 	public abstract void assignDroplet(String appId, String dropletId);
 
-	public void mapAppRoutes(String appId, List<String> routes) {
+	public void mapAppRoutes(String appId, List<Route> routes) {
 		routeFactory.mapAppRoutes(appId, routes);
 	}
 }

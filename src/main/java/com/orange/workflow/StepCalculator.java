@@ -20,7 +20,7 @@ public class StepCalculator {
 					case RUNNING:
 						api.assignDroplet(appId, dropletId);
 						api.startAppAndWaitUntilRunning(appId);
-						api.mapAppRoutes(appId, app.getRoutes());
+						api.mapAppRoutes(appId, app.listRoutes());
 						break;
 					default:
 						throw new IllegalStateException("Abnormal desired droplet state");
@@ -40,10 +40,21 @@ public class StepCalculator {
 	}
 
 	public static Step updateAppName(PaaSAPI api, OverviewApp desiredApp) {
-		return new Step(String.format("updateApp [%s] name to %s at %s", desiredApp.getGuid(), desiredApp.getName(), api.getSiteName())) {
+		return new Step(String.format("updateApp [%s] name to %s at %s", desiredApp.getGuid(), desiredApp.getName(),
+				api.getSiteName())) {
 			@Override
 			public void exec() {
 				api.updateApp(desiredApp);
+			}
+		};
+	}
+
+	public static Step updateAppRoutes(PaaSAPI api, OverviewApp desiredApp) {
+		return new Step(String.format("updateApp [%s] routes to %s at %s", desiredApp.getGuid(), desiredApp.getRoutes(),
+				api.getSiteName())) {
+			@Override
+			public void exec() {
+				
 			}
 		};
 	}
