@@ -44,6 +44,11 @@ public class CloudFoundryAPI extends PaaSAPI {
 		createDropletAndWaitUntilStaged(dropletId);
 		return dropletId;
 	}
+	
+	@Override
+	public void deleteDroplet(String dropletId) {
+		operations.deleteDroplet(dropletId);
+	}
 
 	@Override
 	public void assignDroplet(String appId, String dropletId) {

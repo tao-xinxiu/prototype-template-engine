@@ -102,6 +102,8 @@ public abstract class PaaSAPI {
 
 	// upload the package and stage the droplet
 	public abstract String prepareDroplet(String appId, OverviewDroplet droplet);
+	
+	public abstract void deleteDroplet(String dropletId);
 
 	public abstract void assignDroplet(String appId, String dropletId);
 

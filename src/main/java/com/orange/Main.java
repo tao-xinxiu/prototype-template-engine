@@ -107,9 +107,7 @@ public class Main {
 	@RequestMapping(value = "/change", method = RequestMethod.PUT)
 	public @ResponseBody Overview change(@RequestBody Overview desiredState) {
 		Overview currentState = getCurrentState();
-		if (!currentState.listPaaSSites().equals(desiredState.listPaaSSites())) {
-			throw new IllegalStateException("Get current_state for all the sites to be managed first.");
-		}
+		validDesiredState(currentState, desiredState);
 		Workflow updateSites = new ParallelWorkflow("parallel update sites");
 		for (PaaSSite site : managingSites) {
 			Workflow updateSite = new ParallelWorkflow(
@@ -134,7 +132,10 @@ public class Main {
 					updateApp.addStep(StepCalculator.addAppRoutes(api, appId, appComparator.getAddedRoutes()));
 					updateApp.addStep(StepCalculator.removeAppRoutes(api, appId, appComparator.getRemovedRoutes()));
 				}
-
+				updateApp.addStep(StepCalculator.addDroplets(api, appComparator.getDesiredApp(),
+						appComparator.getAddedDroplets()));
+				updateApp.addStep(StepCalculator.removeDroplets(api, appComparator.getCurrentApp(),
+						appComparator.getRemovedDroplets()));
 				updateSite.addStep(updateApp);
 			}
 			updateSites.addStep(updateSite);
@@ -151,6 +152,17 @@ public class Main {
 				.collect(Collectors.toMap(site -> site.getName(), site -> new CloudFoundryAPI(site).getOverviewSite()));
 		logger.info("Got current state!");
 		return new Overview(sites, overviewSites);
+	}
+
+	private void validDesiredState(Overview currentState, Overview desiredState) {
+		if (!currentState.listPaaSSites().equals(desiredState.listPaaSSites())) {
+			throw new IllegalStateException("Get current_state for all the sites to be managed first.");
+		}
+		if (desiredState.getOverviewSites().values().stream()
+				.anyMatch(site -> site.getOverviewApps().stream().anyMatch(app -> app.getDroplets().stream()
+						.anyMatch(droplet -> droplet.getGuid() == null && droplet.getPath() == null)))) {
+			throw new IllegalStateException("The path of all new droplets should be specified.");
+		}
 	}
 
 	public static void main(String[] args) {

@@ -37,6 +37,24 @@ public class AppComparator {
 			removedRoutes = currentApp.listRoutes().stream().filter(route -> !desiredApp.listRoutes().contains(route))
 					.collect(Collectors.toList());
 		}
+		List<String> desiredDropletIds = new ArrayList<>();
+		for (OverviewDroplet desiredDroplet : desiredApp.getDroplets()) {
+			if (desiredDroplet.getGuid() == null) {
+				addedDroplets.add(desiredDroplet);
+			} else {
+				desiredDropletIds.add(desiredDroplet.getGuid());
+				OverviewDroplet currentDroplet = currentApp.getDroplets().stream()
+						.filter(droplet -> droplet.getGuid().equals(desiredDroplet.getGuid())).findAny().orElse(null);
+				if (currentDroplet == null) {
+					throw new IllegalStateException(
+							String.format("Desired droplet guid [%s] of app [%s] is not present in the current state.",
+									desiredDroplet.getGuid(), desiredApp.getGuid()));
+				}
+				dropletComparators.add(new DropletComparator(currentDroplet, desiredDroplet));
+			}
+		}
+		removedDroplets = currentApp.getDroplets().stream()
+				.filter(droplet -> !desiredDropletIds.contains(droplet.getGuid())).collect(Collectors.toList());
 	}
 
 	public OverviewApp getCurrentApp() {

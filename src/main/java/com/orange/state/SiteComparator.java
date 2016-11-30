@@ -19,20 +19,12 @@ public class SiteComparator {
 	public SiteComparator(OverviewSite currentState, OverviewSite desiredState) {
 		List<String> desiredAppIds = new ArrayList<>();
 		for (OverviewApp desiredApp : desiredState.getOverviewApps()) {
-			desiredAppIds.add(desiredApp.getGuid());
+			validAppDroplets(desiredApp);
 			if (desiredApp.getGuid() == null) {
-				if (desiredApp.getDroplets().stream().anyMatch(droplet -> droplet.getGuid() != null)) {
-					throw new IllegalStateException(
-							String.format("New app [%s] should not have a existed droplet (i.e. droplet guid not null)",
-									desiredApp.getName()));
-				}
-				if (desiredApp.getDroplets().stream().filter(droplet -> droplet.getState() == DropletState.RUNNING)
-						.count() > 1) {
-					throw new IllegalStateException(String.format(
-							"New app [%s] should not have more than one droplet RUNNING", desiredApp.getName()));
-				}
+				validNewApp(desiredApp);
 				addedApp.add(desiredApp);
 			} else {
+				desiredAppIds.add(desiredApp.getGuid());
 				OverviewApp currentApp = currentState.getOverviewApps().stream()
 						.filter(app -> app.getGuid().equals(desiredApp.getGuid())).findAny().orElse(null);
 				if (currentApp == null) {
@@ -56,5 +48,19 @@ public class SiteComparator {
 
 	public List<AppComparator> getAppComparators() {
 		return appComparators;
+	}
+
+	private void validNewApp(OverviewApp app) {
+		if (app.getDroplets().stream().anyMatch(droplet -> droplet.getGuid() != null)) {
+			throw new IllegalStateException(String.format(
+					"New app [%s] should not have a existed droplet (i.e. droplet guid not null)", app.getName()));
+		}
+	}
+
+	private void validAppDroplets(OverviewApp app) {
+		if (app.getDroplets().stream().filter(droplet -> droplet.getState() == DropletState.RUNNING).count() > 1) {
+			throw new IllegalStateException(
+					String.format("New app [%s] should not have more than one droplet RUNNING", app.getName()));
+		}
 	}
 }
