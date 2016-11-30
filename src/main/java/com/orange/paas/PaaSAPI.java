@@ -31,7 +31,7 @@ public abstract class PaaSAPI {
 	 * @return
 	 */
 	public abstract String createAppIfNotExist(Application appProperty);
-	
+
 	public abstract String createAppIfNotExist(OverviewApp app);
 
 	public abstract String prepareApp(String appId, Application appProperty);
@@ -45,7 +45,7 @@ public abstract class PaaSAPI {
 	public abstract void updateApp(String appId, Application appProperty);
 
 	public abstract void updateApp(OverviewApp app, Map<String, String> env);
-	
+
 	public abstract void updateApp(OverviewApp app);
 
 	public String getRouteId(String hostname, String domainKey) {
@@ -92,8 +92,8 @@ public abstract class PaaSAPI {
 	}
 
 	private List<OverviewDroplet> listOverviewDroplets(String appId) {
-		return listAppDropletsId(appId).parallelStream()
-				.map(dropletId -> new OverviewDroplet(dropletId, getDropletVersion(appId, dropletId), null,
+		return listAppDropletsId(appId)
+				.parallelStream().map(dropletId -> new OverviewDroplet(dropletId, null,
 						getAppDropletState(appId, dropletId), listDropletEnv(appId, dropletId)))
 				.collect(Collectors.toList());
 	}
@@ -102,7 +102,7 @@ public abstract class PaaSAPI {
 
 	// upload the package and stage the droplet
 	public abstract String prepareDroplet(String appId, OverviewDroplet droplet);
-	
+
 	public abstract void deleteDroplet(String dropletId);
 
 	public abstract void assignDroplet(String appId, String dropletId);
@@ -110,7 +110,7 @@ public abstract class PaaSAPI {
 	public void mapAppRoutes(String appId, List<Route> routes) {
 		routeFactory.mapAppRoutes(appId, routes);
 	}
-	
+
 	public void unmapAppRoutes(String appId, List<Route> routes) {
 		routeFactory.unmapAppRoutes(appId, routes);
 	}

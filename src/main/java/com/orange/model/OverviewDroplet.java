@@ -5,7 +5,6 @@ import java.util.Map;
 
 public class OverviewDroplet {
 	private String guid;
-	private String version;
 	private String path;
 	private DropletState state;
 	private Map<String, String> env = new HashMap<>();
@@ -13,9 +12,8 @@ public class OverviewDroplet {
 	public OverviewDroplet() {
 	}
 
-	public OverviewDroplet(String guid, String version, String path, DropletState state, Map<String, String> env) {
+	public OverviewDroplet(String guid, String path, DropletState state, Map<String, String> env) {
 		this.guid = guid;
-		this.version = version;
 		this.path = path;
 		this.state = state;
 		this.env = env;
@@ -27,14 +25,6 @@ public class OverviewDroplet {
 
 	public void setGuid(String guid) {
 		this.guid = guid;
-	}
-
-	public String getVersion() {
-		return version;
-	}
-
-	public void setVersion(String version) {
-		this.version = version;
 	}
 
 	public String getPath() {
@@ -69,7 +59,6 @@ public class OverviewDroplet {
 		result = prime * result + ((guid == null) ? 0 : guid.hashCode());
 		result = prime * result + ((path == null) ? 0 : path.hashCode());
 		result = prime * result + ((state == null) ? 0 : state.hashCode());
-		result = prime * result + ((version == null) ? 0 : version.hashCode());
 		return result;
 	}
 
@@ -99,17 +88,11 @@ public class OverviewDroplet {
 			return false;
 		if (state != other.state)
 			return false;
-		if (version == null) {
-			if (other.version != null)
-				return false;
-		} else if (!version.equals(other.version))
-			return false;
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return "OverviewDroplet [guid=" + guid + ", version=" + version + ", path=" + path + ", state=" + state
-				+ ", env=" + env + "]";
+		return "OverviewDroplet [guid=" + guid + ", path=" + path + ", state=" + state + ", env=" + env + "]";
 	}
 }
