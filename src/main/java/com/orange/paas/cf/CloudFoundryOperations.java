@@ -11,6 +11,7 @@ import java.io.OutputStreamWriter;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,6 +54,9 @@ public class CloudFoundryOperations {
 	// cf-java-client supported CF API version
 	private static final Version SUPPORTED_API_VERSION = Version.valueOf("2.54.0");
 	private static final String path_CF_HOME_dir = System.getProperty("user.home") + "/cf_homes/";
+	private static final List<String> CF_sysenv_prefix = Arrays.asList("CF_", "VCAP_");
+	private static final List<String> CF_sysenv_key = Arrays.asList("HOME", "MEMORY_LIMIT", "PORT", "PWD", "TMPDIR",
+			"USER");
 
 	private PaaSAccessInfo siteAccessInfo;
 	private CloudFoundryClient cloudFoundryClient;
@@ -160,9 +164,10 @@ public class CloudFoundryOperations {
 	}
 
 	public Map<String, String> getDropletEnv(String appId, String dropletId) {
-		Set<String> userProvidedEnvKey = getUserEnvKey(appId);
+		Set<String> noUserEnvKey = getNoUserEnvKey(appId);
 		return getCompleteDropletEnv(dropletId).entrySet().stream()
-				.filter(entry -> userProvidedEnvKey.contains(entry.getKey()))
+				.filter(entry -> !noUserEnvKey.contains(entry.getKey())
+						&& CF_sysenv_prefix.stream().noneMatch(prefix -> entry.getKey().startsWith(prefix)))
 				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue().toString()));
 	}
 
@@ -172,8 +177,18 @@ public class CloudFoundryOperations {
 		return response.getEnvironmentVariables();
 	}
 
-	private Set<String> getUserEnvKey(String appId) {
-		return getAppEnv(appId).keySet();
+	private Set<String> getNoUserEnvKey(String appId) {
+		Set<String> noUserEnvKey = new HashSet<>();
+		noUserEnvKey.addAll(CF_sysenv_key);
+		GetApplicationEnvironmentRequest request = GetApplicationEnvironmentRequest.builder().applicationId(appId)
+				.build();
+		GetApplicationEnvironmentResponse response = cloudFoundryClient.applicationsV3().getEnvironment(request)
+				.block();
+		noUserEnvKey.addAll(response.getStagingEnvironmentVariables().keySet());
+		noUserEnvKey.addAll(response.getRunningEnvironmentVariables().keySet());
+		// noUserEnvKey.addAll(response.getApplicationEnvironmentVariables().keySet());
+		// noUserEnvKey.addAll(response.getSystemEnvironmentVariables().keySet());
+		return noUserEnvKey;
 	}
 
 	/**
