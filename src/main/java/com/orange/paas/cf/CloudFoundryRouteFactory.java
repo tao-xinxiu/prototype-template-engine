@@ -73,9 +73,7 @@ public class CloudFoundryRouteFactory extends RouteFactory {
 	public List<Route> listAppRoutes(String appId) {
 		List<Route> appRoutes = new ArrayList<>();
 		for (String routeId : operations.listMappedRoutesId(appId)) {
-			String host = operations.getRouteHost(routeId);
-			String domain = operations.getDomainString(operations.getRouteDomainId(routeId));
-			appRoutes.add(new Route(host, domain));
+			appRoutes.add(operations.getRoute(routeId));
 		}
 		return appRoutes;
 	}

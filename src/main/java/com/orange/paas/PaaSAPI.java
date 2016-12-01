@@ -2,7 +2,6 @@ package com.orange.paas;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.orange.model.*;
 
@@ -84,19 +83,7 @@ public abstract class PaaSAPI {
 
 	public abstract DropletState getAppDropletState(String appId, String dropletId);
 
-	// TODO decrease number of request to get all info for current state
-	public OverviewSite getOverviewSite() {
-		return new OverviewSite(listSpaceAppsId().parallelStream().map(
-				appId -> new OverviewApp(appId, getAppName(appId), listAppRoutes(appId), listOverviewDroplets(appId)))
-				.collect(Collectors.toList()));
-	}
-
-	private List<OverviewDroplet> listOverviewDroplets(String appId) {
-		return listAppDropletsId(appId)
-				.parallelStream().map(dropletId -> new OverviewDroplet(dropletId, null,
-						getAppDropletState(appId, dropletId), listDropletEnv(appId, dropletId)))
-				.collect(Collectors.toList());
-	}
+	public abstract OverviewSite getOverviewSite();
 
 	public abstract String createAppWithOneDroplet(OverviewApp app);
 

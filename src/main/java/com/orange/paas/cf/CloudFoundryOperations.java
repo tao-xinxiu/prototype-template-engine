@@ -21,7 +21,12 @@ import org.cloudfoundry.client.v2.domains.*;
 import org.cloudfoundry.client.v2.info.GetInfoRequest;
 import org.cloudfoundry.client.v2.info.GetInfoResponse;
 import org.cloudfoundry.client.v2.organizations.*;
-import org.cloudfoundry.client.v2.routes.*;
+import org.cloudfoundry.client.v2.routes.CreateRouteRequest;
+import org.cloudfoundry.client.v2.routes.CreateRouteResponse;
+import org.cloudfoundry.client.v2.routes.GetRouteRequest;
+import org.cloudfoundry.client.v2.routes.GetRouteResponse;
+import org.cloudfoundry.client.v2.routes.ListRoutesRequest;
+import org.cloudfoundry.client.v2.routes.ListRoutesResponse;
 import org.cloudfoundry.client.v2.spaces.*;
 import org.cloudfoundry.client.v3.*;
 import org.cloudfoundry.client.v3.Data;
@@ -41,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.zafarkhaja.semver.Version;
 import com.orange.model.PaaSAccessInfo;
+import com.orange.model.Route;
 
 public class CloudFoundryOperations {
 	private static final Logger logger = LoggerFactory.getLogger(CloudFoundryOperations.class);
@@ -357,6 +363,13 @@ public class CloudFoundryOperations {
 		return dropletsId;
 	}
 
+	public List<DropletResource> listAppDroplets(String appId) {
+		ListApplicationDropletsRequest request = ListApplicationDropletsRequest.builder().applicationId(appId).build();
+		ListApplicationDropletsResponse response = cloudFoundryClient.applicationsV3().listDroplets(request).block();
+		List<DropletResource> dropletResources = response.getResources();
+		return dropletResources == null ? new ArrayList<>() : dropletResources;
+	}
+
 	public String getCurrentDropletId(String appId) {
 		cfCliLogin();
 		return executeCFCliPipedCommand(
@@ -378,7 +391,7 @@ public class CloudFoundryOperations {
 		}
 	}
 
-	public String getDomainString(String domainId) {
+	public String getDomainName(String domainId) {
 		if (domainId == null) {
 			return null;
 		}
@@ -430,6 +443,18 @@ public class CloudFoundryOperations {
 			return null;
 		} else {
 			return response.getEntity().getDomainId();
+		}
+	}
+
+	public Route getRoute(String routeId) {
+		GetRouteRequest request = GetRouteRequest.builder().routeId(routeId).build();
+		GetRouteResponse response = cloudFoundryClient.routes().get(request).block();
+		if (response.getEntity() == null) {
+			return null;
+		} else {
+			String host = response.getEntity().getHost();
+			String domainId = response.getEntity().getDomainId();
+			return new Route(host, getDomainName(domainId));
 		}
 	}
 
