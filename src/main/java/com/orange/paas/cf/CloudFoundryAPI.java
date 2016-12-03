@@ -30,15 +30,6 @@ public class CloudFoundryAPI extends PaaSAPI {
 	}
 
 	@Override
-	public String prepareApp(String appId, Application appProperty) {
-		String packageId = operations.createPackage(appId, PackageType.BITS, null);
-		uploadPackageAndWaitUntilReady(packageId, appProperty.getPath());
-		String dropletId = operations.createDroplet(packageId, null, null);
-		createDropletAndWaitUntilStaged(dropletId);
-		return dropletId;
-	}
-
-	@Override
 	public String prepareDroplet(String appId, OverviewDroplet droplet) {
 		String packageId = operations.createPackage(appId, PackageType.BITS, null);
 		uploadPackageAndWaitUntilReady(packageId, droplet.getPath());
@@ -80,22 +71,6 @@ public class CloudFoundryAPI extends PaaSAPI {
 			}
 		}
 		logger.info("droplet staged");
-	}
-
-	@Override
-	public String createAppIfNotExist(Application appProperty) {
-		String appId = operations.getAppId(appProperty.getName());
-		if (appId != null) {
-			logger.info("app existed with id: {}", appId);
-			return appId;
-		}
-		assert appId == null;
-		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(
-				BuildpackData.builder().buildpack(appProperty.getBuildpack()).stack(appProperty.getStack()).build())
-				.build();
-		appId = operations.createApp(appProperty.getName(), appProperty.getEnv(), lifecycle);
-		logger.info("app created with id: {}", appId);
-		return appId;
 	}
 
 	@Override
@@ -164,16 +139,6 @@ public class CloudFoundryAPI extends PaaSAPI {
 	@Override
 	public String getAppName(String appId) {
 		return operations.getAppName(appId);
-	}
-
-	@Override
-	public void updateApp(String appId, Application appProperty) {
-		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(
-				BuildpackData.builder().buildpack(appProperty.getBuildpack()).stack(appProperty.getStack()).build())
-				.build();
-		operations.updateApp(appId, appProperty.getName(), appProperty.getEnv(), lifecycle);
-		logger.info("app {} updated with name {}; env {}; lifecycle {}.", appId, appProperty.getName(),
-				appProperty.getEnv(), lifecycle);
 	}
 
 	@Override

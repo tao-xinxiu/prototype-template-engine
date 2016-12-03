@@ -22,26 +22,13 @@ public abstract class PaaSAPI {
 		return routeFactory.domains;
 	}
 
-	/**
-	 * create an app and return its id, if an app with specific name existed,
-	 * return the id of the app directly
-	 * 
-	 * @param appProperty
-	 * @return
-	 */
-	public abstract String createAppIfNotExist(Application appProperty);
-
 	public abstract String createAppIfNotExist(OverviewApp app);
-
-	public abstract String prepareApp(String appId, Application appProperty);
 
 	public abstract void startAppAndWaitUntilRunning(String appId);
 
 	public abstract void stopApp(String appId);
 
 	public abstract void deleteApp(String appId);
-
-	public abstract void updateApp(String appId, Application appProperty);
 
 	public abstract void updateApp(OverviewApp app, Map<String, String> env);
 
