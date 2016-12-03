@@ -136,6 +136,13 @@ public class Main {
 						appComparator.getAddedDroplets()));
 				updateApp.addStep(StepCalculator.removeDroplets(api, appComparator.getCurrentApp(),
 						appComparator.getRemovedDroplets()));
+				if (appComparator.isCurrentDropletUpdated()) {
+					updateApp.addStep(
+							StepCalculator.updateCurrentDroplet(api, appId, appComparator.getDesiredCurrentDroplet()));
+				}
+				if (appComparator.isAppStoped()) {
+					updateApp.addStep(StepCalculator.stopApp(api, appId));
+				}
 				updateSite.addStep(updateApp);
 			}
 			updateSites.addStep(updateSite);

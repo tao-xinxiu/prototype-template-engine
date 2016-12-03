@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.orange.model.DropletState;
 import com.orange.model.OverviewApp;
 import com.orange.model.OverviewDroplet;
 import com.orange.model.Route;
@@ -17,7 +18,9 @@ public class AppComparator {
 	private List<Route> removedRoutes = new ArrayList<>();
 	private List<OverviewDroplet> addedDroplets = new ArrayList<>();
 	private List<OverviewDroplet> removedDroplets = new ArrayList<>();
-	private List<DropletComparator> dropletComparators = new ArrayList<>();
+	private boolean currentDropletUpdated;
+	private OverviewDroplet desiredCurrentDroplet;
+	private boolean appStoped;
 
 	public AppComparator(OverviewApp currentApp, OverviewApp desiredApp) {
 		if (!currentApp.getGuid().equals(desiredApp.getGuid())) {
@@ -50,11 +53,19 @@ public class AppComparator {
 							String.format("Desired droplet guid [%s] of app [%s] is not present in the current state.",
 									desiredDroplet.getGuid(), desiredApp.getGuid()));
 				}
-				dropletComparators.add(new DropletComparator(currentDroplet, desiredDroplet));
 			}
 		}
 		removedDroplets = currentApp.getDroplets().stream()
 				.filter(droplet -> !desiredDropletIds.contains(droplet.getGuid())).collect(Collectors.toList());
+		OverviewDroplet oldCurrentDroplet = currentApp.getDroplets().stream()
+				.filter(droplet -> droplet.getState() == DropletState.RUNNING).findAny().orElse(null);
+		desiredCurrentDroplet = desiredApp.getDroplets().stream()
+				.filter(droplet -> droplet.getState() == DropletState.RUNNING).findAny().orElse(null);
+		if (desiredCurrentDroplet == null) {
+			appStoped = true;
+		} else if (desiredCurrentDroplet.getGuid() != null) {
+			currentDropletUpdated = !desiredCurrentDroplet.getGuid().equals(oldCurrentDroplet.getGuid());
+		}
 	}
 
 	public OverviewApp getCurrentApp() {
@@ -81,15 +92,23 @@ public class AppComparator {
 		return removedDroplets;
 	}
 
-	public List<DropletComparator> getDropletComparators() {
-		return dropletComparators;
-	}
-
 	public List<Route> getAddedRoutes() {
 		return addedRoutes;
 	}
 
 	public List<Route> getRemovedRoutes() {
 		return removedRoutes;
+	}
+
+	public boolean isCurrentDropletUpdated() {
+		return currentDropletUpdated;
+	}
+
+	public OverviewDroplet getDesiredCurrentDroplet() {
+		return desiredCurrentDroplet;
+	}
+
+	public boolean isAppStoped() {
+		return appStoped;
 	}
 }

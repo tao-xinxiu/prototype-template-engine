@@ -15,6 +15,7 @@ public class StepCalculator {
 			public void exec() {
 				String appId = api.createAppIfNotExist(app);
 				app.setGuid(appId);
+				api.mapAppRoutes(appId, app.listRoutes());
 				for (OverviewDroplet droplet : app.getDroplets()) {
 					api.updateApp(app, droplet.getEnv());
 					String dropletId = api.prepareDroplet(appId, droplet);
@@ -24,7 +25,6 @@ public class StepCalculator {
 					case RUNNING:
 						api.assignDroplet(appId, dropletId);
 						api.startAppAndWaitUntilRunning(appId);
-						api.mapAppRoutes(appId, app.listRoutes());
 						break;
 					default:
 						throw new IllegalStateException("Abnormal desired droplet state");
@@ -108,6 +108,26 @@ public class StepCalculator {
 					}
 					api.deleteDroplet(droplet.getGuid());
 				}
+			}
+		};
+	}
+
+	public static Step updateCurrentDroplet(PaaSAPI api, String appId, OverviewDroplet newCurrentDroplet) {
+		return new Step(String.format("changeCurrentDroplet of app [%s] to [%s] at site [%s]", appId, newCurrentDroplet,
+				api.getSiteName())) {
+			@Override
+			public void exec() {
+				api.assignDroplet(appId, newCurrentDroplet.getGuid());
+				api.startAppAndWaitUntilRunning(appId);
+			}
+		};
+	}
+
+	public static Step stopApp(PaaSAPI api, String appId) {
+		return new Step(String.format("stopApp [%s] at site [%s]", appId, api.getSiteName())) {
+			@Override
+			public void exec() {
+				api.stopApp(appId);
 			}
 		};
 	}
