@@ -100,16 +100,20 @@ public class Main {
 
 	@RequestMapping(value = "/current_state", method = RequestMethod.PUT)
 	public @ResponseBody Overview getCurrentState(@RequestBody Collection<PaaSSite> managingSites) {
-		Main.managingSites = managingSites;
-		return getCurrentState();
+		Map<String, PaaSSite> sites = managingSites.stream()
+				.collect(Collectors.toMap(site -> site.getName(), site -> site));
+		Map<String, OverviewSite> overviewSites = managingSites.parallelStream()
+				.collect(Collectors.toMap(site -> site.getName(), site -> new CloudFoundryAPI(site).getOverviewSite()));
+		logger.info("Got current state!");
+		return new Overview(sites, overviewSites);
 	}
 
 	@RequestMapping(value = "/change", method = RequestMethod.PUT)
 	public @ResponseBody Overview change(@RequestBody Overview desiredState) {
-		Overview currentState = getCurrentState();
+		Overview currentState = getCurrentState(desiredState.listPaaSSites());
 		validDesiredState(currentState, desiredState);
 		Workflow updateSites = new ParallelWorkflow("parallel update sites");
-		for (PaaSSite site : managingSites) {
+		for (PaaSSite site : desiredState.listPaaSSites()) {
 			Workflow updateSite = new ParallelWorkflow(
 					String.format("parallel update site %s entities", site.getName()));
 			SiteComparator comparator = new SiteComparator(currentState.getOverviewSite(site.getName()),
@@ -149,22 +153,10 @@ public class Main {
 		}
 		updateSites.exec();
 		logger.info("Workflow {} finished!", updateSites);
-		return getCurrentState();
-	}
-
-	private Overview getCurrentState() {
-		Map<String, PaaSSite> sites = managingSites.stream()
-				.collect(Collectors.toMap(site -> site.getName(), site -> site));
-		Map<String, OverviewSite> overviewSites = managingSites.parallelStream()
-				.collect(Collectors.toMap(site -> site.getName(), site -> new CloudFoundryAPI(site).getOverviewSite()));
-		logger.info("Got current state!");
-		return new Overview(sites, overviewSites);
+		return getCurrentState(desiredState.listPaaSSites());
 	}
 
 	private void validDesiredState(Overview currentState, Overview desiredState) {
-		if (!currentState.listPaaSSites().equals(desiredState.listPaaSSites())) {
-			throw new IllegalStateException("Get current_state for all the sites to be managed first.");
-		}
 		if (desiredState.getOverviewSites().values().stream()
 				.anyMatch(site -> site.getOverviewApps().stream().anyMatch(app -> app.getDroplets().stream()
 						.anyMatch(droplet -> droplet.getGuid() == null && droplet.getPath() == null)))) {
