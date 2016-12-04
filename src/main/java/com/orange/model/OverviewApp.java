@@ -13,12 +13,6 @@ public class OverviewApp {
 	public OverviewApp() {
 	}
 
-	public OverviewApp(String guid, String name, List<Route> routes) {
-		this.guid = guid;
-		this.name = name;
-		this.routes = routes;
-	}
-
 	public OverviewApp(String guid, String name, List<Route> routes, List<OverviewDroplet> droplets) {
 		this.guid = guid;
 		this.name = name;
@@ -57,15 +51,11 @@ public class OverviewApp {
 	public void setDroplets(List<OverviewDroplet> droplets) {
 		this.droplets = droplets;
 	}
-	
+
 	public List<Route> listRoutes() {
 		return routes;
 	}
 
-	public void addOverviewDroplet(OverviewDroplet overviewDroplet) {
-		this.droplets.add(overviewDroplet);
-	}
-	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -112,5 +102,9 @@ public class OverviewApp {
 	@Override
 	public String toString() {
 		return "OverviewApp [guid=" + guid + ", name=" + name + ", routes=" + routes + ", droplets=" + droplets + "]";
+	}
+
+	public OverviewDroplet runningDroplet() {
+		return droplets.stream().filter(droplet->droplet.getState()==DropletState.RUNNING).findAny().orElse(null);
 	}
 }

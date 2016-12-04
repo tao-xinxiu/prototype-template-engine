@@ -81,6 +81,9 @@ public class Main {
 				if (appComparator.isAppStoped()) {
 					updateApp.addStep(StepCalculator.stopApp(api, appId));
 				}
+				if (appComparator.isAppInstancesUpdated()) {
+					updateApp.addStep(StepCalculator.scaleApp(api, appId, appComparator.getDesiredApp().runningDroplet().getInstances()));
+				}
 				updateSite.addStep(updateApp);
 			}
 			updateSites.addStep(updateSite);

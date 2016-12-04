@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.orange.model.DropletState;
 import com.orange.model.OverviewApp;
 import com.orange.model.OverviewDroplet;
 import com.orange.model.Route;
@@ -21,6 +20,7 @@ public class AppComparator {
 	private boolean currentDropletUpdated;
 	private OverviewDroplet desiredCurrentDroplet;
 	private boolean appStoped;
+	private boolean appInstancesUpdated;
 
 	public AppComparator(OverviewApp currentApp, OverviewApp desiredApp) {
 		if (!currentApp.getGuid().equals(desiredApp.getGuid())) {
@@ -57,14 +57,20 @@ public class AppComparator {
 		}
 		removedDroplets = currentApp.getDroplets().stream()
 				.filter(droplet -> !desiredDropletIds.contains(droplet.getGuid())).collect(Collectors.toList());
-		OverviewDroplet oldCurrentDroplet = currentApp.getDroplets().stream()
-				.filter(droplet -> droplet.getState() == DropletState.RUNNING).findAny().orElse(null);
-		desiredCurrentDroplet = desiredApp.getDroplets().stream()
-				.filter(droplet -> droplet.getState() == DropletState.RUNNING).findAny().orElse(null);
+		OverviewDroplet oldCurrentDroplet = currentApp.runningDroplet();
+		desiredCurrentDroplet = desiredApp.runningDroplet();
 		if (desiredCurrentDroplet == null) {
 			appStoped = true;
 		} else if (desiredCurrentDroplet.getGuid() != null) {
-			currentDropletUpdated = !desiredCurrentDroplet.getGuid().equals(oldCurrentDroplet.getGuid());
+			if (oldCurrentDroplet == null) {
+				currentDropletUpdated = true;
+			}
+			else {
+				currentDropletUpdated = !desiredCurrentDroplet.getGuid().equals(oldCurrentDroplet.getGuid());
+			}
+			if (!currentDropletUpdated) {
+				appInstancesUpdated = !(oldCurrentDroplet.getInstances() == desiredCurrentDroplet.getInstances());
+			}
 		}
 	}
 
@@ -110,5 +116,9 @@ public class AppComparator {
 
 	public boolean isAppStoped() {
 		return appStoped;
+	}
+
+	public boolean isAppInstancesUpdated() {
+		return appInstancesUpdated;
 	}
 }

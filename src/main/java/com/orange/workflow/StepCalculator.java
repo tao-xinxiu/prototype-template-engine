@@ -19,12 +19,12 @@ public class StepCalculator {
 				for (OverviewDroplet droplet : app.getDroplets()) {
 					api.updateApp(app, droplet.getEnv());
 					String dropletId = api.prepareDroplet(appId, droplet);
+					droplet.setGuid(dropletId);
 					switch (droplet.getState()) {
 					case STAGED:
 						break;
 					case RUNNING:
-						api.assignDroplet(appId, dropletId);
-						api.startAppAndWaitUntilRunning(appId);
+						StepCalculator.changeCurrentDroplet(api, appId, droplet);
 						break;
 					default:
 						throw new IllegalStateException("Abnormal desired droplet state");
@@ -81,13 +81,12 @@ public class StepCalculator {
 					api.updateApp(app, droplet.getEnv());
 					String appId = app.getGuid();
 					String dropletId = api.prepareDroplet(appId, droplet);
+					droplet.setGuid(dropletId);
 					switch (droplet.getState()) {
 					case STAGED:
 						break;
 					case RUNNING:
-						api.assignDroplet(appId, dropletId);
-						api.startAppAndWaitUntilRunning(appId);
-						api.mapAppRoutes(appId, app.listRoutes());
+						StepCalculator.changeCurrentDroplet(api, appId, droplet);
 						break;
 					default:
 						throw new IllegalStateException("Abnormal desired droplet state");
@@ -117,8 +116,7 @@ public class StepCalculator {
 				api.getSiteName())) {
 			@Override
 			public void exec() {
-				api.assignDroplet(appId, newCurrentDroplet.getGuid());
-				api.startAppAndWaitUntilRunning(appId);
+				StepCalculator.changeCurrentDroplet(api, appId, newCurrentDroplet);
 			}
 		};
 	}
@@ -130,5 +128,21 @@ public class StepCalculator {
 				api.stopApp(appId);
 			}
 		};
+	}
+
+	public static Step scaleApp(PaaSAPI api, String appId, int instances) {
+		return new Step(String.format("scaleApp [%s] to [%s] instances at site [%s]", appId,
+				instances, api.getSiteName())) {
+			@Override
+			public void exec() {
+				api.scaleApp(appId, instances);
+			}
+		};
+	}
+	
+	private static void changeCurrentDroplet(PaaSAPI api, String appId, OverviewDroplet currentDroplet){
+		api.assignDroplet(appId, currentDroplet.getGuid());
+		api.scaleApp(appId, currentDroplet.getInstances());
+		api.startAppAndWaitUntilRunning(appId);
 	}
 }

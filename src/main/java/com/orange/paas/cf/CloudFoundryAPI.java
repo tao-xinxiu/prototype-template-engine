@@ -172,9 +172,8 @@ public class CloudFoundryAPI extends PaaSAPI {
 
 	@Override
 	public OverviewSite getOverviewSite() {
-		return new OverviewSite(operations.listSpaceApps()
-				.parallelStream().map(appInfo -> new OverviewApp(appInfo.getId(), appInfo.getName(),
-						listAppRoutes(appInfo.getId()), listOverviewDroplets(appInfo.getId())))
+		return new OverviewSite(operations.listSpaceApps().parallelStream()
+				.map(appInfo -> new OverviewApp(appInfo.getId(), appInfo.getName(), listAppRoutes(appInfo.getId()), listOverviewDroplets(appInfo.getId())))
 				.collect(Collectors.toList()));
 	}
 
@@ -185,8 +184,14 @@ public class CloudFoundryAPI extends PaaSAPI {
 		for (DropletResource dropletInfo : operations.listAppDroplets(appId)) {
 			String dropletId = dropletInfo.getId();
 			DropletState state = toDropletState(dropletInfo.getState(), appId, dropletId, currentDropletId);
-			overviewDroplets
-					.add(new OverviewDroplet(dropletId, null, state, operations.getDropletEnv(appId, dropletId)));
+			if (state == DropletState.RUNNING) {
+				overviewDroplets.add(
+						new OverviewDroplet(dropletId, null, state, operations.getProcessesInstance(appId, processType),
+								operations.getDropletEnv(appId, dropletId)));
+			} else {
+				overviewDroplets.add(
+						new OverviewDroplet(dropletId, null, state, 0, operations.getDropletEnv(appId, dropletId)));
+			}
 		}
 		return overviewDroplets;
 	}
@@ -214,5 +219,10 @@ public class CloudFoundryAPI extends PaaSAPI {
 
 	private boolean isAppRunning(String appId) {
 		return operations.listProcessesState(appId, processType).contains("RUNNING");
+	}
+
+	@Override
+	public void scaleApp(String appId, int instances) {
+		operations.scaleProcess(appId, processType, instances);
 	}
 }

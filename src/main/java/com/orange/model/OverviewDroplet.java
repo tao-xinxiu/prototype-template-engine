@@ -7,15 +7,17 @@ public class OverviewDroplet {
 	private String guid;
 	private String path;
 	private DropletState state;
+	private int instances;
 	private Map<String, String> env = new HashMap<>();
 
 	public OverviewDroplet() {
 	}
 
-	public OverviewDroplet(String guid, String path, DropletState state, Map<String, String> env) {
+	public OverviewDroplet(String guid, String path, DropletState state, int instances, Map<String, String> env) {
 		this.guid = guid;
 		this.path = path;
 		this.state = state;
+		this.instances = instances;
 		this.env = env;
 	}
 
@@ -41,6 +43,14 @@ public class OverviewDroplet {
 
 	public void setState(DropletState state) {
 		this.state = state;
+	}
+
+	public int getInstances() {
+		return instances;
+	}
+
+	public void setInstances(int instances) {
+		this.instances = instances;
 	}
 
 	public Map<String, String> getEnv() {

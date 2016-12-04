@@ -547,6 +547,18 @@ public class CloudFoundryOperations {
 		}
 	}
 
+	public int getProcessesInstance(String appId, String processType) {
+		GetApplicationProcessRequest request = GetApplicationProcessRequest.builder().applicationId(appId)
+				.type(processType).build();
+		GetApplicationProcessResponse response = cloudFoundryClient.applicationsV3().getProcess(request).block();
+		return response.getInstances();
+	}
+
+	public void scaleProcess(String appId, String processType, int instances) {
+		ScaleApplicationRequest request = ScaleApplicationRequest.builder().applicationId(appId).type(processType).instances(instances).build();
+		cloudFoundryClient.applicationsV3().scale(request).block();
+	}
+
 	private void cfCliLogin() {
 		try {
 			List<String> loginCommand = new ArrayList<>(
