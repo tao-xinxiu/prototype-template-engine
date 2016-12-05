@@ -1,4 +1,4 @@
-package com.orange.workflow;
+package com.orange.workflow.calculator;
 
 import java.util.List;
 
@@ -7,9 +7,16 @@ import com.orange.model.OverviewApp;
 import com.orange.model.OverviewDroplet;
 import com.orange.model.Route;
 import com.orange.paas.PaaSAPI;
+import com.orange.workflow.Step;
 
-public class StepCalculator {
-	public static Step addApp(PaaSAPI api, OverviewApp app) {
+public class UpdateStepDirectory {
+	private PaaSAPI api;
+	
+	public UpdateStepDirectory(PaaSAPI api) {
+		this.api = api;
+	}
+
+	public Step addApp(OverviewApp app) {
 		return new Step(String.format("addApp [%s] at site [%s]", app.getName(), api.getSiteName())) {
 			@Override
 			public void exec() {
@@ -24,7 +31,7 @@ public class StepCalculator {
 					case STAGED:
 						break;
 					case RUNNING:
-						StepCalculator.changeCurrentDroplet(api, appId, droplet);
+						changeCurrentDropletAndStartApp(appId, droplet);
 						break;
 					default:
 						throw new IllegalStateException("Abnormal desired droplet state");
@@ -34,7 +41,7 @@ public class StepCalculator {
 		};
 	}
 
-	public static Step removeApp(PaaSAPI api, OverviewApp app) {
+	public Step removeApp(OverviewApp app) {
 		return new Step(String.format("removeApp [%s] at site [%s]", app.getName(), api.getSiteName())) {
 			@Override
 			public void exec() {
@@ -43,7 +50,7 @@ public class StepCalculator {
 		};
 	}
 
-	public static Step updateAppName(PaaSAPI api, OverviewApp desiredApp) {
+	public Step updateAppName(OverviewApp desiredApp) {
 		return new Step(String.format("updateApp [%s] name to [%s] at site [%s]", desiredApp.getGuid(),
 				desiredApp.getName(), api.getSiteName())) {
 			@Override
@@ -53,7 +60,7 @@ public class StepCalculator {
 		};
 	}
 
-	public static Step addAppRoutes(PaaSAPI api, String appId, List<Route> addedRoutes) {
+	public Step addAppRoutes(String appId, List<Route> addedRoutes) {
 		return new Step(
 				String.format("map routes %s to app [%s] at site [%s]", addedRoutes, appId, api.getSiteName())) {
 			@Override
@@ -63,7 +70,7 @@ public class StepCalculator {
 		};
 	}
 
-	public static Step removeAppRoutes(PaaSAPI api, String appId, List<Route> removedRoutes) {
+	public Step removeAppRoutes(String appId, List<Route> removedRoutes) {
 		return new Step(
 				String.format("unmap routes %s from app [%s] at site [%s]", removedRoutes, appId, api.getSiteName())) {
 			@Override
@@ -73,7 +80,7 @@ public class StepCalculator {
 		};
 	}
 
-	public static Step addDroplets(PaaSAPI api, OverviewApp app, List<OverviewDroplet> addedDroplets) {
+	public Step addDroplets(OverviewApp app, List<OverviewDroplet> addedDroplets) {
 		return new Step(String.format("addDroplets %s of app %s at site [%s]", addedDroplets, app, api.getSiteName())) {
 			@Override
 			public void exec() {
@@ -86,7 +93,7 @@ public class StepCalculator {
 					case STAGED:
 						break;
 					case RUNNING:
-						StepCalculator.changeCurrentDroplet(api, appId, droplet);
+						changeCurrentDropletAndStartApp(appId, droplet);
 						break;
 					default:
 						throw new IllegalStateException("Abnormal desired droplet state");
@@ -96,7 +103,7 @@ public class StepCalculator {
 		};
 	}
 
-	public static Step removeDroplets(PaaSAPI api, OverviewApp app, List<OverviewDroplet> removedDroplets) {
+	public Step removeDroplets(OverviewApp app, List<OverviewDroplet> removedDroplets) {
 		return new Step(
 				String.format("removeDroplet %s of app %s at site [%s]", removedDroplets, app, api.getSiteName())) {
 			@Override
@@ -111,17 +118,17 @@ public class StepCalculator {
 		};
 	}
 
-	public static Step updateCurrentDroplet(PaaSAPI api, String appId, OverviewDroplet newCurrentDroplet) {
+	public Step updateCurrentDroplet(String appId, OverviewDroplet newCurrentDroplet) {
 		return new Step(String.format("changeCurrentDroplet of app [%s] to [%s] at site [%s]", appId, newCurrentDroplet,
 				api.getSiteName())) {
 			@Override
 			public void exec() {
-				StepCalculator.changeCurrentDroplet(api, appId, newCurrentDroplet);
+				changeCurrentDropletAndStartApp(appId, newCurrentDroplet);
 			}
 		};
 	}
 
-	public static Step stopApp(PaaSAPI api, String appId) {
+	public Step stopApp(String appId) {
 		return new Step(String.format("stopApp [%s] at site [%s]", appId, api.getSiteName())) {
 			@Override
 			public void exec() {
@@ -130,7 +137,7 @@ public class StepCalculator {
 		};
 	}
 
-	public static Step scaleApp(PaaSAPI api, String appId, int instances) {
+	public Step scaleApp(String appId, int instances) {
 		return new Step(String.format("scaleApp [%s] to [%s] instances at site [%s]", appId,
 				instances, api.getSiteName())) {
 			@Override
@@ -140,7 +147,7 @@ public class StepCalculator {
 		};
 	}
 	
-	private static void changeCurrentDroplet(PaaSAPI api, String appId, OverviewDroplet currentDroplet){
+	private void changeCurrentDropletAndStartApp(String appId, OverviewDroplet currentDroplet){
 		api.assignDroplet(appId, currentDroplet.getGuid());
 		api.scaleApp(appId, currentDroplet.getInstances());
 		api.startAppAndWaitUntilRunning(appId);

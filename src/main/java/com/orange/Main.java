@@ -15,17 +15,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.orange.model.Overview;
-import com.orange.model.OverviewApp;
 import com.orange.model.OverviewSite;
 import com.orange.model.PaaSSite;
-import com.orange.paas.PaaSAPI;
 import com.orange.paas.cf.CloudFoundryAPI;
-import com.orange.state.AppComparator;
-import com.orange.state.SiteComparator;
-import com.orange.workflow.ParallelWorkflow;
-import com.orange.workflow.SerialWorkflow;
-import com.orange.workflow.StepCalculator;
 import com.orange.workflow.Workflow;
+import com.orange.workflow.calculator.WorkflowCalculator;
 
 @SpringBootApplication(exclude = { org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration.class })
 @RestController
@@ -46,50 +40,9 @@ public class Main {
 	public @ResponseBody Overview change(@RequestBody Overview desiredState) {
 		Overview currentState = getCurrentState(desiredState.listPaaSSites());
 		validDesiredState(currentState, desiredState);
-		Workflow updateSites = new ParallelWorkflow("parallel update sites");
-		for (PaaSSite site : desiredState.listPaaSSites()) {
-			Workflow updateSite = new ParallelWorkflow(
-					String.format("parallel update site %s entities", site.getName()));
-			SiteComparator comparator = new SiteComparator(currentState.getOverviewSite(site.getName()),
-					desiredState.getOverviewSite(site.getName()));
-			PaaSAPI api = new CloudFoundryAPI(site);
-			for (OverviewApp app : comparator.getAddedApp()) {
-				updateSite.addStep(StepCalculator.addApp(api, app));
-			}
-			for (OverviewApp app : comparator.getRemovedApp()) {
-				updateSite.addStep(StepCalculator.removeApp(api, app));
-			}
-			for (AppComparator appComparator : comparator.getAppComparators()) {
-				Workflow updateApp = new SerialWorkflow(String.format("serial update app from %s to %s at site %s",
-						appComparator.getCurrentApp(), appComparator.getDesiredApp(), site.getName()));
-				String appId = appComparator.getCurrentApp().getGuid();
-				if (appComparator.isNameUpdated()) {
-					updateApp.addStep(StepCalculator.updateAppName(api, appComparator.getDesiredApp()));
-				}
-				if (appComparator.isRoutesUpdated()) {
-					updateApp.addStep(StepCalculator.addAppRoutes(api, appId, appComparator.getAddedRoutes()));
-					updateApp.addStep(StepCalculator.removeAppRoutes(api, appId, appComparator.getRemovedRoutes()));
-				}
-				updateApp.addStep(StepCalculator.addDroplets(api, appComparator.getDesiredApp(),
-						appComparator.getAddedDroplets()));
-				updateApp.addStep(StepCalculator.removeDroplets(api, appComparator.getCurrentApp(),
-						appComparator.getRemovedDroplets()));
-				if (appComparator.isCurrentDropletUpdated()) {
-					updateApp.addStep(
-							StepCalculator.updateCurrentDroplet(api, appId, appComparator.getDesiredCurrentDroplet()));
-				}
-				if (appComparator.isAppStoped()) {
-					updateApp.addStep(StepCalculator.stopApp(api, appId));
-				}
-				if (appComparator.isAppInstancesUpdated()) {
-					updateApp.addStep(StepCalculator.scaleApp(api, appId, appComparator.getDesiredApp().runningDroplet().getInstances()));
-				}
-				updateSite.addStep(updateApp);
-			}
-			updateSites.addStep(updateSite);
-		}
-		updateSites.exec();
-		logger.info("Workflow {} finished!", updateSites);
+		Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState).getUpdateWorkflow();
+		updateWorkflow.exec();
+		logger.info("Workflow {} finished!", updateWorkflow);
 		return getCurrentState(desiredState.listPaaSSites());
 	}
 
