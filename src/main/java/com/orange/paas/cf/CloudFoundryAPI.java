@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.cloudfoundry.client.v3.BuildpackData;
 import org.cloudfoundry.client.v3.Lifecycle;
 import org.cloudfoundry.client.v3.Type;
-import org.cloudfoundry.client.v3.applications.ApplicationResource;
 import org.cloudfoundry.client.v3.droplets.DropletResource;
 import org.cloudfoundry.client.v3.packages.PackageType;
 import org.cloudfoundry.client.v3.packages.State;
@@ -74,24 +73,11 @@ public class CloudFoundryAPI extends PaaSAPI {
 	}
 
 	@Override
-	public String createAppWithOneDroplet(OverviewApp app) {
-		assert app.getDroplets().size() == 1;
-		OverviewDroplet droplet = app.getDroplets().get(0);
-		String appId = operations.getAppId(app.getName());
-		if (appId != null) {
-			throw new IllegalStateException(String.format("app existed with id: [%s]", appId));
-		}
-		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(BuildpackData.builder().build()).build();
-		appId = operations.createApp(app.getName(), droplet.getEnv(), lifecycle);
-		logger.info("app created with id: {}", appId);
-		return appId;
-	}
-
-	@Override
 	public String createAppIfNotExist(OverviewApp app) {
 		String appId = operations.getAppId(app.getName());
 		if (appId != null) {
-			throw new IllegalStateException(String.format("app existed with id: [%s]", appId));
+			throw new IllegalStateException(String
+					.format("Exception in creating app: app named [%s] existed with id: [%s]", app.getName(), appId));
 		}
 		Lifecycle lifecycle = Lifecycle.builder().type(Type.BUILDPACK).data(BuildpackData.builder().build()).build();
 		appId = operations.createApp(app.getName(), null, lifecycle);
@@ -109,7 +95,7 @@ public class CloudFoundryAPI extends PaaSAPI {
 				e.printStackTrace();
 			}
 		}
-		logger.info("app {} at {} running", appId, site.getName());
+		logger.info("app [{}] at [{}] running", appId, site.getName());
 	}
 
 	@Override
@@ -123,57 +109,22 @@ public class CloudFoundryAPI extends PaaSAPI {
 	}
 
 	@Override
-	public List<String> listSpaceAppsId() {
-		List<String> spaceAppsId = new ArrayList<String>();
-		for (ApplicationResource applicationResource : operations.listSpaceApps()) {
-			spaceAppsId.add(applicationResource.getId());
-		}
-		return spaceAppsId;
+	public void updateAppName(String appId, String name) {
+		operations.updateApp(appId, name, null, null);
+		logger.info("app [{}] name updated to [{}].", appId, name);
 	}
 
 	@Override
-	public String getAppId(String appName) {
-		return operations.getAppId(appName);
-	}
-
-	@Override
-	public String getAppName(String appId) {
-		return operations.getAppName(appId);
-	}
-
-	@Override
-	public void updateApp(OverviewApp app, Map<String, String> env) {
-		operations.updateApp(app.getGuid(), app.getName(), env, null);
-		logger.info("app {} updated with name {}; env {}.", app.getGuid(), app.getName(), env);
-	}
-
-	@Override
-	public void updateApp(OverviewApp app) {
-		operations.updateApp(app.getGuid(), app.getName(), null, null);
-		logger.info("app {} updated with name {}.", app.getGuid(), app.getName());
-	}
-
-	@Override
-	// get user provided droplet env
-	public Map<String, String> listDropletEnv(String appId, String dropletId) {
-		return operations.getDropletEnv(appId, dropletId);
-	}
-
-	@Override
-	public List<String> listAppDropletsId(String appId) {
-		return operations.listAppDropletsId(appId);
-	}
-
-	@Override
-	public DropletState getAppDropletState(String appId, String dropletId) {
-		return toDropletState(operations.getDropletState(dropletId), appId, dropletId,
-				operations.getCurrentDropletId(appId));
+	public void updateAppEnv(String appId, Map<String, String> env) {
+		operations.updateApp(appId, null, env, null);
+		logger.info("app [{}] env updated to [{}].", appId, env);
 	}
 
 	@Override
 	public OverviewSite getOverviewSite() {
-		return new OverviewSite(operations.listSpaceApps().parallelStream()
-				.map(appInfo -> new OverviewApp(appInfo.getId(), appInfo.getName(), listAppRoutes(appInfo.getId()), listOverviewDroplets(appInfo.getId())))
+		return new OverviewSite(operations.listSpaceApps()
+				.parallelStream().map(appInfo -> new OverviewApp(appInfo.getId(), appInfo.getName(),
+						listAppRoutes(appInfo.getId()), listOverviewDroplets(appInfo.getId())))
 				.collect(Collectors.toList()));
 	}
 

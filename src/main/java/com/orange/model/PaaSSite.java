@@ -1,11 +1,8 @@
 package com.orange.model;
 
-import java.util.Map;
-
 public class PaaSSite {
 	private String name;
 	private PaaSAccessInfo accessInfo;
-	private Map<String, String> domains;
 
 	public String getName() {
 		return name;
@@ -23,29 +20,11 @@ public class PaaSSite {
 		this.accessInfo = accessInfo;
 	}
 	
-	public Map<String, String> getDomains() {
-		return domains;
-	}
-
-	public void setDomains(Map<String, String> domains) {
-		this.domains = domains;
-	}
-
 	public boolean valid() {
-		if (accessInfo != null && accessInfo.valid() && validDomain()) {
+		if (accessInfo != null && accessInfo.valid()) {
 			return true;
 		} else {
 			return false;
-		}
-	}
-
-	private boolean validDomain() {
-		if (domains == null) {
-			return false;
-		} else if (domains.get("local") == null || domains.get("global") == null || domains.get("tmp") == null) {
-			return false;
-		} else {
-			return true;
 		}
 	}
 
@@ -78,6 +57,4 @@ public class PaaSSite {
 			return false;
 		return true;
 	}
-	
-	
 }
