@@ -1,4 +1,4 @@
-package com.orange.state;
+package com.orange.state.diff;
 
 import java.util.ArrayList;
 import java.util.List;
