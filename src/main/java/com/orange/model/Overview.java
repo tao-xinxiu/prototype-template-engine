@@ -43,6 +43,10 @@ public class Overview {
 	public OverviewSite getOverviewSite(String siteName) {
 		return overviewSites.get(siteName);
 	}
+	
+	public Set<String> listSitesName() {
+		return sites.keySet();
+	}
 
 	public Set<PaaSSite> listPaaSSites() {
 		return new HashSet<>(sites.values());
