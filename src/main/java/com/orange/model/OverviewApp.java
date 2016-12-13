@@ -104,7 +104,7 @@ public class OverviewApp {
 		return "OverviewApp [guid=" + guid + ", name=" + name + ", routes=" + routes + ", droplets=" + droplets + "]";
 	}
 
-	public OverviewDroplet runningDroplet() {
+	public OverviewDroplet findRunningDroplet() {
 		return droplets.stream().filter(droplet->droplet.getState()==DropletState.RUNNING).findAny().orElse(null);
 	}
 }

@@ -67,7 +67,7 @@ public class WorkflowCalculator {
 		}
 		if (appComparator.isAppInstancesUpdated()) {
 			updateApp.addStep(
-					stepCalculator.scaleApp(appId, appComparator.getDesiredApp().runningDroplet().getInstances()));
+					stepCalculator.scaleApp(appId, appComparator.getDesiredApp().findRunningDroplet().getInstances()));
 		}
 		return updateApp;
 	}

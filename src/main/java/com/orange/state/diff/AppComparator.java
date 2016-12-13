@@ -57,8 +57,8 @@ public class AppComparator {
 		}
 		removedDroplets = currentApp.getDroplets().stream()
 				.filter(droplet -> !desiredDropletIds.contains(droplet.getGuid())).collect(Collectors.toList());
-		OverviewDroplet oldCurrentDroplet = currentApp.runningDroplet();
-		desiredCurrentDroplet = desiredApp.runningDroplet();
+		OverviewDroplet oldCurrentDroplet = currentApp.findRunningDroplet();
+		desiredCurrentDroplet = desiredApp.findRunningDroplet();
 		if (desiredCurrentDroplet == null) {
 			appStoped = true;
 		} else if (desiredCurrentDroplet.getGuid() != null) {
