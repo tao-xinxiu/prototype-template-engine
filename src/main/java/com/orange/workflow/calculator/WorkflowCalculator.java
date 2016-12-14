@@ -49,6 +49,9 @@ public class WorkflowCalculator {
 			String workflowName) {
 		Workflow updateApp = new SerialWorkflow(workflowName);
 		String appId = appComparator.getCurrentApp().getGuid();
+		if (appComparator.isEnvUpdated()) {
+			updateApp.addStep(stepCalculator.updateAppEnv(appComparator.getDesiredApp()));
+		}
 		if (appComparator.isNameUpdated()) {
 			updateApp.addStep(stepCalculator.updateAppName(appComparator.getDesiredApp()));
 		}
@@ -56,18 +59,12 @@ public class WorkflowCalculator {
 			updateApp.addStep(stepCalculator.addAppRoutes(appId, appComparator.getAddedRoutes()));
 			updateApp.addStep(stepCalculator.removeAppRoutes(appId, appComparator.getRemovedRoutes()));
 		}
-		updateApp.addStep(stepCalculator.addDroplets(appComparator.getDesiredApp(), appComparator.getAddedDroplets()));
-		updateApp.addStep(
-				stepCalculator.removeDroplets(appComparator.getCurrentApp(), appComparator.getRemovedDroplets()));
-		if (appComparator.isCurrentDropletUpdated()) {
-			updateApp.addStep(stepCalculator.updateCurrentDroplet(appId, appComparator.getDesiredCurrentDroplet()));
+		if (appComparator.isStateUpdated()) {
+			updateApp.addStep(stepCalculator.updateAppState(appComparator.getCurrentApp(), appComparator.getDesiredApp()));
 		}
-		if (appComparator.isAppStoped()) {
-			updateApp.addStep(stepCalculator.stopApp(appId));
-		}
-		if (appComparator.isAppInstancesUpdated()) {
+		if (appComparator.isInstancesUpdated()) {
 			updateApp.addStep(
-					stepCalculator.scaleApp(appId, appComparator.getDesiredApp().findRunningDroplet().getInstances()));
+					stepCalculator.scaleApp(appId, appComparator.getDesiredApp().getInstances()));
 		}
 		return updateApp;
 	}

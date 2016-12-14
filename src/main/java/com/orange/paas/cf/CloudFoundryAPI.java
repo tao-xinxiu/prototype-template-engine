@@ -1,14 +1,13 @@
 package com.orange.paas.cf;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.cloudfoundry.client.v2.spaces.SpaceApplicationSummary;
 import org.cloudfoundry.client.v3.BuildpackData;
 import org.cloudfoundry.client.v3.Lifecycle;
 import org.cloudfoundry.client.v3.Type;
-import org.cloudfoundry.client.v3.droplets.DropletResource;
 import org.cloudfoundry.client.v3.packages.PackageType;
 import org.cloudfoundry.client.v3.packages.State;
 import org.slf4j.Logger;
@@ -29,12 +28,11 @@ public class CloudFoundryAPI extends PaaSAPI {
 	}
 
 	@Override
-	public String prepareDroplet(String appId, OverviewDroplet droplet) {
-		String packageId = operations.createPackage(appId, PackageType.BITS, null);
-		uploadPackageAndWaitUntilReady(packageId, droplet.getPath());
+	public void prepareApp(OverviewApp app) {
+		String packageId = operations.createPackage(app.getGuid(), PackageType.BITS, null);
+		uploadPackageAndWaitUntilReady(packageId, app.getPath());
 		String dropletId = operations.createDroplet(packageId, null, null);
 		createDropletAndWaitUntilStaged(dropletId);
-		return dropletId;
 	}
 
 	@Override
@@ -123,53 +121,33 @@ public class CloudFoundryAPI extends PaaSAPI {
 	@Override
 	public OverviewSite getOverviewSite() {
 		return new OverviewSite(operations.listSpaceApps()
-				.parallelStream().map(appInfo -> new OverviewApp(appInfo.getId(), appInfo.getName(),
-						listAppRoutes(appInfo.getId()), listOverviewDroplets(appInfo.getId())))
+				.parallelStream().map(appInfo -> new OverviewApp(appInfo.getId(), appInfo.getName(), null,
+						parseState(appInfo), appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo)))
 				.collect(Collectors.toList()));
 	}
 
-	private List<OverviewDroplet> listOverviewDroplets(String appId) {
-		List<OverviewDroplet> overviewDroplets = new ArrayList<>();
-		// to min request
-		String currentDropletId = operations.getCurrentDropletId(appId);
-		for (DropletResource dropletInfo : operations.listAppDroplets(appId)) {
-			String dropletId = dropletInfo.getId();
-			DropletState state = toDropletState(dropletInfo.getState(), appId, dropletId, currentDropletId);
-			if (state == DropletState.RUNNING) {
-				overviewDroplets.add(
-						new OverviewDroplet(dropletId, null, state, operations.getProcessesInstance(appId, processType),
-								operations.getDropletEnv(appId, dropletId)));
-			} else {
-				overviewDroplets.add(
-						new OverviewDroplet(dropletId, null, state, 0, operations.getDropletEnv(appId, dropletId)));
-			}
-		}
-		return overviewDroplets;
-	}
-
-	private DropletState toDropletState(org.cloudfoundry.client.v3.droplets.State dropletState, String appId,
-			String dropletId, String currentDropletId) {
-		if (isCurrentDroplet(dropletId, currentDropletId) && isAppRunning(appId)) {
+	private DropletState parseState(SpaceApplicationSummary appInfo) {
+		if (appInfo.getRunningInstances() > 0) {
 			return DropletState.RUNNING;
-		} else {
-			switch (dropletState) {
-			case STAGED:
-				return DropletState.STAGED;
-			case FAILED:
-			case EXPIRED:
-				return DropletState.FAILED;
-			default:// case PENDING: case STAGING:
-				return DropletState.CREATED;
-			}
+		}
+		switch (appInfo.getPackageState()) {
+		case "FAILED":
+			return DropletState.FAILED;
+		case "STAGED":
+			return DropletState.STAGED;
+		default:
+			return DropletState.CREATED;
 		}
 	}
 
-	private boolean isCurrentDroplet(String dropletId, String currentDropletId) {
-		return dropletId == null ? false : dropletId.equals(currentDropletId);
+	private Map<String, String> parseEnv(SpaceApplicationSummary appInfo) {
+		return appInfo.getEnvironmentJsons().entrySet().stream()
+				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> (String) entry.getValue()));
 	}
 
-	private boolean isAppRunning(String appId) {
-		return operations.listProcessesState(appId, processType).contains("RUNNING");
+	private List<Route> parseRoutes(SpaceApplicationSummary appInfo) {
+		return appInfo.getRoutes().stream().map(route -> new Route(route.getHost(), route.getDomain().getName()))
+				.collect(Collectors.toList());
 	}
 
 	@Override

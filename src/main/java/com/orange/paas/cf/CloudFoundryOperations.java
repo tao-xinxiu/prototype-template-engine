@@ -118,11 +118,11 @@ public class CloudFoundryOperations {
 		}
 	}
 
-	public List<ApplicationResource> listSpaceApps() {
+	public List<SpaceApplicationSummary> listSpaceApps() {
 		try {
-			ListApplicationsRequest request = ListApplicationsRequest.builder().spaceId(spaceId).build();
-			ListApplicationsResponse response = cloudFoundryClient.applicationsV3().list(request).block();
-			return response.getResources();
+			GetSpaceSummaryRequest request = GetSpaceSummaryRequest.builder().spaceId(spaceId).build();
+			GetSpaceSummaryResponse response = cloudFoundryClient.spaces().getSummary(request).block();
+			return response.getApplications();
 		} catch (Exception e) {
 			throw new IllegalStateException("expcetion during getting space apps", e);
 		}

@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.orange.model.DropletState;
 import com.orange.model.OverviewApp;
-import com.orange.model.OverviewDroplet;
 import com.orange.model.Route;
 import com.orange.paas.PaaSAPI;
 import com.orange.workflow.Step;
@@ -23,8 +22,17 @@ public class UpdateStepDirectory {
 				String appId = api.createAppIfNotExist(app);
 				app.setGuid(appId);
 				api.mapAppRoutes(appId, app.listRoutes());
-				for (OverviewDroplet droplet : app.getDroplets()) {
-					addDroplet(appId, droplet);
+				api.scaleApp(appId, app.getInstances());
+				api.updateAppEnv(appId, app.getEnv());
+				api.prepareApp(app);
+				switch (app.getState()) {
+				case STAGED:
+					break;
+				case RUNNING:
+					api.startAppAndWaitUntilRunning(appId);
+					break;
+				default:
+					throw new IllegalStateException("Abnormal desired droplet state");
 				}
 			}
 		};
@@ -45,6 +53,16 @@ public class UpdateStepDirectory {
 			@Override
 			public void exec() {
 				api.updateAppName(desiredApp.getGuid(), desiredApp.getName());
+			}
+		};
+	}
+	
+	public Step updateAppEnv(OverviewApp desiredApp) {
+		return new Step(String.format("updateApp [%s] env to [%s] at site [%s]", desiredApp.getGuid(),
+				desiredApp.getEnv(), api.getSiteName())) {
+			@Override
+			public void exec() {
+				api.updateAppEnv(desiredApp.getGuid(), desiredApp.getEnv());
 			}
 		};
 	}
@@ -69,47 +87,35 @@ public class UpdateStepDirectory {
 		};
 	}
 
-	public Step addDroplets(OverviewApp app, List<OverviewDroplet> addedDroplets) {
-		return new Step(String.format("addDroplets %s of app %s at site [%s]", addedDroplets, app, api.getSiteName())) {
+	public Step updateAppState(OverviewApp currentApp, OverviewApp desiredApp) {
+		return new Step(String.format("change app [%s] state from [%s] to [%s] at site [%s]", currentApp.getGuid(),
+				currentApp.getState(), desiredApp.getState(), api.getSiteName())) {
 			@Override
 			public void exec() {
-				for (OverviewDroplet droplet : addedDroplets) {
-					addDroplet(app.getGuid(), droplet);
-				}
-			}
-		};
-	}
-
-	public Step removeDroplets(OverviewApp app, List<OverviewDroplet> removedDroplets) {
-		return new Step(
-				String.format("removeDroplet %s of app %s at site [%s]", removedDroplets, app, api.getSiteName())) {
-			@Override
-			public void exec() {
-				for (OverviewDroplet droplet : removedDroplets) {
-					if (droplet.getState() == DropletState.RUNNING) {
-						api.stopApp(app.getGuid());
+				assert currentApp.getGuid().equals(desiredApp.getGuid());
+				assert currentApp.getState() != DropletState.FAILED && desiredApp.getState() != DropletState.FAILED;
+				assert currentApp.getState() != desiredApp.getState();
+				switch (currentApp.getState()) {
+				case CREATED:
+					api.prepareApp(currentApp);
+					if (desiredApp.getState() == DropletState.RUNNING) {
+						api.startAppAndWaitUntilRunning(currentApp.getGuid());
 					}
-					api.deleteDroplet(droplet.getGuid());
+					break;
+				case STAGED:
+					if (desiredApp.getState() == DropletState.RUNNING) {
+						api.startAppAndWaitUntilRunning(currentApp.getGuid());
+						break;
+					}
+				case RUNNING:
+					if (desiredApp.getState() == DropletState.STAGED) {
+						api.stopApp(currentApp.getGuid());
+						break;
+					}
+				default:
+					throw new IllegalStateException(String.format("Unsupported app state change from [%s] to [%s]",
+							currentApp.getState(), desiredApp.getState()));
 				}
-			}
-		};
-	}
-
-	public Step updateCurrentDroplet(String appId, OverviewDroplet newCurrentDroplet) {
-		return new Step(String.format("changeCurrentDroplet of app [%s] to [%s] at site [%s]", appId, newCurrentDroplet,
-				api.getSiteName())) {
-			@Override
-			public void exec() {
-				changeCurrentDropletAndStartApp(appId, newCurrentDroplet);
-			}
-		};
-	}
-
-	public Step stopApp(String appId) {
-		return new Step(String.format("stopApp [%s] at site [%s]", appId, api.getSiteName())) {
-			@Override
-			public void exec() {
-				api.stopApp(appId);
 			}
 		};
 	}
@@ -122,26 +128,5 @@ public class UpdateStepDirectory {
 				api.scaleApp(appId, instances);
 			}
 		};
-	}
-
-	private void changeCurrentDropletAndStartApp(String appId, OverviewDroplet currentDroplet) {
-		api.assignDroplet(appId, currentDroplet.getGuid());
-		api.scaleApp(appId, currentDroplet.getInstances());
-		api.startAppAndWaitUntilRunning(appId);
-	}
-
-	private void addDroplet(String appId, OverviewDroplet droplet) {
-		api.updateAppEnv(appId, droplet.getEnv());
-		String dropletId = api.prepareDroplet(appId, droplet);
-		droplet.setGuid(dropletId);
-		switch (droplet.getState()) {
-		case STAGED:
-			break;
-		case RUNNING:
-			changeCurrentDropletAndStartApp(appId, droplet);
-			break;
-		default:
-			throw new IllegalStateException("Abnormal desired droplet state");
-		}
 	}
 }

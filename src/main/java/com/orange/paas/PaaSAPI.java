@@ -35,7 +35,7 @@ public abstract class PaaSAPI {
 	public abstract void scaleApp(String appId, int instances);
 
 	// upload the package and stage the droplet
-	public abstract String prepareDroplet(String appId, OverviewDroplet droplet);
+	public abstract void prepareApp(OverviewApp app);
 
 	public abstract void deleteDroplet(String dropletId);
 

@@ -1,23 +1,32 @@
 package com.orange.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OverviewApp {
 	private String guid;
 	private String name;
+	private String path;
+	private DropletState state;
+	private int instances;
+	private Map<String, String> env = new HashMap<>();
 	private List<Route> routes = new ArrayList<>();
-	private List<OverviewDroplet> droplets = new ArrayList<>();
 
 	public OverviewApp() {
 	}
 
-	public OverviewApp(String guid, String name, List<Route> routes, List<OverviewDroplet> droplets) {
+	public OverviewApp(String guid, String name, String path, DropletState state, int instances,
+			Map<String, String> env, List<Route> routes) {
 		this.guid = guid;
 		this.name = name;
+		this.path = path;
+		this.state = state;
+		this.instances = instances;
+		this.env = env;
 		this.routes = routes;
-		this.droplets = droplets;
 	}
 
 	public String getGuid() {
@@ -44,67 +53,40 @@ public class OverviewApp {
 		this.routes = routes.stream().map(Route::new).collect(Collectors.toList());
 	}
 
-	public List<OverviewDroplet> getDroplets() {
-		return droplets;
-	}
-
-	public void setDroplets(List<OverviewDroplet> droplets) {
-		this.droplets = droplets;
-	}
-
 	public List<Route> listRoutes() {
 		return routes;
 	}
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((droplets == null) ? 0 : droplets.hashCode());
-		result = prime * result + ((guid == null) ? 0 : guid.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((routes == null) ? 0 : routes.hashCode());
-		return result;
+	public String getPath() {
+		return path;
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		OverviewApp other = (OverviewApp) obj;
-		if (droplets == null) {
-			if (other.droplets != null)
-				return false;
-		} else if (!droplets.equals(other.droplets))
-			return false;
-		if (guid == null) {
-			if (other.guid != null)
-				return false;
-		} else if (!guid.equals(other.guid))
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (routes == null) {
-			if (other.routes != null)
-				return false;
-		} else if (!routes.equals(other.routes))
-			return false;
-		return true;
+	public void setPath(String path) {
+		this.path = path;
 	}
 
-	@Override
-	public String toString() {
-		return "OverviewApp [guid=" + guid + ", name=" + name + ", routes=" + routes + ", droplets=" + droplets + "]";
+	public DropletState getState() {
+		return state;
 	}
 
-	public OverviewDroplet findRunningDroplet() {
-		return droplets.stream().filter(droplet->droplet.getState()==DropletState.RUNNING).findAny().orElse(null);
+	public void setState(DropletState state) {
+		this.state = state;
 	}
+
+	public int getInstances() {
+		return instances;
+	}
+
+	public void setInstances(int instances) {
+		this.instances = instances;
+	}
+
+	public Map<String, String> getEnv() {
+		return env;
+	}
+
+	public void setEnv(Map<String, String> env) {
+		this.env = env;
+	}
+
 }

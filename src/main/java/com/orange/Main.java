@@ -66,10 +66,9 @@ public class Main {
 	}
 
 	private void validDesiredState(Overview currentState, Overview desiredState) {
-		if (desiredState.getOverviewSites().values().stream()
-				.anyMatch(site -> site.getOverviewApps().stream().anyMatch(app -> app.getDroplets().stream()
-						.anyMatch(droplet -> droplet.getGuid() == null && droplet.getPath() == null)))) {
-			throw new IllegalStateException("The path of all new droplets should be specified.");
+		if (desiredState.getOverviewSites().values().stream().anyMatch(site -> site.getOverviewApps().stream()
+				.anyMatch(app -> app.getGuid() == null && app.getPath() == null))) {
+			throw new IllegalStateException("The path of all new apps should be specified.");
 		}
 	}
 

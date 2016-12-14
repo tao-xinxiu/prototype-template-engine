@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.orange.model.DropletState;
 import com.orange.model.OverviewApp;
 import com.orange.model.OverviewSite;
 
@@ -19,9 +18,7 @@ public class SiteComparator {
 	public SiteComparator(OverviewSite currentState, OverviewSite desiredState) {
 		List<String> desiredAppIds = new ArrayList<>();
 		for (OverviewApp desiredApp : desiredState.getOverviewApps()) {
-			validAppDroplets(desiredApp);
 			if (desiredApp.getGuid() == null) {
-				validNewApp(desiredApp);
 				addedApp.add(desiredApp);
 			} else {
 				desiredAppIds.add(desiredApp.getGuid());
@@ -48,19 +45,5 @@ public class SiteComparator {
 
 	public List<AppComparator> getAppComparators() {
 		return appComparators;
-	}
-
-	private void validNewApp(OverviewApp app) {
-		if (app.getDroplets().stream().anyMatch(droplet -> droplet.getGuid() != null)) {
-			throw new IllegalStateException(String.format(
-					"New app [%s] should not have a existed droplet (i.e. droplet guid not null)", app.getName()));
-		}
-	}
-
-	private void validAppDroplets(OverviewApp app) {
-		if (app.getDroplets().stream().filter(droplet -> droplet.getState() == DropletState.RUNNING).count() > 1) {
-			throw new IllegalStateException(
-					String.format("New app [%s] should not have more than one droplet RUNNING", app.getName()));
-		}
 	}
 }

@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.orange.model.OverviewApp;
-import com.orange.model.OverviewDroplet;
 import com.orange.model.Route;
 
 public class AppComparator {
@@ -15,12 +14,9 @@ public class AppComparator {
 	private boolean routesUpdated;
 	private List<Route> addedRoutes = new ArrayList<>();
 	private List<Route> removedRoutes = new ArrayList<>();
-	private List<OverviewDroplet> addedDroplets = new ArrayList<>();
-	private List<OverviewDroplet> removedDroplets = new ArrayList<>();
-	private boolean currentDropletUpdated;
-	private OverviewDroplet desiredCurrentDroplet;
-	private boolean appStoped;
-	private boolean appInstancesUpdated;
+	private boolean stateUpdated;
+	private boolean instancesUpdated;
+	private boolean envUpdated; 
 
 	public AppComparator(OverviewApp currentApp, OverviewApp desiredApp) {
 		if (!currentApp.getGuid().equals(desiredApp.getGuid())) {
@@ -30,9 +26,6 @@ public class AppComparator {
 		}
 		this.currentApp = currentApp;
 		this.desiredApp = desiredApp;
-		if (!currentApp.getName().equals(desiredApp.getName())) {
-			nameUpdated = true;
-		}
 		if (!currentApp.getRoutes().equals(desiredApp.getRoutes())) {
 			routesUpdated = true;
 			addedRoutes = desiredApp.listRoutes().stream().filter(route -> !currentApp.listRoutes().contains(route))
@@ -40,38 +33,10 @@ public class AppComparator {
 			removedRoutes = currentApp.listRoutes().stream().filter(route -> !desiredApp.listRoutes().contains(route))
 					.collect(Collectors.toList());
 		}
-		List<String> desiredDropletIds = new ArrayList<>();
-		for (OverviewDroplet desiredDroplet : desiredApp.getDroplets()) {
-			if (desiredDroplet.getGuid() == null) {
-				addedDroplets.add(desiredDroplet);
-			} else {
-				desiredDropletIds.add(desiredDroplet.getGuid());
-				OverviewDroplet currentDroplet = currentApp.getDroplets().stream()
-						.filter(droplet -> droplet.getGuid().equals(desiredDroplet.getGuid())).findAny().orElse(null);
-				if (currentDroplet == null) {
-					throw new IllegalStateException(
-							String.format("Desired droplet guid [%s] of app [%s] is not present in the current state.",
-									desiredDroplet.getGuid(), desiredApp.getGuid()));
-				}
-			}
-		}
-		removedDroplets = currentApp.getDroplets().stream()
-				.filter(droplet -> !desiredDropletIds.contains(droplet.getGuid())).collect(Collectors.toList());
-		OverviewDroplet oldCurrentDroplet = currentApp.findRunningDroplet();
-		desiredCurrentDroplet = desiredApp.findRunningDroplet();
-		if (desiredCurrentDroplet == null) {
-			appStoped = true;
-		} else if (desiredCurrentDroplet.getGuid() != null) {
-			if (oldCurrentDroplet == null) {
-				currentDropletUpdated = true;
-			}
-			else {
-				currentDropletUpdated = !desiredCurrentDroplet.getGuid().equals(oldCurrentDroplet.getGuid());
-			}
-			if (!currentDropletUpdated) {
-				appInstancesUpdated = !(oldCurrentDroplet.getInstances() == desiredCurrentDroplet.getInstances());
-			}
-		}
+		nameUpdated = !currentApp.getName().equals(desiredApp.getName());
+		stateUpdated = !(currentApp.getState() == desiredApp.getState());
+		instancesUpdated = !(currentApp.getInstances() == desiredApp.getInstances());
+		envUpdated = !(currentApp.getEnv().equals(desiredApp.getEnv()));
 	}
 
 	public OverviewApp getCurrentApp() {
@@ -90,14 +55,6 @@ public class AppComparator {
 		return routesUpdated;
 	}
 
-	public List<OverviewDroplet> getAddedDroplets() {
-		return addedDroplets;
-	}
-
-	public List<OverviewDroplet> getRemovedDroplets() {
-		return removedDroplets;
-	}
-
 	public List<Route> getAddedRoutes() {
 		return addedRoutes;
 	}
@@ -106,19 +63,15 @@ public class AppComparator {
 		return removedRoutes;
 	}
 
-	public boolean isCurrentDropletUpdated() {
-		return currentDropletUpdated;
+	public boolean isStateUpdated() {
+		return stateUpdated;
 	}
 
-	public OverviewDroplet getDesiredCurrentDroplet() {
-		return desiredCurrentDroplet;
+	public boolean isInstancesUpdated() {
+		return instancesUpdated;
 	}
 
-	public boolean isAppStoped() {
-		return appStoped;
-	}
-
-	public boolean isAppInstancesUpdated() {
-		return appInstancesUpdated;
+	public boolean isEnvUpdated() {
+		return envUpdated;
 	}
 }
