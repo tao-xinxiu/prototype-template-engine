@@ -1,5 +1,6 @@
 package com.orange.paas.cf;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,8 +24,8 @@ public class CloudFoundryAPI extends PaaSAPI {
 	private CloudFoundryOperations operations;
 
 	public CloudFoundryAPI(PaaSSite site) {
-		super(site, new CloudFoundryRouteFactory(site));
-		this.operations = ((CloudFoundryRouteFactory) this.routeFactory).getOperations();
+		super(site);
+		this.operations = new CloudFoundryOperations(site.getAccessInfo());
 	}
 
 	@Override
@@ -33,18 +34,6 @@ public class CloudFoundryAPI extends PaaSAPI {
 		uploadPackageAndWaitUntilReady(packageId, app.getPath());
 		String dropletId = operations.createDroplet(packageId, null, null);
 		createDropletAndWaitUntilStaged(dropletId);
-	}
-
-	@Override
-	public void deleteDroplet(String dropletId) {
-		operations.deleteDroplet(dropletId);
-	}
-
-	@Override
-	public void assignDroplet(String appId, String dropletId) {
-		// app should be stopped before assigning current droplet
-		operations.stopApp(appId);
-		operations.assignDroplet(appId, dropletId);
 	}
 
 	private void uploadPackageAndWaitUntilReady(String packageId, String bitsPath) {
@@ -153,5 +142,42 @@ public class CloudFoundryAPI extends PaaSAPI {
 	@Override
 	public void scaleApp(String appId, int instances) {
 		operations.scaleProcess(appId, processType, instances);
+	}
+	
+	@Override
+	public List<Route> listAppRoutes(String appId) {
+		List<Route> appRoutes = new ArrayList<>();
+		for (String routeId : operations.listMappedRoutesId(appId)) {
+			appRoutes.add(operations.getRoute(routeId));
+		}
+		return appRoutes;
+	}
+
+	@Override
+	public void mapAppRoutes(String appId, List<Route> routes) {
+		for (Route route : routes) {
+			String domainId = operations.getDomainId(route.getDomain());
+			String routeId = operations.getRouteId(route.getHostname(), domainId);
+			if (routeId == null) {
+				routeId = operations.createRoute(route.getHostname(), domainId);
+			}
+			operations.createRouteMapping(appId, routeId);
+			logger.info("route [{}] mapped to the app [{}]", routeId, appId);
+		}
+	}
+
+	@Override
+	public void unmapAppRoutes(String appId, List<Route> routes) {
+		for (Route route : routes) {
+			String domainId = operations.getDomainId(route.getDomain());
+			String routeId = operations.getRouteId(route.getHostname(), domainId);
+			if (routeId != null) {
+				String routeMappingId = operations.getRouteMappingId(appId, routeId);
+				if (routeMappingId != null) {
+					operations.deleteRouteMapping(routeMappingId);
+				}
+			}
+			logger.info("route [{}] unmapped from the app [{}]", routeId, appId);
+		}
 	}
 }
