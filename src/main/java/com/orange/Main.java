@@ -1,7 +1,6 @@
 package com.orange;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -20,7 +19,7 @@ import com.orange.model.Overview;
 import com.orange.model.OverviewSite;
 import com.orange.model.PaaSSite;
 import com.orange.model.Strategy;
-import com.orange.paas.cf.CloudFoundryAPI;
+import com.orange.paas.cf.CloudFoundryAPIv2;
 import com.orange.state.MidStateCalculator;
 import com.orange.workflow.Workflow;
 import com.orange.workflow.calculator.WorkflowCalculator;
@@ -36,7 +35,7 @@ public class Main {
 		Map<String, PaaSSite> sites = managingSites.stream()
 				.collect(Collectors.toMap(site -> site.getName(), site -> site));
 		Map<String, OverviewSite> overviewSites = managingSites.parallelStream()
-				.collect(Collectors.toMap(site -> site.getName(), site -> new CloudFoundryAPI(site).getOverviewSite()));
+				.collect(Collectors.toMap(site -> site.getName(), site -> new CloudFoundryAPIv2(site).getOverviewSite()));
 		logger.info("Got current state!");
 		return new Overview(sites, overviewSites);
 	}
@@ -52,7 +51,7 @@ public class Main {
 	}
 
 	@RequestMapping(value = "/mid_states", method = RequestMethod.POST)
-	public @ResponseBody List<Overview> calcMidStates(@RequestBody Overview finalState, String strategy) {
+	public @ResponseBody Overview calcMidStates(@RequestBody Overview finalState, String strategy) {
 		Strategy updateStrategy = Strategy.valueOf(strategy.toUpperCase());
 		Overview currentState = getCurrentState(finalState.listPaaSSites());
 		validDesiredState(currentState, finalState);

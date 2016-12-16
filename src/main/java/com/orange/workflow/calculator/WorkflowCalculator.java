@@ -4,7 +4,7 @@ import com.orange.model.Overview;
 import com.orange.model.OverviewApp;
 import com.orange.model.PaaSSite;
 import com.orange.paas.PaaSAPI;
-import com.orange.paas.cf.CloudFoundryAPI;
+import com.orange.paas.cf.CloudFoundryAPIv2;
 import com.orange.state.diff.AppComparator;
 import com.orange.state.diff.SiteComparator;
 import com.orange.workflow.ParallelWorkflow;
@@ -27,7 +27,7 @@ public class WorkflowCalculator {
 					String.format("parallel update site %s entities", site.getName()));
 			SiteComparator comparator = new SiteComparator(currentState.getOverviewSite(site.getName()),
 					desiredState.getOverviewSite(site.getName()));
-			PaaSAPI api = new CloudFoundryAPI(site);
+			PaaSAPI api = new CloudFoundryAPIv2(site);
 			UpdateStepDirectory stepDir = new UpdateStepDirectory(api);
 			for (OverviewApp app : comparator.getAddedApp()) {
 				updateSite.addStep(stepDir.addApp(app));
@@ -60,11 +60,11 @@ public class WorkflowCalculator {
 			updateApp.addStep(stepCalculator.removeAppRoutes(appId, appComparator.getRemovedRoutes()));
 		}
 		if (appComparator.isStateUpdated()) {
-			updateApp.addStep(stepCalculator.updateAppState(appComparator.getCurrentApp(), appComparator.getDesiredApp()));
+			updateApp.addStep(
+					stepCalculator.updateAppState(appComparator.getCurrentApp(), appComparator.getDesiredApp()));
 		}
 		if (appComparator.isInstancesUpdated()) {
-			updateApp.addStep(
-					stepCalculator.scaleApp(appId, appComparator.getDesiredApp().getInstances()));
+			updateApp.addStep(stepCalculator.scaleApp(appId, appComparator.getDesiredApp().getInstances()));
 		}
 		return updateApp;
 	}

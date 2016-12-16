@@ -1,7 +1,7 @@
 package com.orange.model;
 
 public class SiteDeploymentConfig {
-	private String temporaryNameSuffix = "_UPDATING";
+	private String temporaryNameSuffix = "-UPDATING";
 	private String temporaryRoute;
 	// TODO add timeout, retry times of deployment operations
 

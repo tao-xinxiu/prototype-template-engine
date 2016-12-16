@@ -89,4 +89,9 @@ public class OverviewApp {
 		this.env = env;
 	}
 
+	@Override
+	public String toString() {
+		return "OverviewApp [guid=" + guid + ", name=" + name + ", path=" + path + ", state=" + state + ", instances="
+				+ instances + ", env=" + env + ", routes=" + routes + "]";
+	}
 }

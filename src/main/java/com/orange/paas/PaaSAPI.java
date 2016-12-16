@@ -18,12 +18,40 @@ public abstract class PaaSAPI {
 
 	public abstract OverviewSite getOverviewSite();
 
-	public abstract String createAppIfNotExist(OverviewApp app);
+	/**
+	 * create and upload app package; i.e. app state: nonexistent -> created
+	 * 
+	 * @param app
+	 * @return
+	 */
+	public abstract String createAppWaitUploaded(OverviewApp app);
 
-	public abstract void prepareApp(OverviewApp app);
+	/**
+	 * stage app; i.e. app state: created -> staged
+	 * 
+	 * @param app
+	 */
+	public abstract void stageAppWaitStaged(String appId);
 
-	public abstract void startAppAndWaitUntilRunning(String appId);
+	/**
+	 * start app; i.e. app state: staged -> running
+	 * 
+	 * @param appId
+	 */
+	public abstract void startAppWaitRunning(String appId);
 
+	/**
+	 * app state: created -> running
+	 * 
+	 * @param appId
+	 */
+	public abstract void stageAndStartAppWaitRunning(String appId);
+
+	/**
+	 * app state: running -> staged
+	 * 
+	 * @param appId
+	 */
 	public abstract void stopApp(String appId);
 
 	public abstract void deleteApp(String appId);
@@ -34,9 +62,16 @@ public abstract class PaaSAPI {
 
 	public abstract void scaleApp(String appId, int instances);
 
+	/**
+	 * operations to make env change taking effect, ex. restage or restart
+	 * 
+	 * @param appId
+	 */
+	public abstract void propagateEnvChange(String appId);
+
 	public abstract List<Route> listAppRoutes(String appId);
 
-	public abstract void mapAppRoutes(String appId, List<Route> routes);
+	public abstract void createAndMapAppRoutes(String appId, List<Route> routes);
 
 	public abstract void unmapAppRoutes(String appId, List<Route> routes);
 }

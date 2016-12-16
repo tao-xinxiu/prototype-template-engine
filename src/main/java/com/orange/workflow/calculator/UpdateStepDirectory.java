@@ -19,20 +19,20 @@ public class UpdateStepDirectory {
 		return new Step(String.format("addApp [%s] at site [%s]", app.getName(), api.getSiteName())) {
 			@Override
 			public void exec() {
-				String appId = api.createAppIfNotExist(app);
-				app.setGuid(appId);
-				api.mapAppRoutes(appId, app.listRoutes());
-				api.scaleApp(appId, app.getInstances());
-				api.updateAppEnv(appId, app.getEnv());
-				api.prepareApp(app);
+				String appId = api.createAppWaitUploaded(app);
+				api.createAndMapAppRoutes(appId, app.listRoutes());
 				switch (app.getState()) {
+				case CREATED:
+					break;
 				case STAGED:
+					api.stageAppWaitStaged(appId);
 					break;
 				case RUNNING:
-					api.startAppAndWaitUntilRunning(appId);
+					api.stageAndStartAppWaitRunning(appId);
 					break;
 				default:
-					throw new IllegalStateException("Abnormal desired droplet state");
+					throw new IllegalStateException(
+							String.format("Unsupported desired app state [%s].", app.getState()));
 				}
 			}
 		};
@@ -56,13 +56,14 @@ public class UpdateStepDirectory {
 			}
 		};
 	}
-	
+
 	public Step updateAppEnv(OverviewApp desiredApp) {
 		return new Step(String.format("updateApp [%s] env to [%s] at site [%s]", desiredApp.getGuid(),
 				desiredApp.getEnv(), api.getSiteName())) {
 			@Override
 			public void exec() {
 				api.updateAppEnv(desiredApp.getGuid(), desiredApp.getEnv());
+				api.propagateEnvChange(desiredApp.getGuid());
 			}
 		};
 	}
@@ -72,7 +73,7 @@ public class UpdateStepDirectory {
 				String.format("map routes %s to app [%s] at site [%s]", addedRoutes, appId, api.getSiteName())) {
 			@Override
 			public void exec() {
-				api.mapAppRoutes(appId, addedRoutes);
+				api.createAndMapAppRoutes(appId, addedRoutes);
 			}
 		};
 	}
@@ -97,14 +98,20 @@ public class UpdateStepDirectory {
 				assert currentApp.getState() != desiredApp.getState();
 				switch (currentApp.getState()) {
 				case CREATED:
-					api.prepareApp(currentApp);
-					if (desiredApp.getState() == DropletState.RUNNING) {
-						api.startAppAndWaitUntilRunning(currentApp.getGuid());
+					switch (desiredApp.getState()) {
+					case STAGED:
+						api.stageAppWaitStaged(currentApp.getGuid());
+						break;
+					case RUNNING:
+						api.stageAndStartAppWaitRunning(currentApp.getGuid());
+					default:
+						throw new IllegalStateException(
+								String.format("Unsupported desired app state [%s].", desiredApp.getState()));
 					}
 					break;
 				case STAGED:
 					if (desiredApp.getState() == DropletState.RUNNING) {
-						api.startAppAndWaitUntilRunning(currentApp.getGuid());
+						api.startAppWaitRunning(currentApp.getGuid());
 						break;
 					}
 				case RUNNING:
@@ -113,7 +120,7 @@ public class UpdateStepDirectory {
 						break;
 					}
 				default:
-					throw new IllegalStateException(String.format("Unsupported app state change from [%s] to [%s]",
+					throw new IllegalStateException(String.format("Unsupported app state change from [%s] to [%s].",
 							currentApp.getState(), desiredApp.getState()));
 				}
 			}
