@@ -111,17 +111,17 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 				.collect(Collectors.toList()));
 	}
 
-	private DropletState parseState(SpaceApplicationSummary appInfo) {
+	private AppState parseState(SpaceApplicationSummary appInfo) {
 		if (appInfo.getRunningInstances() > 0) {
-			return DropletState.RUNNING;
+			return AppState.RUNNING;
 		}
 		switch (appInfo.getPackageState()) {
 		case "FAILED":
-			return DropletState.FAILED;
+			return AppState.FAILED;
 		case "STAGED":
-			return DropletState.STAGED;
+			return AppState.STAGED;
 		default:
-			return DropletState.CREATED;
+			return AppState.CREATED;
 		}
 	}
 

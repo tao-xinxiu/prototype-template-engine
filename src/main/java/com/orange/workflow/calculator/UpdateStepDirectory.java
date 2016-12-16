@@ -2,7 +2,7 @@ package com.orange.workflow.calculator;
 
 import java.util.List;
 
-import com.orange.model.DropletState;
+import com.orange.model.AppState;
 import com.orange.model.OverviewApp;
 import com.orange.model.Route;
 import com.orange.paas.PaaSAPI;
@@ -94,7 +94,7 @@ public class UpdateStepDirectory {
 			@Override
 			public void exec() {
 				assert currentApp.getGuid().equals(desiredApp.getGuid());
-				assert currentApp.getState() != DropletState.FAILED && desiredApp.getState() != DropletState.FAILED;
+				assert currentApp.getState() != AppState.FAILED && desiredApp.getState() != AppState.FAILED;
 				assert currentApp.getState() != desiredApp.getState();
 				switch (currentApp.getState()) {
 				case CREATED:
@@ -110,12 +110,12 @@ public class UpdateStepDirectory {
 					}
 					break;
 				case STAGED:
-					if (desiredApp.getState() == DropletState.RUNNING) {
+					if (desiredApp.getState() == AppState.RUNNING) {
 						api.startAppWaitRunning(currentApp.getGuid());
 						break;
 					}
 				case RUNNING:
-					if (desiredApp.getState() == DropletState.STAGED) {
+					if (desiredApp.getState() == AppState.STAGED) {
 						api.stopApp(currentApp.getGuid());
 						break;
 					}

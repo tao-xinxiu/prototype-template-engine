@@ -10,7 +10,7 @@ public class OverviewApp {
 	private String guid;
 	private String name;
 	private String path;
-	private DropletState state;
+	private AppState state;
 	private int instances;
 	private Map<String, String> env = new HashMap<>();
 	private List<Route> routes = new ArrayList<>();
@@ -18,7 +18,7 @@ public class OverviewApp {
 	public OverviewApp() {
 	}
 
-	public OverviewApp(String guid, String name, String path, DropletState state, int instances,
+	public OverviewApp(String guid, String name, String path, AppState state, int instances,
 			Map<String, String> env, List<Route> routes) {
 		this.guid = guid;
 		this.name = name;
@@ -65,11 +65,11 @@ public class OverviewApp {
 		this.path = path;
 	}
 
-	public DropletState getState() {
+	public AppState getState() {
 		return state;
 	}
 
-	public void setState(DropletState state) {
+	public void setState(AppState state) {
 		this.state = state;
 	}
 

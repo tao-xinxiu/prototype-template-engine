@@ -1,5 +1,5 @@
 package com.orange.model;
 
-public enum DropletState {
+public enum AppState {
 	RUNNING, STAGED, CREATED, FAILED
 }
