@@ -1,24 +1,42 @@
 package com.orange.model;
 
 public class SiteDeploymentConfig {
-	private String temporaryNameSuffix = "-UPDATING";
-	private String temporaryRoute;
+	private static final String defaultTmpNameSuffix = "-UPDATING";
+	private static final String defaultTmpRouteHostSuffix = "-tmp";
+	private String tmpNameSuffix = defaultTmpNameSuffix;
+	private String tmpRouteHostSuffix = defaultTmpRouteHostSuffix;
+	private String tmpRouteDomain;
 	// TODO add timeout, retry times of deployment operations
 
-	public String getTemporaryNameSuffix() {
-		return temporaryNameSuffix;
+	public String getTmpNameSuffix() {
+		return tmpNameSuffix;
 	}
 
-	public void setTemporaryNameSuffix(String temporaryNameSuffix) {
-		this.temporaryNameSuffix = temporaryNameSuffix;
+	public void setTmpNameSuffix(String tmpNameSuffix) {
+		this.tmpNameSuffix = tmpNameSuffix;
 	}
 
-	public String getTemporaryRoute() {
-		return temporaryRoute;
+	public String getTmpRouteHostSuffix() {
+		return tmpRouteHostSuffix;
 	}
 
-	public void setTemporaryRoute(String temporaryRoute) {
-		this.temporaryRoute = temporaryRoute;
+	public void setTmpRouteHostSuffix(String tmpRouteHostSuffix) {
+		this.tmpRouteHostSuffix = tmpRouteHostSuffix;
 	}
 
+	public String getTmpRouteDomain() {
+		return tmpRouteDomain;
+	}
+
+	public void setTmpRouteDomain(String tmpRouteDomain) {
+		this.tmpRouteDomain = tmpRouteDomain;
+	}
+
+	public static String getDefaulttmpnamesuffix() {
+		return defaultTmpNameSuffix;
+	}
+
+	public static String getDefaulttmproutehostsuffix() {
+		return defaultTmpRouteHostSuffix;
+	}
 }

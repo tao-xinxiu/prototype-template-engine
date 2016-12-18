@@ -108,7 +108,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 		return new OverviewSite(operations.listSpaceApps()
 				.parallelStream().map(appInfo -> new OverviewApp(appInfo.getId(), appInfo.getName(), null,
 						parseState(appInfo), appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo)))
-				.collect(Collectors.toList()));
+				.collect(Collectors.toSet()));
 	}
 
 	private AppState parseState(SpaceApplicationSummary appInfo) {

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 public class Overview {
 	private Map<String, PaaSSite> sites = new HashMap<>();
@@ -18,10 +19,19 @@ public class Overview {
 	public Overview() {
 	}
 
-	public void addPaaSSite(PaaSSite site, OverviewSite overviewApps) {
-		assert site != null && overviewApps != null;
+	public Overview(Overview other) {
+		for (Entry<String, PaaSSite> entry : other.sites.entrySet()) {
+			this.sites.put(entry.getKey(), new PaaSSite(entry.getValue()));
+		}
+		for (Entry<String, OverviewSite> entry : other.overviewSites.entrySet()) {
+			this.overviewSites.put(entry.getKey(), new OverviewSite(entry.getValue()));
+		}
+	}
+
+	public void addPaaSSite(PaaSSite site, OverviewSite overviewSite) {
+		assert site != null && overviewSite != null;
 		sites.put(site.getName(), site);
-		overviewSites.put(site.getName(), overviewApps);
+		overviewSites.put(site.getName(), overviewSite);
 	}
 
 	public Map<String, PaaSSite> getSites() {
@@ -43,7 +53,7 @@ public class Overview {
 	public OverviewSite getOverviewSite(String siteName) {
 		return overviewSites.get(siteName);
 	}
-	
+
 	public Set<String> listSitesName() {
 		return sites.keySet();
 	}
@@ -60,5 +70,64 @@ public class Overview {
 		} else {
 			return sites.keySet().equals(overviewSites.keySet());
 		}
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((overviewSites == null) ? 0 : overviewSites.hashCode());
+		result = prime * result + ((sites == null) ? 0 : sites.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Overview other = (Overview) obj;
+		if (overviewSites == null) {
+			if (other.overviewSites != null)
+				return false;
+		} else if (!overviewSites.equals(other.overviewSites))
+			return false;
+		if (sites == null) {
+			if (other.sites != null)
+				return false;
+		} else if (!sites.equals(other.sites))
+			return false;
+		return true;
+	}
+
+	/**
+	 * return whether "this" is an instantiated state of "desiredState".
+	 * 
+	 * @param desiredState
+	 * @return
+	 */
+	public boolean isInstantiation(Overview desiredState) {
+		if (desiredState == null) {
+			return false;
+		}
+		if (!this.sites.equals(desiredState.sites)) {
+			return false;
+		}
+		for (String site : this.sites.keySet()) {
+			Set<OverviewApp> desiredApps = desiredState.getOverviewSite(site).getOverviewApps();
+			Set<OverviewApp> apps = this.getOverviewSite(site).getOverviewApps();
+			if (apps.size() != desiredApps.size()) {
+				return false;
+			}
+			for (OverviewApp desiredApp : desiredApps) {
+				if (apps.stream().noneMatch(app -> app.isInstantiation(desiredApp))) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 }

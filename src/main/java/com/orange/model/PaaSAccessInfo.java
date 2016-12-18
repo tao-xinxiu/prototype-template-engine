@@ -9,6 +9,30 @@ public class PaaSAccessInfo {
 	private String space;
 	private boolean skipSslValidation;
 
+	public PaaSAccessInfo() {
+	}
+
+	public PaaSAccessInfo(String name, String api, String user, String pwd, String org, String space,
+			boolean skipSslValidation) {
+		this.name = name;
+		this.api = api;
+		this.user = user;
+		this.pwd = pwd;
+		this.org = org;
+		this.space = space;
+		this.skipSslValidation = skipSslValidation;
+	}
+
+	public PaaSAccessInfo(PaaSAccessInfo other) {
+		this.name = other.name;
+		this.api = other.api;
+		this.user = other.user;
+		this.pwd = other.pwd;
+		this.org = other.org;
+		this.space = other.space;
+		this.skipSslValidation = other.skipSslValidation;
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -35,7 +59,7 @@ public class PaaSAccessInfo {
 		}
 		this.user = user;
 	}
-	
+
 	public String getPwd() {
 		return pwd;
 	}
@@ -70,7 +94,7 @@ public class PaaSAccessInfo {
 	public void setSkipSslValidation(boolean skipSslValidation) {
 		this.skipSslValidation = skipSslValidation;
 	}
-	
+
 	public boolean valid() {
 		if (api != null && user != null && pwd != null && org != null && space != null) {
 			return true;
@@ -78,11 +102,10 @@ public class PaaSAccessInfo {
 			return false;
 		}
 	}
-	
+
 	@Override
 	public String toString() {
-		return String.format(
-				"{api: %s; user: %s; pwd: %s; org:%s; space:%s; skipSslValidation:%s}", api,
-				user, pwd, org, space, skipSslValidation);
+		return String.format("{api: %s; user: %s; pwd: %s; org:%s; space:%s; skipSslValidation:%s}", api, user, pwd,
+				org, space, skipSslValidation);
 	}
 }

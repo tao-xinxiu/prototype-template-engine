@@ -4,6 +4,19 @@ public class PaaSSite {
 	private String name;
 	private PaaSAccessInfo accessInfo;
 
+	public PaaSSite() {
+	}
+
+	public PaaSSite(String name, PaaSAccessInfo accessInfo) {
+		this.name = name;
+		this.accessInfo = accessInfo;
+	}
+
+	public PaaSSite(PaaSSite other) {
+		this.name = other.name;
+		this.accessInfo = new PaaSAccessInfo(other.accessInfo);
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -11,7 +24,7 @@ public class PaaSSite {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
 	public PaaSAccessInfo getAccessInfo() {
 		return accessInfo;
 	}
@@ -19,7 +32,7 @@ public class PaaSSite {
 	public void setAccessInfo(PaaSAccessInfo accessInfo) {
 		this.accessInfo = accessInfo;
 	}
-	
+
 	public boolean valid() {
 		if (accessInfo != null && accessInfo.valid()) {
 			return true;
