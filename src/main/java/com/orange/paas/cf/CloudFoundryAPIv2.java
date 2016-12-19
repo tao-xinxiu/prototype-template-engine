@@ -1,8 +1,8 @@
 package com.orange.paas.cf;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.cloudfoundry.client.v2.spaces.SpaceApplicationSummary;
@@ -130,9 +130,9 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> (String) entry.getValue()));
 	}
 
-	private List<Route> parseRoutes(SpaceApplicationSummary appInfo) {
+	private Set<Route> parseRoutes(SpaceApplicationSummary appInfo) {
 		return appInfo.getRoutes().stream().map(route -> new Route(route.getHost(), route.getDomain().getName()))
-				.collect(Collectors.toList());
+				.collect(Collectors.toSet());
 	}
 
 	@Override
@@ -148,8 +148,8 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	}
 
 	@Override
-	public List<Route> listAppRoutes(String appId) {
-		List<Route> appRoutes = new ArrayList<>();
+	public Set<Route> listAppRoutes(String appId) {
+		Set<Route> appRoutes = new HashSet<>();
 		for (String routeId : operations.listMappedRoutesId(appId)) {
 			appRoutes.add(operations.getRoute(routeId));
 		}
@@ -157,7 +157,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	}
 
 	@Override
-	public void createAndMapAppRoutes(String appId, List<Route> routes) {
+	public void createAndMapAppRoutes(String appId, Set<Route> routes) {
 		for (Route route : routes) {
 			String domainId = operations.getDomainId(route.getDomain());
 			String routeId = operations.getRouteId(route.getHostname(), domainId);
@@ -170,7 +170,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	}
 
 	@Override
-	public void unmapAppRoutes(String appId, List<Route> routes) {
+	public void unmapAppRoutes(String appId, Set<Route> routes) {
 		for (Route route : routes) {
 			String domainId = operations.getDomainId(route.getDomain());
 			String routeId = operations.getRouteId(route.getHostname(), domainId);

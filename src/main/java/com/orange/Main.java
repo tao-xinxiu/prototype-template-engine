@@ -53,6 +53,9 @@ public class Main {
 
 	@RequestMapping(value = "/mid_states", method = RequestMethod.POST)
 	public @ResponseBody Overview calcMidStates(@RequestBody Overview finalState) {
+		if (midStateCalculator == null) {
+			throw new IllegalStateException("Update config not yet set.");
+		}
 		Overview currentState = getCurrentState(finalState.listPaaSSites());
 		validDesiredState(currentState, finalState);
 		return midStateCalculator.calcMidStates(currentState, finalState);
@@ -62,6 +65,13 @@ public class Main {
 	public void setUpdateConfig(@RequestParam("strategy") String strategy,
 			@RequestBody DeploymentConfig deploymentConfig) {
 		this.midStateCalculator = new MidStateCalculator(Strategy.valueOf(strategy.toUpperCase()), deploymentConfig);
+		logger.info("Update config set!");
+	}
+
+	@RequestMapping(value = "/is_instantiation", method = RequestMethod.POST)
+	public boolean isInstantiation(@RequestBody Overview desiredState) {
+		Overview currentState = getCurrentState(desiredState.listPaaSSites());
+		return currentState.isInstantiation(desiredState);
 	}
 
 	private void validDesiredState(Overview currentState, Overview desiredState) {

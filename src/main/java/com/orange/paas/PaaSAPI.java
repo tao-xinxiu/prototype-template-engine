@@ -1,7 +1,7 @@
 package com.orange.paas;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.orange.model.*;
 
@@ -69,9 +69,9 @@ public abstract class PaaSAPI {
 	 */
 	public abstract void propagateEnvChange(String appId);
 
-	public abstract List<Route> listAppRoutes(String appId);
+	public abstract Set<Route> listAppRoutes(String appId);
 
-	public abstract void createAndMapAppRoutes(String appId, List<Route> routes);
+	public abstract void createAndMapAppRoutes(String appId, Set<Route> routes);
 
-	public abstract void unmapAppRoutes(String appId, List<Route> routes);
+	public abstract void unmapAppRoutes(String appId, Set<Route> routes);
 }

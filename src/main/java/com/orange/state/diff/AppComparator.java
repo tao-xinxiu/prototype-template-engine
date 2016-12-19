@@ -1,7 +1,7 @@
 package com.orange.state.diff;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.orange.model.OverviewApp;
@@ -12,8 +12,8 @@ public class AppComparator {
 	private OverviewApp desiredApp;
 	private boolean nameUpdated;
 	private boolean routesUpdated;
-	private List<Route> addedRoutes = new ArrayList<>();
-	private List<Route> removedRoutes = new ArrayList<>();
+	private Set<Route> addedRoutes = new HashSet<>();
+	private Set<Route> removedRoutes = new HashSet<>();
 	private boolean stateUpdated;
 	private boolean instancesUpdated;
 	private boolean envUpdated; 
@@ -29,9 +29,9 @@ public class AppComparator {
 		if (!currentApp.getRoutes().equals(desiredApp.getRoutes())) {
 			routesUpdated = true;
 			addedRoutes = desiredApp.listRoutes().stream().filter(route -> !currentApp.listRoutes().contains(route))
-					.collect(Collectors.toList());
+					.collect(Collectors.toSet());
 			removedRoutes = currentApp.listRoutes().stream().filter(route -> !desiredApp.listRoutes().contains(route))
-					.collect(Collectors.toList());
+					.collect(Collectors.toSet());
 		}
 		nameUpdated = !currentApp.getName().equals(desiredApp.getName());
 		stateUpdated = !(currentApp.getState() == desiredApp.getState());
@@ -55,11 +55,11 @@ public class AppComparator {
 		return routesUpdated;
 	}
 
-	public List<Route> getAddedRoutes() {
+	public Set<Route> getAddedRoutes() {
 		return addedRoutes;
 	}
 
-	public List<Route> getRemovedRoutes() {
+	public Set<Route> getRemovedRoutes() {
 		return removedRoutes;
 	}
 

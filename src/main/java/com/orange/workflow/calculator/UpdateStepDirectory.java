@@ -1,6 +1,6 @@
 package com.orange.workflow.calculator;
 
-import java.util.List;
+import java.util.Set;
 
 import com.orange.model.AppState;
 import com.orange.model.OverviewApp;
@@ -68,7 +68,7 @@ public class UpdateStepDirectory {
 		};
 	}
 
-	public Step addAppRoutes(String appId, List<Route> addedRoutes) {
+	public Step addAppRoutes(String appId, Set<Route> addedRoutes) {
 		return new Step(
 				String.format("map routes %s to app [%s] at site [%s]", addedRoutes, appId, api.getSiteName())) {
 			@Override
@@ -78,7 +78,7 @@ public class UpdateStepDirectory {
 		};
 	}
 
-	public Step removeAppRoutes(String appId, List<Route> removedRoutes) {
+	public Step removeAppRoutes(String appId, Set<Route> removedRoutes) {
 		return new Step(
 				String.format("unmap routes %s from app [%s] at site [%s]", removedRoutes, appId, api.getSiteName())) {
 			@Override

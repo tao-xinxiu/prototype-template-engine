@@ -1,9 +1,9 @@
 package com.orange.model;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OverviewApp {
@@ -13,13 +13,13 @@ public class OverviewApp {
 	private AppState state;
 	private int instances;
 	private Map<String, String> env = new HashMap<>();
-	private List<Route> routes = new ArrayList<>();
+	private Set<Route> routes = new HashSet<>();
 
 	public OverviewApp() {
 	}
 
 	public OverviewApp(String guid, String name, String path, AppState state, int instances, Map<String, String> env,
-			List<Route> routes) {
+			Set<Route> routes) {
 		this.guid = guid;
 		this.name = name;
 		this.path = path;
@@ -36,7 +36,7 @@ public class OverviewApp {
 		state = other.state;
 		instances = other.instances;
 		env = new HashMap<>(other.env);
-		routes = new ArrayList<>(other.routes);
+		routes = new HashSet<>(other.routes);
 	}
 
 	public String getGuid() {
@@ -55,15 +55,15 @@ public class OverviewApp {
 		this.name = name;
 	}
 
-	public List<String> getRoutes() {
-		return routes.stream().map(Route::toString).collect(Collectors.toList());
+	public Set<String> getRoutes() {
+		return routes.stream().map(Route::toString).collect(Collectors.toSet());
 	}
 
-	public void setRoutes(List<String> routes) {
-		this.routes = routes.stream().map(Route::new).collect(Collectors.toList());
+	public void setRoutes(Set<String> routes) {
+		this.routes = routes.stream().map(Route::new).collect(Collectors.toSet());
 	}
 
-	public List<Route> listRoutes() {
+	public Set<Route> listRoutes() {
 		return routes;
 	}
 
@@ -173,7 +173,7 @@ public class OverviewApp {
 		if (this.guid == null || this.path != null) {
 			return false;
 		}
-		if (desiredApp.guid != null && this.guid != desiredApp.guid) {
+		if (desiredApp.guid != null && !this.guid.equals(desiredApp.guid)) {
 			return false;
 		}
 		if (!this.name.equals(desiredApp.name) || !this.state.equals(desiredApp.state)

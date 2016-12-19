@@ -45,8 +45,7 @@ public class MidStateCalculator {
 			OverviewSite siteMidState = new OverviewSite();
 			SiteDeploymentConfig config = deploymentConfig.getSiteDeploymentConfig(site.getName());
 			for (OverviewApp desiredApp : finalState.getOverviewSite(site.getName()).getOverviewApps()) {
-				String appTmpName = appTmpName(config, desiredApp);
-				List<String> appNames = Arrays.asList(desiredApp.getName(), appTmpName);
+				List<String> appNames = Arrays.asList(desiredApp.getName(), appTmpName(config, desiredApp));
 				Set<OverviewApp> updateApps = new Overview(currentState).getOverviewSite(site.getName())
 						.getOverviewApps().stream().filter(app -> appNames.contains(app.getName()))
 						.collect(Collectors.toSet());
@@ -80,7 +79,7 @@ public class MidStateCalculator {
 		String appTmpName = initDeploy ? desiredApp.getName() : appTmpName(config, desiredApp);
 		// new app connect to temporary route if tmpRouteDomain specified,
 		// otherwise connect to its desired routes.
-		List<Route> appTmpRoute = config.getTmpRouteDomain() == null ? desiredApp.listRoutes()
+		Set<Route> appTmpRoute = config.getTmpRouteDomain() == null ? desiredApp.listRoutes()
 				: singleRoute(desiredApp.getName() + config.getTmpRouteHostSuffix(), config.getTmpRouteDomain());
 		AppState state = AppState.RUNNING;
 		int instances = desiredApp.getInstances();
@@ -124,7 +123,7 @@ public class MidStateCalculator {
 		return desiredApp.getName() + config.getTmpNameSuffix();
 	}
 
-	private List<Route> singleRoute(String host, String domain) {
-		return Collections.singletonList(new Route(host, domain));
+	private Set<Route> singleRoute(String host, String domain) {
+		return Collections.singleton(new Route(host, domain));
 	}
 }

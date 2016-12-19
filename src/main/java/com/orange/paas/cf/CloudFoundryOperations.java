@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.cloudfoundry.client.CloudFoundryClient;
@@ -255,12 +256,12 @@ public class CloudFoundryOperations {
 		}
 	}
 
-	public List<String> listMappedRoutesId(String appId) {
+	public Set<String> listMappedRoutesId(String appId) {
 		try {
 			ListApplicationRoutesRequest request = ListApplicationRoutesRequest.builder().applicationId(appId).build();
 			ListApplicationRoutesResponse response = cloudFoundryClient.applicationsV2().listRoutes(request).block();
 			return response.getResources().stream().map(resource -> resource.getMetadata().getId())
-					.collect(Collectors.toList());
+					.collect(Collectors.toSet());
 		} catch (Exception e) {
 			throw new IllegalStateException(String.format("Expcetion during listing mapped routes of app: [%s]", appId),
 					e);

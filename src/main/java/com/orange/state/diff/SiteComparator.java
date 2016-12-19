@@ -1,7 +1,7 @@
 package com.orange.state.diff;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.orange.model.OverviewApp;
@@ -9,14 +9,14 @@ import com.orange.model.OverviewSite;
 
 public class SiteComparator {
 	// list of apps to be created, i.e. apps in desiredState with guid null
-	private List<OverviewApp> addedApp = new ArrayList<>();
+	private Set<OverviewApp> addedApp = new HashSet<>();
 	// list of apps to be deleted, i.e. app guid in currentState but not in
 	// desiredState
-	private List<OverviewApp> removedApp = new ArrayList<>();
-	private List<AppComparator> appComparators = new ArrayList<>();
+	private Set<OverviewApp> removedApp = new HashSet<>();
+	private Set<AppComparator> appComparators = new HashSet<>();
 
 	public SiteComparator(OverviewSite currentState, OverviewSite desiredState) {
-		List<String> desiredAppIds = new ArrayList<>();
+		Set<String> desiredAppIds = new HashSet<>();
 		for (OverviewApp desiredApp : desiredState.getOverviewApps()) {
 			if (desiredApp.getGuid() == null) {
 				addedApp.add(desiredApp);
@@ -32,18 +32,18 @@ public class SiteComparator {
 			}
 		}
 		removedApp = currentState.getOverviewApps().stream()
-				.filter(currentApp -> !desiredAppIds.contains(currentApp.getGuid())).collect(Collectors.toList());
+				.filter(currentApp -> !desiredAppIds.contains(currentApp.getGuid())).collect(Collectors.toSet());
 	}
 
-	public List<OverviewApp> getAddedApp() {
+	public Set<OverviewApp> getAddedApp() {
 		return addedApp;
 	}
 
-	public List<OverviewApp> getRemovedApp() {
+	public Set<OverviewApp> getRemovedApp() {
 		return removedApp;
 	}
 
-	public List<AppComparator> getAppComparators() {
+	public Set<AppComparator> getAppComparators() {
 		return appComparators;
 	}
 }
