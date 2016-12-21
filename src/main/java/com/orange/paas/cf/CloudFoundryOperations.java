@@ -51,9 +51,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.model.AppDesiredState;
-import com.orange.model.OverviewApp;
 import com.orange.model.PaaSAccessInfo;
-import com.orange.model.Route;
+import com.orange.model.state.OverviewApp;
+import com.orange.model.state.Route;
 
 public class CloudFoundryOperations {
 	private final Logger logger;

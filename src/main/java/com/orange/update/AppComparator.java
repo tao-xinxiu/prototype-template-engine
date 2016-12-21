@@ -1,11 +1,11 @@
-package com.orange.state.diff;
+package com.orange.update;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.orange.model.OverviewApp;
-import com.orange.model.Route;
+import com.orange.model.state.OverviewApp;
+import com.orange.model.state.Route;
 
 public class AppComparator {
 	private OverviewApp currentApp;

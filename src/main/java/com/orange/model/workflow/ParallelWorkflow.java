@@ -1,4 +1,4 @@
-package com.orange.workflow;
+package com.orange.model.workflow;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,11 +1,11 @@
-package com.orange.state.diff;
+package com.orange.update;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.orange.model.OverviewApp;
-import com.orange.model.OverviewSite;
+import com.orange.model.state.OverviewApp;
+import com.orange.model.state.OverviewSite;
 
 public class SiteComparator {
 	// list of apps to be created, i.e. apps in desiredState with guid null

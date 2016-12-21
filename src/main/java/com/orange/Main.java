@@ -15,15 +15,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.orange.midstate.MidStateCalculator;
 import com.orange.model.DeploymentConfig;
-import com.orange.model.Overview;
-import com.orange.model.OverviewSite;
 import com.orange.model.PaaSSite;
 import com.orange.model.Strategy;
+import com.orange.model.state.Overview;
+import com.orange.model.state.OverviewSite;
+import com.orange.model.workflow.Workflow;
 import com.orange.paas.cf.CloudFoundryAPIv2;
-import com.orange.state.MidStateCalculator;
-import com.orange.workflow.Workflow;
-import com.orange.workflow.calculator.WorkflowCalculator;
+import com.orange.update.WorkflowCalculator;
 
 @SpringBootApplication(exclude = { org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration.class })
 @RestController

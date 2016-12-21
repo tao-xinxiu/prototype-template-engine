@@ -4,6 +4,9 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orange.model.*;
+import com.orange.model.state.OverviewApp;
+import com.orange.model.state.OverviewSite;
+import com.orange.model.state.Route;
 
 public abstract class PaaSAPI {
 	protected PaaSSite site;

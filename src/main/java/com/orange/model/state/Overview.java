@@ -1,10 +1,12 @@
-package com.orange.model;
+package com.orange.model.state;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+
+import com.orange.model.PaaSSite;
 
 public class Overview {
 	private Map<String, PaaSSite> sites = new HashMap<>();

@@ -9,16 +9,17 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import com.orange.model.AppState;
+import com.orange.midstate.MidStateCalculator;
 import com.orange.model.DeploymentConfig;
-import com.orange.model.Overview;
-import com.orange.model.OverviewApp;
-import com.orange.model.OverviewSite;
 import com.orange.model.PaaSAccessInfo;
 import com.orange.model.PaaSSite;
-import com.orange.model.Route;
 import com.orange.model.SiteDeploymentConfig;
 import com.orange.model.Strategy;
+import com.orange.model.state.AppState;
+import com.orange.model.state.Overview;
+import com.orange.model.state.OverviewApp;
+import com.orange.model.state.OverviewSite;
+import com.orange.model.state.Route;
 
 public class MidStateCalculatorTest {
 	private static final String site1name = "site1";

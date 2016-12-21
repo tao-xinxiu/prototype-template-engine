@@ -1,15 +1,13 @@
-package com.orange.workflow.calculator;
+package com.orange.update;
 
-import com.orange.model.Overview;
-import com.orange.model.OverviewApp;
 import com.orange.model.PaaSSite;
+import com.orange.model.state.Overview;
+import com.orange.model.state.OverviewApp;
+import com.orange.model.workflow.ParallelWorkflow;
+import com.orange.model.workflow.SerialWorkflow;
+import com.orange.model.workflow.Workflow;
 import com.orange.paas.PaaSAPI;
 import com.orange.paas.cf.CloudFoundryAPIv2;
-import com.orange.state.diff.AppComparator;
-import com.orange.state.diff.SiteComparator;
-import com.orange.workflow.ParallelWorkflow;
-import com.orange.workflow.SerialWorkflow;
-import com.orange.workflow.Workflow;
 
 public class WorkflowCalculator {
 	private Overview currentState;

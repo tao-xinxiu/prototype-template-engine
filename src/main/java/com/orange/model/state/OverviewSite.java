@@ -1,4 +1,4 @@
-package com.orange.model;
+package com.orange.model.state;
 
 import java.util.HashSet;
 import java.util.Set;

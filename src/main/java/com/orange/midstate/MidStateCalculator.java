@@ -1,4 +1,4 @@
-package com.orange.state;
+package com.orange.midstate;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -6,15 +6,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.orange.model.AppState;
 import com.orange.model.DeploymentConfig;
-import com.orange.model.Overview;
-import com.orange.model.OverviewApp;
-import com.orange.model.OverviewSite;
 import com.orange.model.PaaSSite;
-import com.orange.model.Route;
 import com.orange.model.SiteDeploymentConfig;
 import com.orange.model.Strategy;
+import com.orange.model.state.AppState;
+import com.orange.model.state.Overview;
+import com.orange.model.state.OverviewApp;
+import com.orange.model.state.OverviewSite;
+import com.orange.model.state.Route;
 
 public class MidStateCalculator {
 	private Strategy strategy;

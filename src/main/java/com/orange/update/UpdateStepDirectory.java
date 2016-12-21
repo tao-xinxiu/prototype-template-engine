@@ -1,12 +1,12 @@
-package com.orange.workflow.calculator;
+package com.orange.update;
 
 import java.util.Set;
 
-import com.orange.model.AppState;
-import com.orange.model.OverviewApp;
-import com.orange.model.Route;
+import com.orange.model.state.AppState;
+import com.orange.model.state.OverviewApp;
+import com.orange.model.state.Route;
+import com.orange.model.workflow.Step;
 import com.orange.paas.PaaSAPI;
-import com.orange.workflow.Step;
 
 public class UpdateStepDirectory {
 	private PaaSAPI api;
