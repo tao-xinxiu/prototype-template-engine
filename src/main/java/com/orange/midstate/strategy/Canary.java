@@ -6,7 +6,7 @@ import com.orange.model.SiteDeploymentConfig;
 import com.orange.model.state.AppState;
 import com.orange.model.state.OverviewApp;
 
-public class Canary extends Strategy {
+public class Canary extends AppUpdateStrategy {
 	public Canary(Set<OverviewApp> updateApps, OverviewApp desiredApp, SiteDeploymentConfig config) {
 		super(updateApps, desiredApp, config);
 	}

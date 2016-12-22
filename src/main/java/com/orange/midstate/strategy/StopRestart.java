@@ -7,7 +7,7 @@ import com.orange.model.SiteDeploymentConfig;
 import com.orange.model.state.AppState;
 import com.orange.model.state.OverviewApp;
 
-public class StopRestart extends Strategy {
+public class StopRestart extends AppUpdateStrategy {
 	public StopRestart(Set<OverviewApp> updateApps, OverviewApp desiredApp, SiteDeploymentConfig config) {
 		super(updateApps, desiredApp, config);
 	}

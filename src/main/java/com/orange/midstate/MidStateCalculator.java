@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.orange.midstate.strategy.Strategy;
+import com.orange.midstate.strategy.AppUpdateStrategy;
 import com.orange.model.DeploymentConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.SiteDeploymentConfig;
@@ -41,13 +41,17 @@ public class MidStateCalculator {
 			OverviewSite siteMidState = new OverviewSite();
 			SiteDeploymentConfig config = deploymentConfig.getSiteDeploymentConfig(site.getName());
 			for (OverviewApp desiredApp : finalState.getOverviewSite(site.getName()).getOverviewApps()) {
-				List<String> appNames = Arrays.asList(desiredApp.getName(), appTmpName(config, desiredApp));
-				// deep copy of apps in current state
+				List<String> appNames = Arrays.asList(desiredApp.getName(),
+						desiredApp.getName() + config.getTmpNameSuffix());
+				// updateApps is a deep copy of apps in current state which is
+				// related (by name) to the desired app
+				// TODO this injection may leave some current apps not related
+				// to any desired app
 				Set<OverviewApp> updateApps = new Overview(currentState).getOverviewSite(site.getName())
 						.getOverviewApps().stream().filter(app -> appNames.contains(app.getName()))
 						.collect(Collectors.toSet());
 				try {
-					Strategy strategy = (Strategy) Class.forName(strategyClass)
+					AppUpdateStrategy strategy = (AppUpdateStrategy) Class.forName(strategyClass)
 							.getConstructor(Set.class, OverviewApp.class, SiteDeploymentConfig.class)
 							.newInstance(updateApps, desiredApp, config);
 					OverviewApp newApp = strategy.newApp();
@@ -75,9 +79,5 @@ public class MidStateCalculator {
 			midState.addPaaSSite(site, siteMidState);
 		}
 		return midState;
-	}
-
-	private String appTmpName(SiteDeploymentConfig config, OverviewApp desiredApp) {
-		return desiredApp.getName() + config.getTmpNameSuffix();
 	}
 }

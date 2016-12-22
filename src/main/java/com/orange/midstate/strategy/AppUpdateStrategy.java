@@ -11,14 +11,14 @@ import com.orange.model.SiteDeploymentConfig;
 import com.orange.model.state.OverviewApp;
 import com.orange.model.state.Route;
 
-public abstract class Strategy {
+public abstract class AppUpdateStrategy {
 	private static List<AppProperty> updateOrder = Collections.unmodifiableList(Arrays.asList(AppProperty.ENV,
 			AppProperty.STATE, AppProperty.ROUTES, AppProperty.INSTANCES, AppProperty.NAME));
 	protected Set<OverviewApp> updateApps;
 	protected OverviewApp desiredApp;
 	protected SiteDeploymentConfig config;
 
-	public Strategy(Set<OverviewApp> updateApps, OverviewApp desiredApp, SiteDeploymentConfig config) {
+	public AppUpdateStrategy(Set<OverviewApp> updateApps, OverviewApp desiredApp, SiteDeploymentConfig config) {
 		this.updateApps = updateApps;
 		this.desiredApp = desiredApp;
 		this.config = config;
@@ -28,12 +28,13 @@ public abstract class Strategy {
 		return updateOrder;
 	}
 
-//	protected static void setUpdateOrder(List<AppProperty> updateOrder) {
-//		if (updateOrder.size() != 5 || !updateOrder.containsAll(Arrays.asList(AppProperty.values()))) {
-//			throw new IllegalStateException("Invalid update order.");
-//		}
-//		Strategy.updateOrder = Collections.unmodifiableList(updateOrder);
-//	}
+	// protected static void setUpdateOrder(List<AppProperty> updateOrder) {
+	// if (updateOrder.size() != 5 ||
+	// !updateOrder.containsAll(Arrays.asList(AppProperty.values()))) {
+	// throw new IllegalStateException("Invalid update order.");
+	// }
+	// Strategy.updateOrder = Collections.unmodifiableList(updateOrder);
+	// }
 
 	public abstract void onEnvUpdated();
 
@@ -62,16 +63,8 @@ public abstract class Strategy {
 		updateApps.remove(oldApps());
 	}
 
-	// return temporary route if tmpRouteDomain specified,
-	// otherwise return app's desired routes.
-	protected Set<Route> appTmpRoute() {
-		return config.getTmpRouteDomain() == null ? desiredApp.listRoutes()
-				: Collections.singleton(
-						new Route(desiredApp.getName() + config.getTmpRouteHostSuffix(), config.getTmpRouteDomain()));
-	}
-
 	protected Set<OverviewApp> oldApps() {
-		return updateApps.stream().filter(app->app!=newApp()).collect(Collectors.toSet());
+		return updateApps.stream().filter(app -> app != newApp()).collect(Collectors.toSet());
 	}
 
 	// return the app in "currentApps" named "appName"
@@ -87,5 +80,13 @@ public abstract class Strategy {
 
 	protected String appTmpName() {
 		return nameConflictedApp() == null ? desiredApp.getName() : desiredApp.getName() + config.getTmpNameSuffix();
+	}
+
+	// return temporary route if tmpRouteDomain specified,
+	// otherwise return app's desired routes.
+	protected Set<Route> appTmpRoute() {
+		return config.getTmpRouteDomain() == null ? desiredApp.listRoutes()
+				: Collections.singleton(
+						new Route(desiredApp.getName() + config.getTmpRouteHostSuffix(), config.getTmpRouteDomain()));
 	}
 }

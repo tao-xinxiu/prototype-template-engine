@@ -6,7 +6,7 @@ import com.orange.model.SiteDeploymentConfig;
 import com.orange.model.state.AppState;
 import com.orange.model.state.OverviewApp;
 
-public class BlueGreen extends Strategy {
+public class BlueGreen extends AppUpdateStrategy {
 	public BlueGreen(Set<OverviewApp> updateApps, OverviewApp desiredApp, SiteDeploymentConfig config) {
 		super(updateApps, desiredApp, config);
 	}
