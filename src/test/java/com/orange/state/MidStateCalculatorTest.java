@@ -14,7 +14,6 @@ import com.orange.model.DeploymentConfig;
 import com.orange.model.PaaSAccessInfo;
 import com.orange.model.PaaSSite;
 import com.orange.model.SiteDeploymentConfig;
-import com.orange.model.Strategy;
 import com.orange.model.state.AppState;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
@@ -36,10 +35,11 @@ public class MidStateCalculatorTest {
 	private static final String newAppSite1Id = "newApp-guid-site1";
 	private static final String newAppSite2Id = "newApp-guid-site2";
 	private static final String newAppPath = "/app/path/app.zip";
+	private static final String strategyPackage = "com.orange.midstate.strategy";
 
 	@Test
 	public void should_get_blueGreenMidStates_withTmpRoute() {
-		MidStateCalculator midStateCalculator = new MidStateCalculator(Strategy.BLUEGREEN, deploymentConfig());
+		MidStateCalculator midStateCalculator = new MidStateCalculator(strategyClass("BlueGreen"), deploymentConfig());
 		final Overview midState1 = midStateCalculator.calcMidStates(initState(), finalState());
 		assertThat(midState1.getOverviewSites()).hasSize(2);
 		OverviewApp expectedNewApp1 = new OverviewApp(null, appTmpName, newAppPath, AppState.RUNNING, appInstances,
@@ -74,7 +74,7 @@ public class MidStateCalculatorTest {
 
 	@Test
 	public void should_get_blueGreenMidStates_withoutTmpRoute() {
-		MidStateCalculator midStateCalculator = new MidStateCalculator(Strategy.BLUEGREEN, new DeploymentConfig());
+		MidStateCalculator midStateCalculator = new MidStateCalculator(strategyClass("BlueGreen"), new DeploymentConfig());
 		final Overview midState1 = midStateCalculator.calcMidStates(initState(), finalState());
 		assertThat(midState1.getOverviewSites()).hasSize(2);
 		OverviewApp expectedNewApp = new OverviewApp(null, appTmpName, newAppPath, AppState.RUNNING, appInstances,
@@ -102,7 +102,7 @@ public class MidStateCalculatorTest {
 
 	@Test
 	public void should_get_blueGreenMidStates_initDeploy() {
-		MidStateCalculator midStateCalculator = new MidStateCalculator(Strategy.BLUEGREEN, new DeploymentConfig());
+		MidStateCalculator midStateCalculator = new MidStateCalculator(strategyClass("BlueGreen"), new DeploymentConfig());
 		final Overview midState1 = midStateCalculator.calcMidStates(emptyState(), finalState());
 		assertThat(midState1.getOverviewSites()).hasSize(2);
 		OverviewApp expectedNewApp = new OverviewApp(null, appName, newAppPath, AppState.RUNNING, appInstances,
@@ -116,7 +116,7 @@ public class MidStateCalculatorTest {
 
 	@Test
 	public void should_get_canaryMidStates_withTmpRoute() {
-		MidStateCalculator midStateCalculator = new MidStateCalculator(Strategy.CANARY, deploymentConfig());
+		MidStateCalculator midStateCalculator = new MidStateCalculator(strategyClass("Canary"), deploymentConfig());
 		final Overview midState1 = midStateCalculator.calcMidStates(initState(), finalState());
 		assertThat(midState1.getOverviewSites()).hasSize(2);
 		assertThat(midState1.getOverviewSite(site1name).getOverviewApps()).containsOnly(oldAppSite1(),
@@ -158,7 +158,7 @@ public class MidStateCalculatorTest {
 
 	@Test
 	public void should_get_canaryMidStates_withoutTmpRoute() {
-		MidStateCalculator midStateCalculator = new MidStateCalculator(Strategy.CANARY, new DeploymentConfig());
+		MidStateCalculator midStateCalculator = new MidStateCalculator(strategyClass("Canary"), new DeploymentConfig());
 		final Overview midState1 = midStateCalculator.calcMidStates(initState(), finalState());
 		assertThat(midState1.getOverviewSites()).hasSize(2);
 		assertThat(midState1.getOverviewSite(site1name).getOverviewApps()).containsOnly(oldAppSite1(),
@@ -193,7 +193,7 @@ public class MidStateCalculatorTest {
 
 	@Test
 	public void should_get_canaryMidStates_initDeploy() {
-		MidStateCalculator midStateCalculator = new MidStateCalculator(Strategy.CANARY, new DeploymentConfig());
+		MidStateCalculator midStateCalculator = new MidStateCalculator(strategyClass("Canary"), new DeploymentConfig());
 		final Overview midState1 = midStateCalculator.calcMidStates(emptyState(), finalState());
 		assertThat(midState1.getOverviewSites()).hasSize(2);
 		assertThat(midState1.getOverviewSite(site1name).getOverviewApps())
@@ -214,7 +214,7 @@ public class MidStateCalculatorTest {
 
 	@Test
 	public void should_get_stopRestartMidStates_withTmpRoute() {
-		MidStateCalculator midStateCalculator = new MidStateCalculator(Strategy.STOPRESTART, deploymentConfig());
+		MidStateCalculator midStateCalculator = new MidStateCalculator(strategyClass("StopRestart"), deploymentConfig());
 		final Overview midState1 = midStateCalculator.calcMidStates(initState(), finalState());
 		assertThat(midState1.getOverviewSites()).hasSize(2);
 		assertThat(midState1.getOverviewSite(site1name).getOverviewApps()).containsOnly(oldAppSite1(), new OverviewApp(
@@ -276,7 +276,7 @@ public class MidStateCalculatorTest {
 
 	@Test
 	public void should_get_stopRestartMidStates_withoutTmpRoute() {
-		MidStateCalculator midStateCalculator = new MidStateCalculator(Strategy.STOPRESTART, new DeploymentConfig());
+		MidStateCalculator midStateCalculator = new MidStateCalculator(strategyClass("StopRestart"), new DeploymentConfig());
 		final Overview midState1 = midStateCalculator.calcMidStates(initState(), finalState());
 		assertThat(midState1.getOverviewSites()).hasSize(2);
 		assertThat(midState1.getOverviewSite(site1name).getOverviewApps()).containsOnly(oldAppSite1(),
@@ -326,7 +326,7 @@ public class MidStateCalculatorTest {
 
 	@Test
 	public void should_get_stopRestartMidStates_initDeploy() {
-		MidStateCalculator midStateCalculator = new MidStateCalculator(Strategy.STOPRESTART, new DeploymentConfig());
+		MidStateCalculator midStateCalculator = new MidStateCalculator(strategyClass("StopRestart"), new DeploymentConfig());
 		final Overview midState1 = midStateCalculator.calcMidStates(emptyState(), finalState());
 		assertThat(midState1.getOverviewSites()).hasSize(2);
 		assertThat(midState1.getOverviewSite(site1name).getOverviewApps()).containsOnly(
@@ -413,5 +413,9 @@ public class MidStateCalculatorTest {
 		Map<String, String> env = new HashMap<>();
 		env.put("APP_VERSION", "1.0.1");
 		return env;
+	}
+
+	private String strategyClass(String strategyName) {
+		return strategyPackage + "." + strategyName;
 	}
 }

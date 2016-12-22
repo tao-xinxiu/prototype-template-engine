@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.orange.midstate.MidStateCalculator;
 import com.orange.model.DeploymentConfig;
 import com.orange.model.PaaSSite;
-import com.orange.model.Strategy;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewSite;
 import com.orange.model.workflow.Workflow;
@@ -64,7 +63,8 @@ public class Main {
 	@RequestMapping(value = "/set_update_config", method = RequestMethod.PUT)
 	public void setUpdateConfig(@RequestParam("strategy") String strategy,
 			@RequestBody DeploymentConfig deploymentConfig) {
-		this.midStateCalculator = new MidStateCalculator(Strategy.valueOf(strategy.toUpperCase()), deploymentConfig);
+		strategy = "com.orange.midstate.strategy." + strategy;
+		this.midStateCalculator = new MidStateCalculator(strategy, deploymentConfig);
 		logger.info("Update config set!");
 	}
 
