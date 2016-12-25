@@ -1,10 +1,12 @@
 package com.orange.midstate;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashSet;
+import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Set;
 
 import com.orange.midstate.strategy.AppUpdateStrategy;
+import com.orange.model.AppProperty;
 import com.orange.model.DeploymentConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.SiteDeploymentConfig;
@@ -29,6 +31,7 @@ public class MidStateCalculator {
 	 * @param finalState
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public Overview calcMidStates(final Overview currentState, final Overview finalState) {
 		// return null when arrived final state
 		if (currentState.isInstantiation(finalState)) {
@@ -39,37 +42,51 @@ public class MidStateCalculator {
 			OverviewSite siteMidState = new OverviewSite();
 			SiteDeploymentConfig config = deploymentConfig.getSiteDeploymentConfig(site.getName());
 			Set<OverviewApp> currentApps = currentState.getOverviewSite(site.getName()).getOverviewApps();
-			Set<OverviewApp> notRelatedApps = new HashSet<>(currentApps);
 			for (OverviewApp desiredApp : finalState.getOverviewSite(site.getName()).getOverviewApps()) {
 				try {
 					AppUpdateStrategy strategy = (AppUpdateStrategy) Class.forName(strategyClass)
 							.getConstructor(Set.class, OverviewApp.class, SiteDeploymentConfig.class)
 							.newInstance(currentApps, desiredApp, config);
-					Set<OverviewApp> currentRelatedApps = strategy.getCurrentRelatedApps();
-					notRelatedApps.removeAll(currentRelatedApps);
-					OverviewApp instantiatedDesiredApp = strategy.instantiatedDesiredApp(currentRelatedApps);
+					OverviewApp instantiatedDesiredApp = strategy.getInstantiatedDesiredApp();
 					if (instantiatedDesiredApp == null) {
 						siteMidState.addOverviewApps(strategy.onEnvUpdated());
-					} else if (!instantiatedDesiredApp.getState().equals(desiredApp.getState())) {
-						siteMidState.addOverviewApps(strategy.onStateUpdated());
-					} else if (!instantiatedDesiredApp.getRoutes().equals(desiredApp.getRoutes())) {
-						siteMidState.addOverviewApps(strategy.onRoutesUpdated());
-					} else if (!(instantiatedDesiredApp.getInstances() == desiredApp.getInstances())) {
-						siteMidState.addOverviewApps(strategy.onInstancesUpdated());
-					} else if (!instantiatedDesiredApp.getName().equals(desiredApp.getName())) {
-						siteMidState.addOverviewApps(strategy.onNameUpdated());
-					} else {
-						siteMidState.addOverviewApps(strategy.nothingUpdated());
+						continue;
+					}
+					List<AppProperty> updateOrder = AppUpdateStrategy.getUpdateOrder();
+					for (AppProperty property : updateOrder) {
+						if (propertyChanged(instantiatedDesiredApp, desiredApp, property)) {
+							siteMidState.addOverviewApps((Set<OverviewApp>) strategy.getClass()
+									.getMethod(String.format("on%sUpdated", property)).invoke(strategy));
+							break;
+						}
+						if (property == updateOrder.get(updateOrder.size() - 1)) {
+							siteMidState.addOverviewApps(strategy.nothingUpdated());
+						}
 					}
 				} catch (InstantiationException | IllegalAccessException | ClassNotFoundException
 						| IllegalArgumentException | InvocationTargetException | NoSuchMethodException
 						| SecurityException e) {
-					throw new IllegalStateException(String.format("Exception [%s] in Strategy [%s] instantiation.",
-							e.getClass().getName(), strategyClass), e);
+					throw new IllegalStateException(
+							String.format("Exception [%s] in Strategy [%s] instantiation or method calling.",
+									e.getClass().getName(), strategyClass),
+							e);
 				}
 			}
 			midState.addPaaSSite(site, siteMidState);
 		}
 		return midState;
+	}
+
+	private boolean propertyChanged(OverviewApp currentApp, OverviewApp desiredApp, AppProperty property) {
+		try {
+			Method getPropertyMethod = OverviewApp.class.getMethod("get" + property);
+			return !getPropertyMethod.invoke(currentApp).equals(getPropertyMethod.invoke(desiredApp));
+		} catch (NoSuchMethodException | SecurityException e) {
+			throw new IllegalStateException(String.format("Exception [%s] in getting [%s].[%s] method.",
+					e.getClass().getName(), OverviewApp.class, "get" + property), e);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			throw new IllegalStateException(String.format("Exception [%s] in calling [%s].[%s] method.",
+					e.getClass().getName(), OverviewApp.class, "get" + property), e);
+		}
 	}
 }

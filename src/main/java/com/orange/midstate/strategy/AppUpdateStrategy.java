@@ -14,8 +14,8 @@ import com.orange.model.state.OverviewApp;
 import com.orange.model.state.Route;
 
 public abstract class AppUpdateStrategy {
-	private static List<AppProperty> updateOrder = Collections.unmodifiableList(Arrays.asList(AppProperty.ENV,
-			AppProperty.STATE, AppProperty.ROUTES, AppProperty.INSTANCES, AppProperty.NAME));
+	private static List<AppProperty> updateOrder = Collections.unmodifiableList(Arrays.asList(AppProperty.Env,
+			AppProperty.State, AppProperty.Routes, AppProperty.Instances, AppProperty.Name));
 	protected Set<OverviewApp> currentRelatedApps;
 	protected OverviewApp desiredApp;
 	protected SiteDeploymentConfig config;
@@ -30,16 +30,15 @@ public abstract class AppUpdateStrategy {
 		return updateOrder;
 	}
 
-	// protected static void setUpdateOrder(List<AppProperty> updateOrder) {
-	// if (updateOrder.size() != 5 ||
-	// !updateOrder.containsAll(Arrays.asList(AppProperty.values()))) {
-	// throw new IllegalStateException("Invalid update order.");
-	// }
-	// Strategy.updateOrder = Collections.unmodifiableList(updateOrder);
-	// }
+	protected static void setUpdateOrder(List<AppProperty> updateOrder) {
+		if (updateOrder.size() != 5 || !updateOrder.containsAll(Arrays.asList(AppProperty.values()))) {
+			throw new IllegalStateException("Invalid update order.");
+		}
+		AppUpdateStrategy.updateOrder = Collections.unmodifiableList(updateOrder);
+	}
 
-	public Set<OverviewApp> getCurrentRelatedApps() {
-		return currentRelatedApps;
+	public OverviewApp getInstantiatedDesiredApp() {
+		return instantiatedDesiredApp(currentRelatedApps);
 	}
 
 	/**
@@ -96,7 +95,7 @@ public abstract class AppUpdateStrategy {
 	 * 
 	 * @return
 	 */
-	public OverviewApp instantiatedDesiredApp(Set<OverviewApp> currentRelatedApps) {
+	protected OverviewApp instantiatedDesiredApp(Set<OverviewApp> currentRelatedApps) {
 		return desiredApp.getGuid() != null
 				? Util.searchApp(currentRelatedApps, app -> app.getGuid().equals(desiredApp.getGuid()))
 				: Util.searchApp(currentRelatedApps, app -> app.getEnv().equals(desiredApp.getEnv()));
