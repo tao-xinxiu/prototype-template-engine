@@ -12,8 +12,10 @@ public class BlueGreen extends AppUpdateStrategy {
 	}
 
 	@Override
-	public void onEnvUpdated() {
-		updateApps.add(new OverviewApp(null, appTmpName(), desiredApp.getPath(), AppState.RUNNING,
+	public Set<OverviewApp> onEnvUpdated() {
+		Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
+		desiredRelatedApps.add(new OverviewApp(null, newAppName(), desiredApp.getPath(), AppState.RUNNING,
 				desiredApp.getInstances(), desiredApp.getEnv(), appTmpRoute()));
+		return desiredRelatedApps;
 	}
 }

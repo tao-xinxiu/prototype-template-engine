@@ -1,10 +1,8 @@
 package com.orange.midstate;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.orange.midstate.strategy.AppUpdateStrategy;
 import com.orange.model.DeploymentConfig;
@@ -40,35 +38,29 @@ public class MidStateCalculator {
 		for (PaaSSite site : finalState.listPaaSSites()) {
 			OverviewSite siteMidState = new OverviewSite();
 			SiteDeploymentConfig config = deploymentConfig.getSiteDeploymentConfig(site.getName());
+			Set<OverviewApp> currentApps = currentState.getOverviewSite(site.getName()).getOverviewApps();
+			Set<OverviewApp> notRelatedApps = new HashSet<>(currentApps);
 			for (OverviewApp desiredApp : finalState.getOverviewSite(site.getName()).getOverviewApps()) {
-				List<String> appNames = Arrays.asList(desiredApp.getName(),
-						desiredApp.getName() + config.getTmpNameSuffix());
-				// updateApps is a deep copy of apps in current state which is
-				// related (by name) to the desired app
-				// TODO this injection may leave some current apps not related
-				// to any desired app
-				Set<OverviewApp> updateApps = new Overview(currentState).getOverviewSite(site.getName())
-						.getOverviewApps().stream().filter(app -> appNames.contains(app.getName()))
-						.collect(Collectors.toSet());
 				try {
 					AppUpdateStrategy strategy = (AppUpdateStrategy) Class.forName(strategyClass)
 							.getConstructor(Set.class, OverviewApp.class, SiteDeploymentConfig.class)
-							.newInstance(updateApps, desiredApp, config);
-					OverviewApp newApp = strategy.newApp();
-					if (newApp == null) {
-						strategy.onEnvUpdated();
-					} else if (!newApp.getState().equals(desiredApp.getState())) {
-						strategy.onStateUpdated();
-					} else if (!newApp.getRoutes().equals(desiredApp.getRoutes())) {
-						strategy.onRoutesUpdated();
-					} else if (!(newApp.getInstances() == desiredApp.getInstances())) {
-						strategy.onInstancesUpdated();
-					} else if (!newApp.getName().equals(desiredApp.getName())) {
-						strategy.onNameUpdated();
+							.newInstance(currentApps, desiredApp, config);
+					Set<OverviewApp> currentRelatedApps = strategy.getCurrentRelatedApps();
+					notRelatedApps.removeAll(currentRelatedApps);
+					OverviewApp instantiatedDesiredApp = strategy.instantiatedDesiredApp(currentRelatedApps);
+					if (instantiatedDesiredApp == null) {
+						siteMidState.addOverviewApps(strategy.onEnvUpdated());
+					} else if (!instantiatedDesiredApp.getState().equals(desiredApp.getState())) {
+						siteMidState.addOverviewApps(strategy.onStateUpdated());
+					} else if (!instantiatedDesiredApp.getRoutes().equals(desiredApp.getRoutes())) {
+						siteMidState.addOverviewApps(strategy.onRoutesUpdated());
+					} else if (!(instantiatedDesiredApp.getInstances() == desiredApp.getInstances())) {
+						siteMidState.addOverviewApps(strategy.onInstancesUpdated());
+					} else if (!instantiatedDesiredApp.getName().equals(desiredApp.getName())) {
+						siteMidState.addOverviewApps(strategy.onNameUpdated());
 					} else {
-						strategy.nothingUpdated();
+						siteMidState.addOverviewApps(strategy.nothingUpdated());
 					}
-					siteMidState.addOverviewApps(updateApps);
 				} catch (InstantiationException | IllegalAccessException | ClassNotFoundException
 						| IllegalArgumentException | InvocationTargetException | NoSuchMethodException
 						| SecurityException e) {

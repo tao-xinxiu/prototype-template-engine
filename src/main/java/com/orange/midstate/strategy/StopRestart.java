@@ -1,7 +1,6 @@
 package com.orange.midstate.strategy;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.orange.model.SiteDeploymentConfig;
 import com.orange.model.state.AppState;
@@ -13,21 +12,30 @@ public class StopRestart extends AppUpdateStrategy {
 	}
 
 	@Override
-	public void onEnvUpdated() {
-		AppState state = nameConflictedApp() == null ? AppState.RUNNING : AppState.CREATED;
-		updateApps.add(new OverviewApp(null, appTmpName(), desiredApp.getPath(), state, desiredApp.getInstances(),
-				desiredApp.getEnv(), appTmpRoute()));
+	public Set<OverviewApp> onEnvUpdated() {
+		Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
+		AppState state = nameConflictedApp(desiredRelatedApps) == null ? AppState.RUNNING : AppState.CREATED;
+		desiredRelatedApps.add(new OverviewApp(null, newAppName(), desiredApp.getPath(), state,
+				desiredApp.getInstances(), desiredApp.getEnv(), appTmpRoute()));
+		return desiredRelatedApps;
 	}
 
 	@Override
-	public void onStateUpdated() {
-		Set<OverviewApp> oldRunningApps = oldApps().stream().filter(app -> app.getState() == AppState.RUNNING)
-				.collect(Collectors.toSet());
-		for (OverviewApp app : oldRunningApps) {
-			app.setState(AppState.STAGED);
+	public Set<OverviewApp> onStateUpdated() {
+		Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
+		OverviewApp instantiatedDesiredApp = instantiatedDesiredApp(desiredRelatedApps);
+		if (desiredApp.getState() == AppState.RUNNING) {
+			Set<OverviewApp> oldRunningApps = Util
+					.searchByState(Util.exludedApps(desiredRelatedApps, instantiatedDesiredApp), AppState.RUNNING);
+			if (oldRunningApps.isEmpty()) {
+				instantiatedDesiredApp.setState(desiredApp.getState());
+			} else {
+				oldRunningApps.stream().forEach(app -> app.setState(AppState.STAGED));
+			}
+		} else {
+			instantiatedDesiredApp.setState(desiredApp.getState());
 		}
-		if (oldRunningApps.isEmpty()) {
-			newApp().setState(desiredApp.getState());
-		}
+
+		return desiredRelatedApps;
 	}
 }
