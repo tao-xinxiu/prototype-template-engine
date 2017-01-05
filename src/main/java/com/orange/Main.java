@@ -1,6 +1,11 @@
 package com.orange;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -14,11 +19,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.orange.midstate.MidStateCalculator;
 import com.orange.model.DeploymentConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.state.Overview;
+import com.orange.model.state.OverviewApp;
 import com.orange.model.state.OverviewSite;
 import com.orange.model.workflow.Workflow;
 import com.orange.paas.cf.CloudFoundryAPIv2;
@@ -28,6 +35,7 @@ import com.orange.update.WorkflowCalculator;
 @RestController
 public class Main {
 	private static final Logger logger = LoggerFactory.getLogger(Main.class);
+	private static final String storePath = "./store/";
 	private MidStateCalculator midStateCalculator;
 
 	@RequestMapping(value = "/current_state", method = RequestMethod.POST)
@@ -40,10 +48,42 @@ public class Main {
 		return new Overview(sites, overviewSites);
 	}
 
+	/**
+	 * Upload the app binary or source file which is supposed to be uploaded to
+	 * the PaaS
+	 * 
+	 * @param file
+	 * @return the stored file name, which is supposed to fill out app path in
+	 *         the desired state description
+	 */
+	@RequestMapping(value = "/upload", method = RequestMethod.POST)
+	public @ResponseBody String handleFileUpload(@RequestParam("file") MultipartFile file) {
+		// split original file name base and extension
+		String[] fileOriginalNameSplited = file.getOriginalFilename().split("\\.(?=[^\\.]+$)");
+		String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+		String fileStoredName = String.format("%s_%s.%s", fileOriginalNameSplited[0], timestamp,
+				fileOriginalNameSplited[1]);
+		if (!file.isEmpty()) {
+			try {
+				byte[] bytes = file.getBytes();
+				BufferedOutputStream stream = new BufferedOutputStream(
+						new FileOutputStream(new File(storePath + fileStoredName)));
+				stream.write(bytes);
+				stream.close();
+				logger.info("Successfully uploaded {} into {} !", file.getOriginalFilename(), fileStoredName);
+				return fileStoredName;
+			} catch (Exception e) {
+				throw new IllegalStateException("Failed to upload " + file.getOriginalFilename(), e);
+			}
+		} else {
+			throw new IllegalStateException(String.format("Upload file [%s] is empty", file.getOriginalFilename()));
+		}
+	}
+
 	@RequestMapping(value = "/change", method = RequestMethod.POST)
 	public @ResponseBody Overview change(@RequestBody Overview desiredState) {
 		Overview currentState = getCurrentState(desiredState.listPaaSSites());
-		validDesiredState(currentState, desiredState);
+		validAndConfigAppPath(currentState, desiredState);
 		Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState).getUpdateWorkflow();
 		updateWorkflow.exec();
 		logger.info("Workflow {} finished!", updateWorkflow);
@@ -56,7 +96,6 @@ public class Main {
 			throw new IllegalStateException("Update config not yet set.");
 		}
 		Overview currentState = getCurrentState(finalState.listPaaSSites());
-		validDesiredState(currentState, finalState);
 		return midStateCalculator.calcMidStates(currentState, finalState);
 	}
 
@@ -74,14 +113,30 @@ public class Main {
 		return currentState.isInstantiation(desiredState);
 	}
 
-	private void validDesiredState(Overview currentState, Overview desiredState) {
-		if (desiredState.getOverviewSites().values().stream().anyMatch(site -> site.getOverviewApps().stream()
-				.anyMatch(app -> app.getGuid() == null && app.getPath() == null))) {
-			throw new IllegalStateException("The path of all new apps should be specified.");
+	private void validAndConfigAppPath(Overview currentState, Overview desiredState) {
+		for (OverviewSite site : desiredState.getOverviewSites().values()) {
+			for (OverviewApp app : site.getOverviewApps()) {
+				if (app.getGuid() == null) {
+					if (app.getPath() == null) {
+						throw new IllegalStateException(
+								String.format("The path of the new app [%s] is not specified.", app.getName()));
+					} else {
+						String appName = app.getPath();
+						app.setPath(storePath + appName);
+						if (!new File(app.getPath()).exists()) {
+							throw new IllegalStateException(String.format("App file [%s] not yet uploaded.", appName));
+						}
+					}
+				}
+			}
 		}
 	}
 
 	public static void main(String[] args) {
+		File storeDir = new File(storePath);
+		if (!storeDir.exists()) {
+			storeDir.mkdirs();
+		}
 		SpringApplication.run(Main.class, args);
 	}
 }
