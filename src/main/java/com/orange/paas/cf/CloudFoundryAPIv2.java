@@ -17,7 +17,7 @@ import com.orange.model.state.Route;
 import com.orange.paas.PaaSAPI;
 
 public class CloudFoundryAPIv2 extends PaaSAPI {
-	private static final int uploadTimeout = 60 * 5;
+	private static final int uploadTimeout = 60 * 15;
 	private final Logger logger;
 	private CloudFoundryOperations operations;
 
