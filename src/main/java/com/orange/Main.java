@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -35,6 +36,7 @@ import com.orange.update.WorkflowCalculator;
 @RestController
 public class Main {
 	private static final Logger logger = LoggerFactory.getLogger(Main.class);
+	// storePath and MidStateCalculator(strategy&config) are specific to user
 	private static final String storePath = "./store/";
 	private MidStateCalculator midStateCalculator;
 
@@ -78,6 +80,12 @@ public class Main {
 		} else {
 			throw new IllegalStateException(String.format("Upload file [%s] is empty", file.getOriginalFilename()));
 		}
+	}
+
+	// users should only clean their proper uploaded files
+	@RequestMapping(value = "/cleanFiles", method = RequestMethod.PUT)
+	public @ResponseBody void cleanFilesUploaded() {
+		Arrays.stream(new File(storePath).listFiles()).forEach(File::delete);
 	}
 
 	@RequestMapping(value = "/change", method = RequestMethod.POST)
