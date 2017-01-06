@@ -46,7 +46,6 @@ import org.cloudfoundry.reactor.ProxyConfiguration;
 import org.cloudfoundry.reactor.TokenProvider;
 import org.cloudfoundry.reactor.client.ReactorCloudFoundryClient;
 import org.cloudfoundry.reactor.tokenprovider.PasswordGrantTokenProvider;
-import org.cloudfoundry.util.JobUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,7 +154,7 @@ public class CloudFoundryOperations {
 			UploadApplicationRequest request = UploadApplicationRequest.builder().applicationId(appId)
 					.application(new FileInputStream(new File(path))).build();
 			logger.info("App [{}] package [{}] start uploading", appId, path);
-			cloudFoundryClient.applicationsV2().upload(request).then(job -> JobUtils.waitForCompletion(cloudFoundryClient, job));
+			cloudFoundryClient.applicationsV2().upload(request).block();
 			logger.info("App [{}] package [{}] uploaded.", appId, path);
 		} catch (IOException e) {
 			throw new IllegalStateException(String.format("IOException during uploading app with path: [%s]", path), e);
