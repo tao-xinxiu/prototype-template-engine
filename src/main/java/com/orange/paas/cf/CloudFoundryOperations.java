@@ -3,7 +3,6 @@ package com.orange.paas.cf;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +46,7 @@ import org.cloudfoundry.reactor.ProxyConfiguration;
 import org.cloudfoundry.reactor.TokenProvider;
 import org.cloudfoundry.reactor.client.ReactorCloudFoundryClient;
 import org.cloudfoundry.reactor.tokenprovider.PasswordGrantTokenProvider;
+import org.cloudfoundry.util.JobUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,12 +150,12 @@ public class CloudFoundryOperations {
 		}
 	}
 
-	public void uploadApp(String appId, String path, long timeout) {
+	public void uploadApp(String appId, String path) {
 		try {
 			UploadApplicationRequest request = UploadApplicationRequest.builder().applicationId(appId)
 					.application(new FileInputStream(new File(path))).build();
-			logger.info("App [{}] package [{}] start uploading with timeout of [{}] seconds", appId, path, timeout);
-			cloudFoundryClient.applicationsV2().upload(request).block(Duration.ofSeconds(timeout));
+			logger.info("App [{}] package [{}] start uploading", appId, path);
+			cloudFoundryClient.applicationsV2().upload(request).then(job -> JobUtils.waitForCompletion(cloudFoundryClient, job));
 			logger.info("App [{}] package [{}] uploaded.", appId, path);
 		} catch (IOException e) {
 			throw new IllegalStateException(String.format("IOException during uploading app with path: [%s]", path), e);
@@ -163,7 +163,7 @@ public class CloudFoundryOperations {
 			throw new IllegalStateException(String.format("Expcetion during uploading app [%s]", appId), e);
 		}
 	}
-
+	
 	public void restageApp(String appId) {
 		RestageApplicationRequest request = RestageApplicationRequest.builder().applicationId(appId).build();
 		cloudFoundryClient.applicationsV2().restage(request).block();

@@ -17,7 +17,6 @@ import com.orange.model.state.Route;
 import com.orange.paas.PaaSAPI;
 
 public class CloudFoundryAPIv2 extends PaaSAPI {
-	private static final int uploadTimeout = 60 * 15;
 	private final Logger logger;
 	private CloudFoundryOperations operations;
 
@@ -31,7 +30,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	public String createAppWaitUploaded(OverviewApp app) {
 		String appId = operations.createApp(app);
 		logger.info("App [{}] created with id: [{}].", app.getName(), appId);
-		operations.uploadApp(appId, app.getPath(), uploadTimeout);
+		operations.uploadApp(appId, app.getPath());
 		return appId;
 	}
 
