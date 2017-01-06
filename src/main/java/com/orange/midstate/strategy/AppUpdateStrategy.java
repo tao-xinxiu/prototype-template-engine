@@ -14,8 +14,8 @@ import com.orange.model.state.OverviewApp;
 import com.orange.model.state.Route;
 
 public abstract class AppUpdateStrategy {
-	private static List<AppProperty> updateOrder = Collections.unmodifiableList(Arrays.asList(AppProperty.Env,
-			AppProperty.State, AppProperty.Routes, AppProperty.Instances, AppProperty.Name));
+	private static List<AppProperty> updateOrder = Collections.unmodifiableList(Arrays.asList(AppProperty.Path,
+			AppProperty.Env, AppProperty.State, AppProperty.Routes, AppProperty.Instances, AppProperty.Name));
 	protected Set<OverviewApp> currentRelatedApps;
 	protected OverviewApp desiredApp;
 	protected SiteDeploymentConfig config;
@@ -31,7 +31,7 @@ public abstract class AppUpdateStrategy {
 	}
 
 	protected static void setUpdateOrder(List<AppProperty> updateOrder) {
-		if (updateOrder.size() != 5 || !updateOrder.containsAll(Arrays.asList(AppProperty.values()))) {
+		if (updateOrder.size() != 6 || !updateOrder.containsAll(Arrays.asList(AppProperty.values()))) {
 			throw new IllegalStateException("Invalid update order.");
 		}
 		AppUpdateStrategy.updateOrder = Collections.unmodifiableList(updateOrder);
@@ -52,6 +52,8 @@ public abstract class AppUpdateStrategy {
 		return app -> desiredApp.getGuid() != null ? desiredApp.getGuid().equals(app.getGuid())
 				: relatedAppName().contains(app.getName());
 	}
+
+	public abstract Set<OverviewApp> onPathUpdated();
 
 	public abstract Set<OverviewApp> onEnvUpdated();
 

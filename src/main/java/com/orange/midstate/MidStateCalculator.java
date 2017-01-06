@@ -79,6 +79,9 @@ public class MidStateCalculator {
 
 	private boolean propertyChanged(OverviewApp currentApp, OverviewApp desiredApp, AppProperty property) {
 		try {
+			if (property == AppProperty.Path) {
+				return desiredApp.getPath() == null;
+			}
 			Method getPropertyMethod = OverviewApp.class.getMethod("get" + property);
 			return !getPropertyMethod.invoke(currentApp).equals(getPropertyMethod.invoke(desiredApp));
 		} catch (NoSuchMethodException | SecurityException e) {

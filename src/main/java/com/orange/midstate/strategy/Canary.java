@@ -18,4 +18,12 @@ public class Canary extends AppUpdateStrategy {
 				desiredApp.getEnv(), appTmpRoute()));
 		return desiredRelatedApps;
 	}
+
+	@Override
+	public Set<OverviewApp> onPathUpdated() {
+		Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
+		desiredRelatedApps.add(new OverviewApp(null, newAppName(), desiredApp.getPath(), AppState.RUNNING, 1,
+				desiredApp.getEnv(), appTmpRoute()));
+		return desiredRelatedApps;
+	}
 }
