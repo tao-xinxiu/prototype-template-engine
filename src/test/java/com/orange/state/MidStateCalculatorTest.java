@@ -47,28 +47,28 @@ public class MidStateCalculatorTest {
 		assertThat(midState1.getOverviewSite(site1name).getOverviewApps()).containsOnly(oldAppSite1(), expectedNewApp1);
 		assertThat(midState1.getOverviewSite(site2name).getOverviewApps()).containsOnly(oldAppSite2(), expectedNewApp1);
 
-		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalState());
+		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalStateWithoutPath());
 		assertThat(midState2.getOverviewSites()).hasSize(2);
 		assertThat(midState2.getOverviewSite(site1name).getOverviewApps()).containsOnly(oldAppSite1(), new OverviewApp(
 				newAppSite1Id, appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState2.getOverviewSite(site2name).getOverviewApps()).containsOnly(oldAppSite2(), new OverviewApp(
 				newAppSite2Id, appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalState());
+		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalStateWithoutPath());
 		assertThat(midState3.getOverviewSites()).hasSize(2);
 		assertThat(midState3.getOverviewSite(site1name).getOverviewApps()).containsOnly(new OverviewApp(newAppSite1Id,
 				appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState3.getOverviewSite(site2name).getOverviewApps()).containsOnly(new OverviewApp(newAppSite2Id,
 				appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState4 = midStateCalculator.calcMidStates(midState3, finalState());
+		final Overview midState4 = midStateCalculator.calcMidStates(midState3, finalStateWithoutPath());
 		assertThat(midState4.getOverviewSites()).hasSize(2);
 		assertThat(midState4.getOverviewSite(site1name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite1Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState4.getOverviewSite(site2name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite2Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState5 = midStateCalculator.calcMidStates(midState4, finalState());
+		final Overview midState5 = midStateCalculator.calcMidStates(midState4, finalStateWithoutPath());
 		assertThat(midState5).isNull();
 	}
 
@@ -82,21 +82,21 @@ public class MidStateCalculatorTest {
 		assertThat(midState1.getOverviewSite(site1name).getOverviewApps()).containsOnly(oldAppSite1(), expectedNewApp);
 		assertThat(midState1.getOverviewSite(site2name).getOverviewApps()).containsOnly(oldAppSite2(), expectedNewApp);
 
-		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalState());
+		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalStateWithoutPath());
 		assertThat(midState2.getOverviewSites()).hasSize(2);
 		assertThat(midState2.getOverviewSite(site1name).getOverviewApps()).containsOnly(new OverviewApp(newAppSite1Id,
 				appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState2.getOverviewSite(site2name).getOverviewApps()).containsOnly(new OverviewApp(newAppSite2Id,
 				appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalState());
+		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalStateWithoutPath());
 		assertThat(midState3.getOverviewSites()).hasSize(2);
 		assertThat(midState3.getOverviewSite(site1name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite1Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState3.getOverviewSite(site2name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite2Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState4 = midStateCalculator.calcMidStates(midState3, finalState());
+		final Overview midState4 = midStateCalculator.calcMidStates(midState3, finalStateWithoutPath());
 		assertThat(midState4).isNull();
 	}
 
@@ -110,7 +110,7 @@ public class MidStateCalculatorTest {
 		assertThat(midState1.getOverviewSite(site1name).getOverviewApps()).containsOnly(expectedNewApp);
 		assertThat(midState1.getOverviewSite(site2name).getOverviewApps()).containsOnly(expectedNewApp);
 
-		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalState());
+		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalStateWithoutPath());
 		assertThat(midState2).isNull();
 	}
 
@@ -124,35 +124,35 @@ public class MidStateCalculatorTest {
 		assertThat(midState1.getOverviewSite(site2name).getOverviewApps()).containsOnly(oldAppSite2(),
 				new OverviewApp(null, appTmpName, newAppPath, AppState.RUNNING, 1, newAppEnv(), appTmpRoutes));
 
-		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalState());
+		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalStateWithoutPath());
 		assertThat(midState2.getOverviewSites()).hasSize(2);
 		assertThat(midState2.getOverviewSite(site1name).getOverviewApps()).containsOnly(oldAppSite1(),
 				new OverviewApp(newAppSite1Id, appTmpName, null, AppState.RUNNING, 1, newAppEnv(), appRoutes));
 		assertThat(midState2.getOverviewSite(site2name).getOverviewApps()).containsOnly(oldAppSite2(),
 				new OverviewApp(newAppSite2Id, appTmpName, null, AppState.RUNNING, 1, newAppEnv(), appRoutes));
 
-		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalState());
+		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalStateWithoutPath());
 		assertThat(midState3.getOverviewSites()).hasSize(2);
 		assertThat(midState3.getOverviewSite(site1name).getOverviewApps()).containsOnly(oldAppSite1(), new OverviewApp(
 				newAppSite1Id, appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState3.getOverviewSite(site2name).getOverviewApps()).containsOnly(oldAppSite2(), new OverviewApp(
 				newAppSite2Id, appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState4 = midStateCalculator.calcMidStates(midState3, finalState());
+		final Overview midState4 = midStateCalculator.calcMidStates(midState3, finalStateWithoutPath());
 		assertThat(midState4.getOverviewSites()).hasSize(2);
 		assertThat(midState4.getOverviewSite(site1name).getOverviewApps()).containsOnly(new OverviewApp(newAppSite1Id,
 				appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState4.getOverviewSite(site2name).getOverviewApps()).containsOnly(new OverviewApp(newAppSite2Id,
 				appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState5 = midStateCalculator.calcMidStates(midState4, finalState());
+		final Overview midState5 = midStateCalculator.calcMidStates(midState4, finalStateWithoutPath());
 		assertThat(midState5.getOverviewSites()).hasSize(2);
 		assertThat(midState5.getOverviewSite(site1name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite1Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState5.getOverviewSite(site2name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite2Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState6 = midStateCalculator.calcMidStates(midState5, finalState());
+		final Overview midState6 = midStateCalculator.calcMidStates(midState5, finalStateWithoutPath());
 		assertThat(midState6).isNull();
 	}
 
@@ -166,28 +166,28 @@ public class MidStateCalculatorTest {
 		assertThat(midState1.getOverviewSite(site2name).getOverviewApps()).containsOnly(oldAppSite2(),
 				new OverviewApp(null, appTmpName, newAppPath, AppState.RUNNING, 1, newAppEnv(), appRoutes));
 
-		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalState());
+		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalStateWithoutPath());
 		assertThat(midState2.getOverviewSites()).hasSize(2);
 		assertThat(midState2.getOverviewSite(site1name).getOverviewApps()).containsOnly(oldAppSite1(), new OverviewApp(
 				newAppSite1Id, appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState2.getOverviewSite(site2name).getOverviewApps()).containsOnly(oldAppSite2(), new OverviewApp(
 				newAppSite2Id, appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalState());
+		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalStateWithoutPath());
 		assertThat(midState3.getOverviewSites()).hasSize(2);
 		assertThat(midState3.getOverviewSite(site1name).getOverviewApps()).containsOnly(new OverviewApp(newAppSite1Id,
 				appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState3.getOverviewSite(site2name).getOverviewApps()).containsOnly(new OverviewApp(newAppSite2Id,
 				appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState4 = midStateCalculator.calcMidStates(midState3, finalState());
+		final Overview midState4 = midStateCalculator.calcMidStates(midState3, finalStateWithoutPath());
 		assertThat(midState4.getOverviewSites()).hasSize(2);
 		assertThat(midState4.getOverviewSite(site1name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite1Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState4.getOverviewSite(site2name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite2Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState5 = midStateCalculator.calcMidStates(midState4, finalState());
+		final Overview midState5 = midStateCalculator.calcMidStates(midState4, finalStateWithoutPath());
 		assertThat(midState5).isNull();
 	}
 
@@ -201,14 +201,14 @@ public class MidStateCalculatorTest {
 		assertThat(midState1.getOverviewSite(site2name).getOverviewApps())
 				.containsOnly(new OverviewApp(null, appName, newAppPath, AppState.RUNNING, 1, newAppEnv(), appRoutes));
 
-		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalState());
+		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalStateWithoutPath());
 		assertThat(midState2.getOverviewSites()).hasSize(2);
 		assertThat(midState2.getOverviewSite(site1name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite1Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState2.getOverviewSite(site2name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite2Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalState());
+		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalStateWithoutPath());
 		assertThat(midState3).isNull();
 	}
 
@@ -222,7 +222,7 @@ public class MidStateCalculatorTest {
 		assertThat(midState1.getOverviewSite(site2name).getOverviewApps()).containsOnly(oldAppSite2(), new OverviewApp(
 				null, appTmpName, newAppPath, AppState.CREATED, appInstances, newAppEnv(), appTmpRoutes));
 
-		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalState());
+		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalStateWithoutPath());
 		assertThat(midState2.getOverviewSites()).hasSize(2);
 		assertThat(midState2.getOverviewSite(site1name).getOverviewApps()).containsOnly(
 				new OverviewApp(oldAppSite1Id, appName, null, AppState.STAGED, appInstances, oldAppEnv(), appRoutes),
@@ -234,7 +234,7 @@ public class MidStateCalculatorTest {
 						appTmpRoutes));
 
 		assertThat(mockInstantiateState(midState2)).isEqualTo(midState2);
-		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalState());
+		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalStateWithoutPath());
 		assertThat(midState3.getOverviewSites()).hasSize(2);
 		assertThat(midState3.getOverviewSite(site1name).getOverviewApps()).containsOnly(
 				new OverviewApp(oldAppSite1Id, appName, null, AppState.STAGED, appInstances, oldAppEnv(), appRoutes),
@@ -245,7 +245,7 @@ public class MidStateCalculatorTest {
 				new OverviewApp(newAppSite2Id, appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(),
 						appTmpRoutes));
 
-		final Overview midState4 = midStateCalculator.calcMidStates(midState3, finalState());
+		final Overview midState4 = midStateCalculator.calcMidStates(midState3, finalStateWithoutPath());
 		assertThat(midState4.getOverviewSites()).hasSize(2);
 		assertThat(midState4.getOverviewSite(site1name).getOverviewApps()).containsOnly(
 				new OverviewApp(oldAppSite1Id, appName, null, AppState.STAGED, appInstances, oldAppEnv(), appRoutes),
@@ -256,21 +256,21 @@ public class MidStateCalculatorTest {
 				new OverviewApp(newAppSite2Id, appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(),
 						appRoutes));
 
-		final Overview midState5 = midStateCalculator.calcMidStates(midState4, finalState());
+		final Overview midState5 = midStateCalculator.calcMidStates(midState4, finalStateWithoutPath());
 		assertThat(midState5.getOverviewSites()).hasSize(2);
 		assertThat(midState5.getOverviewSite(site1name).getOverviewApps()).containsOnly(new OverviewApp(newAppSite1Id,
 				appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState5.getOverviewSite(site2name).getOverviewApps()).containsOnly(new OverviewApp(newAppSite2Id,
 				appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState6 = midStateCalculator.calcMidStates(midState5, finalState());
+		final Overview midState6 = midStateCalculator.calcMidStates(midState5, finalStateWithoutPath());
 		assertThat(midState6.getOverviewSites()).hasSize(2);
 		assertThat(midState6.getOverviewSite(site1name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite1Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState6.getOverviewSite(site2name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite2Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState7 = midStateCalculator.calcMidStates(midState6, finalState());
+		final Overview midState7 = midStateCalculator.calcMidStates(midState6, finalStateWithoutPath());
 		assertThat(midState7).isNull();
 	}
 
@@ -284,7 +284,7 @@ public class MidStateCalculatorTest {
 		assertThat(midState1.getOverviewSite(site2name).getOverviewApps()).containsOnly(oldAppSite2(),
 				new OverviewApp(null, appTmpName, newAppPath, AppState.CREATED, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalState());
+		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalStateWithoutPath());
 		assertThat(midState2.getOverviewSites()).hasSize(2);
 		assertThat(midState2.getOverviewSite(site1name).getOverviewApps()).containsOnly(
 				new OverviewApp(oldAppSite1Id, appName, null, AppState.STAGED, appInstances, oldAppEnv(), appRoutes),
@@ -295,7 +295,7 @@ public class MidStateCalculatorTest {
 				new OverviewApp(newAppSite2Id, appTmpName, null, AppState.CREATED, appInstances, newAppEnv(),
 						appRoutes));
 
-		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalState());
+		final Overview midState3 = midStateCalculator.calcMidStates(midState2, finalStateWithoutPath());
 		assertThat(midState3.getOverviewSites()).hasSize(2);
 		assertThat(midState3.getOverviewSite(site1name).getOverviewApps()).containsOnly(
 				new OverviewApp(oldAppSite1Id, appName, null, AppState.STAGED, appInstances, oldAppEnv(), appRoutes),
@@ -306,21 +306,21 @@ public class MidStateCalculatorTest {
 				new OverviewApp(newAppSite2Id, appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(),
 						appRoutes));
 
-		final Overview midState4 = midStateCalculator.calcMidStates(midState3, finalState());
+		final Overview midState4 = midStateCalculator.calcMidStates(midState3, finalStateWithoutPath());
 		assertThat(midState4.getOverviewSites()).hasSize(2);
 		assertThat(midState4.getOverviewSite(site1name).getOverviewApps()).containsOnly(new OverviewApp(newAppSite1Id,
 				appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState4.getOverviewSite(site2name).getOverviewApps()).containsOnly(new OverviewApp(newAppSite2Id,
 				appTmpName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState5 = midStateCalculator.calcMidStates(midState4, finalState());
+		final Overview midState5 = midStateCalculator.calcMidStates(midState4, finalStateWithoutPath());
 		assertThat(midState5.getOverviewSites()).hasSize(2);
 		assertThat(midState5.getOverviewSite(site1name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite1Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 		assertThat(midState5.getOverviewSite(site2name).getOverviewApps()).containsOnly(
 				new OverviewApp(newAppSite2Id, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState6 = midStateCalculator.calcMidStates(midState5, finalState());
+		final Overview midState6 = midStateCalculator.calcMidStates(midState5, finalStateWithoutPath());
 		assertThat(midState6).isNull();
 	}
 
@@ -334,7 +334,7 @@ public class MidStateCalculatorTest {
 		assertThat(midState1.getOverviewSite(site2name).getOverviewApps()).containsOnly(
 				new OverviewApp(null, appName, newAppPath, AppState.RUNNING, appInstances, newAppEnv(), appRoutes));
 
-		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalState());
+		final Overview midState2 = midStateCalculator.calcMidStates(mockInstantiateState(midState1), finalStateWithoutPath());
 		assertThat(midState2).isNull();
 	}
 
@@ -382,6 +382,15 @@ public class MidStateCalculatorTest {
 				new OverviewApp(null, appName, newAppPath, AppState.RUNNING, appInstances, newAppEnv(), appRoutes))));
 		finalState.addPaaSSite(site2(), new OverviewSite(Collections.singleton(
 				new OverviewApp(null, appName, newAppPath, AppState.RUNNING, appInstances, newAppEnv(), appRoutes))));
+		return finalState;
+	}
+	
+	private Overview finalStateWithoutPath() {
+		Overview finalState = new Overview();
+		finalState.addPaaSSite(site1(), new OverviewSite(Collections.singleton(
+				new OverviewApp(null, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes))));
+		finalState.addPaaSSite(site2(), new OverviewSite(Collections.singleton(
+				new OverviewApp(null, appName, null, AppState.RUNNING, appInstances, newAppEnv(), appRoutes))));
 		return finalState;
 	}
 
