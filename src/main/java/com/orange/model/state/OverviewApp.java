@@ -176,6 +176,9 @@ public class OverviewApp {
 		if (desiredApp.guid != null && !this.guid.equals(desiredApp.guid)) {
 			return false;
 		}
+		if (desiredApp.path != null) {
+			return false;
+		}
 		if (!this.name.equals(desiredApp.name) || !this.state.equals(desiredApp.state)
 				|| this.instances != desiredApp.instances || !this.env.equals(desiredApp.env)
 				|| !this.routes.equals(desiredApp.routes)) {
