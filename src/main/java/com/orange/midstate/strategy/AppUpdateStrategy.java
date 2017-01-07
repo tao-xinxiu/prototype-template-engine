@@ -53,6 +53,10 @@ public abstract class AppUpdateStrategy {
 				: relatedAppName().contains(app.getName());
 	}
 
+	public Set<OverviewApp> onNoInstantiatedDesiredApp() {
+		return onPathUpdated();
+	}
+
 	public abstract Set<OverviewApp> onPathUpdated();
 
 	public abstract Set<OverviewApp> onEnvUpdated();
@@ -98,9 +102,10 @@ public abstract class AppUpdateStrategy {
 	 * @return
 	 */
 	protected OverviewApp instantiatedDesiredApp(Set<OverviewApp> currentRelatedApps) {
-		return desiredApp.getGuid() != null
-				? Util.searchApp(currentRelatedApps, app -> app.getGuid().equals(desiredApp.getGuid()))
-				: Util.searchApp(currentRelatedApps, app -> app.getEnv().equals(desiredApp.getEnv()));
+		return desiredApp.getPath() != null ? null
+				: (desiredApp.getGuid() != null
+						? Util.searchApp(currentRelatedApps, app -> app.getGuid().equals(desiredApp.getGuid()))
+						: Util.searchApp(currentRelatedApps, app -> app.getEnv().equals(desiredApp.getEnv())));
 	}
 
 	protected OverviewApp nameConflictedApp(Set<OverviewApp> currentRelatedApps) {

@@ -49,7 +49,7 @@ public class MidStateCalculator {
 							.newInstance(currentApps, desiredApp, config);
 					OverviewApp instantiatedDesiredApp = strategy.getInstantiatedDesiredApp();
 					if (instantiatedDesiredApp == null) {
-						siteMidState.addOverviewApps(strategy.onEnvUpdated());
+						siteMidState.addOverviewApps(strategy.onNoInstantiatedDesiredApp());
 						continue;
 					}
 					List<AppProperty> updateOrder = AppUpdateStrategy.getUpdateOrder();
