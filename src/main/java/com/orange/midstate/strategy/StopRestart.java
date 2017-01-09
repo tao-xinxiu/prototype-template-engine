@@ -14,7 +14,8 @@ public class StopRestart extends AppUpdateStrategy {
 	@Override
 	public Set<OverviewApp> onEnvUpdated() {
 		Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
-		AppState state = nameConflictedApp(desiredRelatedApps) == null ? AppState.RUNNING : AppState.CREATED;
+		AppState state = nameConflictedApp(desiredRelatedApps, desiredApp.getName()) == null ? AppState.RUNNING
+				: AppState.CREATED;
 		desiredRelatedApps.add(new OverviewApp(null, newAppName(), desiredApp.getPath(), state,
 				desiredApp.getInstances(), desiredApp.getEnv(), appTmpRoute()));
 		return desiredRelatedApps;
@@ -42,7 +43,8 @@ public class StopRestart extends AppUpdateStrategy {
 	@Override
 	public Set<OverviewApp> onPathUpdated() {
 		Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
-		AppState state = nameConflictedApp(desiredRelatedApps) == null ? AppState.RUNNING : AppState.CREATED;
+		AppState state = nameConflictedApp(desiredRelatedApps, desiredApp.getName()) == null ? AppState.RUNNING
+				: AppState.CREATED;
 		desiredRelatedApps.add(new OverviewApp(null, newAppName(), desiredApp.getPath(), state,
 				desiredApp.getInstances(), desiredApp.getEnv(), appTmpRoute()));
 		return desiredRelatedApps;

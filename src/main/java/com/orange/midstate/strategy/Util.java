@@ -25,7 +25,16 @@ public class Util {
 	}
 
 	public static OverviewApp searchApp(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
-		return apps.stream().filter(predicate).findAny().orElse(null);
+		Set<OverviewApp> result = search(apps, predicate);
+		switch (result.size()) {
+		case 0:
+			return null;
+		case 1:
+			return result.iterator().next();
+		default:
+			throw new IllegalStateException(String
+					.format("Illegal state: found more than one apps [%s] which satisfy [%s]", result, predicate));
+		}
 	}
 
 	public static Set<OverviewApp> exludedApps(Set<OverviewApp> apps, OverviewApp inclusion) {

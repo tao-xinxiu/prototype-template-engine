@@ -81,7 +81,7 @@ public abstract class AppUpdateStrategy {
 
 	public Set<OverviewApp> onNameUpdated() {
 		Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
-		OverviewApp nameConflictedApp = nameConflictedApp(desiredRelatedApps);
+		OverviewApp nameConflictedApp = nameConflictedApp(desiredRelatedApps, desiredApp.getName());
 		if (nameConflictedApp != null) {
 			desiredRelatedApps.remove(nameConflictedApp);
 		} else {
@@ -102,19 +102,36 @@ public abstract class AppUpdateStrategy {
 	 * @return
 	 */
 	protected OverviewApp instantiatedDesiredApp(Set<OverviewApp> currentRelatedApps) {
-		return desiredApp.getPath() != null ? null
-				: (desiredApp.getGuid() != null
-						? Util.searchApp(currentRelatedApps, app -> app.getGuid().equals(desiredApp.getGuid()))
-						: Util.searchApp(currentRelatedApps, app -> app.getEnv().equals(desiredApp.getEnv())));
+		if (desiredApp.getName().endsWith(config.getTmpNameSuffix())) {
+			throw new IllegalStateException(String.format("Not support desired app [%s] using [%s] suffix.",
+					desiredApp.getName(), config.getTmpNameSuffix()));
+		}
+		if (desiredApp.getPath() != null) {
+			return null;
+		}
+		if (desiredApp.getGuid() != null) {
+			return Util.searchApp(currentRelatedApps, app -> app.getGuid().equals(desiredApp.getGuid()));
+		}
+		Set<OverviewApp> desiredEnvApps = Util.search(currentRelatedApps,
+				app -> app.getEnv().equals(desiredApp.getEnv()));
+		switch (desiredEnvApps.size()) {
+		case 0:
+			return null;
+		case 1:
+			return desiredEnvApps.iterator().next();
+		default:
+			return Util.searchApp(currentRelatedApps, app -> app.getName().equals(tmpAppName()));
+		}
 	}
 
-	protected OverviewApp nameConflictedApp(Set<OverviewApp> currentRelatedApps) {
+	protected OverviewApp nameConflictedApp(Set<OverviewApp> currentRelatedApps, String name) {
 		return Util.searchByName(Util.exludedApps(currentRelatedApps, instantiatedDesiredApp(currentRelatedApps)),
-				desiredApp.getName());
+				name);
 	}
 
 	protected String newAppName() {
-		return nameConflictedApp(currentRelatedApps) == null ? desiredApp.getName() : tmpAppName();
+		return nameConflictedApp(currentRelatedApps, desiredApp.getName()) == null ? desiredApp.getName()
+				: tmpAppName();
 	}
 
 	protected String tmpAppName() {
