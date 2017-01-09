@@ -4,7 +4,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -84,8 +83,13 @@ public class Main {
 
 	// users should only clean their proper uploaded files
 	@RequestMapping(value = "/cleanFiles", method = RequestMethod.PUT)
-	public @ResponseBody void cleanFilesUploaded() {
-		Arrays.stream(new File(storePath).listFiles()).forEach(File::delete);
+	public @ResponseBody String cleanFilesUploaded(@RequestParam("fileName") String fileName) {
+		boolean success = new File(storePath + fileName).delete();
+		if (success) {
+			return "File is successfully deleted.";
+		} else {
+			return "File delete failed.";
+		}
 	}
 
 	@RequestMapping(value = "/change", method = RequestMethod.POST)
