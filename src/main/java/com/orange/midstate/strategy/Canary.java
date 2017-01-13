@@ -6,7 +6,7 @@ import com.orange.model.SiteDeploymentConfig;
 import com.orange.model.state.AppState;
 import com.orange.model.state.OverviewApp;
 
-public class Canary extends AppUpdateStrategy {
+public class Canary extends OneUpdatingAppStrategy {
 	public Canary(Set<OverviewApp> updateApps, OverviewApp desiredApp, SiteDeploymentConfig config) {
 		super(updateApps, desiredApp, config);
 	}
@@ -19,7 +19,7 @@ public class Canary extends AppUpdateStrategy {
 	@Override
 	public Set<OverviewApp> onPathUpdated() {
 		Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
-		desiredRelatedApps.add(new OverviewApp(null, newAppName(), desiredApp.getPath(), AppState.RUNNING, 1,
+		desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(), AppState.RUNNING, 1,
 				desiredApp.getEnv(), appTmpRoute()));
 		return desiredRelatedApps;
 	}

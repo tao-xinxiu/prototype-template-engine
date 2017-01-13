@@ -21,14 +21,14 @@ public class CanaryEconomic extends Canary {
 		OverviewApp instantiatedDesiredApp = instantiatedDesiredApp(desiredRelatedApps);
 		Set<OverviewApp> oldApps = Util.exludedApps(desiredRelatedApps, instantiatedDesiredApp);
 		if (oldApps.size() == 0) { // initial deploy
-			desiredRelatedApps.add(new OverviewApp(null, newAppName(), desiredApp.getPath(), AppState.RUNNING, 1,
-					desiredApp.getEnv(), appTmpRoute()));
+			desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(), AppState.RUNNING,
+					1, desiredApp.getEnv(), appTmpRoute()));
 		} else {
 			OverviewApp oldApp = oldApps.iterator().next();
 			boolean oldAppsScaled = (oldApp.getInstances() == (desiredApp.getInstances() - 1));
 			if (oldAppsScaled) {
-				desiredRelatedApps.add(new OverviewApp(null, newAppName(), desiredApp.getPath(), AppState.RUNNING, 1,
-						desiredApp.getEnv(), appTmpRoute()));
+				desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(),
+						AppState.RUNNING, 1, desiredApp.getEnv(), appTmpRoute()));
 			} else {
 				oldApp.setInstances(desiredApp.getInstances() - 1);
 			}
