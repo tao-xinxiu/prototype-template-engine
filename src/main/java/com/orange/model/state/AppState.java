@@ -1,5 +1,5 @@
 package com.orange.model.state;
 
 public enum AppState {
-	RUNNING, STAGED, CREATED, FAILED
+    RUNNING, STAGED, CREATED, FAILED
 }

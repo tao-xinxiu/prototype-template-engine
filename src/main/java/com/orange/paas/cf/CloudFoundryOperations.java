@@ -55,282 +55,282 @@ import com.orange.model.state.OverviewApp;
 import com.orange.model.state.Route;
 
 public class CloudFoundryOperations {
-	private final Logger logger;
-	private PaaSAccessInfo siteAccessInfo;
-	private CloudFoundryClient cloudFoundryClient;
-	private String spaceId;
+    private final Logger logger;
+    private PaaSAccessInfo siteAccessInfo;
+    private CloudFoundryClient cloudFoundryClient;
+    private String spaceId;
 
-	public CloudFoundryOperations(PaaSAccessInfo siteAccessInfo) {
-		this.siteAccessInfo = siteAccessInfo;
-		this.logger = LoggerFactory.getLogger(String.format("%s(%s)", getClass(), siteAccessInfo.getName()));
-		String proxy_host = System.getenv("proxy_host");
-		String proxy_port = System.getenv("proxy_port");
-		ConnectionContext connectionContext;
-		if (proxy_host != null && proxy_port != null) {
-			ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host)
-					.port(Integer.parseInt(proxy_port)).build();
-			connectionContext = DefaultConnectionContext.builder().apiHost(siteAccessInfo.getApi())
-					.skipSslValidation(siteAccessInfo.getSkipSslValidation()).proxyConfiguration(proxyConfiguration)
-					.build();
-		} else {
-			connectionContext = DefaultConnectionContext.builder().apiHost(siteAccessInfo.getApi())
-					.skipSslValidation(siteAccessInfo.getSkipSslValidation()).build();
-		}
-		TokenProvider tokenProvider = PasswordGrantTokenProvider.builder().password(siteAccessInfo.getPwd())
-				.username(siteAccessInfo.getUser()).build();
-		this.cloudFoundryClient = ReactorCloudFoundryClient.builder().connectionContext(connectionContext)
-				.tokenProvider(tokenProvider).build();
-		this.spaceId = requestSpaceId();
+    public CloudFoundryOperations(PaaSAccessInfo siteAccessInfo) {
+	this.siteAccessInfo = siteAccessInfo;
+	this.logger = LoggerFactory.getLogger(String.format("%s(%s)", getClass(), siteAccessInfo.getName()));
+	String proxy_host = System.getenv("proxy_host");
+	String proxy_port = System.getenv("proxy_port");
+	ConnectionContext connectionContext;
+	if (proxy_host != null && proxy_port != null) {
+	    ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host)
+		    .port(Integer.parseInt(proxy_port)).build();
+	    connectionContext = DefaultConnectionContext.builder().apiHost(siteAccessInfo.getApi())
+		    .skipSslValidation(siteAccessInfo.getSkipSslValidation()).proxyConfiguration(proxyConfiguration)
+		    .build();
+	} else {
+	    connectionContext = DefaultConnectionContext.builder().apiHost(siteAccessInfo.getApi())
+		    .skipSslValidation(siteAccessInfo.getSkipSslValidation()).build();
+	}
+	TokenProvider tokenProvider = PasswordGrantTokenProvider.builder().password(siteAccessInfo.getPwd())
+		.username(siteAccessInfo.getUser()).build();
+	this.cloudFoundryClient = ReactorCloudFoundryClient.builder().connectionContext(connectionContext)
+		.tokenProvider(tokenProvider).build();
+	this.spaceId = requestSpaceId();
+    }
+
+    private String requestOrgId() {
+	try {
+	    ListOrganizationsRequest request = ListOrganizationsRequest.builder().name(siteAccessInfo.getOrg()).build();
+	    ListOrganizationsResponse response = cloudFoundryClient.organizations().list(request).block();
+	    logger.trace("Got organization id.");
+	    return response.getResources().get(0).getMetadata().getId();
+	} catch (Exception e) {
+	    throw new IllegalStateException("expcetion during getting org id", e);
+	}
+    }
+
+    private String requestSpaceId() {
+	try {
+	    ListSpacesRequest request = ListSpacesRequest.builder().organizationId(requestOrgId())
+		    .name(siteAccessInfo.getSpace()).build();
+	    ListSpacesResponse response = cloudFoundryClient.spaces().list(request).block();
+	    logger.trace("Got space id.");
+	    return response.getResources().get(0).getMetadata().getId();
+	} catch (Exception e) {
+	    throw new IllegalStateException("expcetion during getting space id", e);
+	}
+    }
+
+    public List<SpaceApplicationSummary> listSpaceApps() {
+	try {
+	    GetSpaceSummaryRequest request = GetSpaceSummaryRequest.builder().spaceId(spaceId).build();
+	    logger.trace("Start requesting space application summary...");
+	    GetSpaceSummaryResponse response = cloudFoundryClient.spaces().getSummary(request).block();
+	    logger.trace("Got space apps!");
+	    return response.getApplications();
+	} catch (Exception e) {
+	    throw new IllegalStateException("expcetion during getting space apps", e);
+	}
+    }
+
+    public SummaryApplicationResponse getAppSummary(String appId) {
+	try {
+	    SummaryApplicationRequest request = SummaryApplicationRequest.builder().applicationId(appId).build();
+	    SummaryApplicationResponse response = cloudFoundryClient.applicationsV2().summary(request).block();
+	    return response;
+	} catch (Exception e) {
+	    throw new IllegalStateException(String.format("Expcetion during getting app [%s] summary.", appId), e);
+	}
+    }
+
+    public String createApp(OverviewApp app) {
+	try {
+	    CreateApplicationRequest request = CreateApplicationRequest.builder().name(app.getName()).spaceId(spaceId)
+		    .instances(app.getInstances()).environmentJsons(app.getEnv()).build();
+	    CreateApplicationResponse response = cloudFoundryClient.applicationsV2().create(request).block();
+	    return response.getMetadata().getId();
+	} catch (Exception e) {
+	    throw new IllegalStateException(String.format("Expcetion during creating app %s.", app), e);
+	}
+    }
+
+    public void deleteApp(String appId) {
+	try {
+	    DeleteApplicationRequest request = DeleteApplicationRequest.builder().applicationId(appId).build();
+	    cloudFoundryClient.applicationsV2().delete(request).block();
+	    logger.info("App {} at {} deleted.", appId, siteAccessInfo.getName());
+	} catch (Exception e) {
+	    throw new IllegalStateException("expcetion during deleting app with id: " + appId, e);
+	}
+    }
+
+    public void uploadApp(String appId, String path) {
+	try {
+	    UploadApplicationRequest request = UploadApplicationRequest.builder().applicationId(appId)
+		    .application(new FileInputStream(new File(path))).build();
+	    logger.info("App [{}] package [{}] start uploading", appId, path);
+	    cloudFoundryClient.applicationsV2().upload(request).block();
+	    logger.info("App [{}] package [{}] uploaded.", appId, path);
+	} catch (IOException e) {
+	    throw new IllegalStateException(String.format("IOException during uploading app with path: [%s]", path), e);
+	} catch (Exception e) {
+	    throw new IllegalStateException(String.format("Expcetion during uploading app [%s]", appId), e);
+	}
+    }
+
+    public void restageApp(String appId) {
+	RestageApplicationRequest request = RestageApplicationRequest.builder().applicationId(appId).build();
+	cloudFoundryClient.applicationsV2().restage(request).block();
+    }
+
+    public String getDomainId(String domain) {
+	try {
+	    ListDomainsRequest request = ListDomainsRequest.builder().name(domain).build();
+	    ListDomainsResponse response = cloudFoundryClient.domains().list(request).block();
+	    if (response.getResources().size() == 0) {
+		return null;
+	    }
+	    assert response.getResources().size() == 1;
+	    return response.getResources().get(0).getMetadata().getId();
+	} catch (Exception e) {
+	    throw new IllegalStateException(
+		    String.format("Expcetion during getting domain id for domain name: [%s].", domain), e);
+	}
+    }
+
+    public String getDomainName(String domainId) {
+	if (domainId == null) {
+	    return null;
+	}
+	GetDomainRequest request = GetDomainRequest.builder().domainId(domainId).build();
+	GetDomainResponse response = cloudFoundryClient.domains().get(request).block();
+	if (response.getEntity() == null) {
+	    return null;
+	} else {
+	    return response.getEntity().getName();
+	}
+    }
+
+    public String getRouteId(String hostname, String domainId) {
+	try {
+	    ListRoutesRequest request = ListRoutesRequest.builder().domainId(domainId).host(hostname).build();
+	    ListRoutesResponse response = cloudFoundryClient.routes().list(request).block();
+	    if (response.getResources().size() == 0) {
+		return null;
+	    }
+	    assert response.getResources().size() == 1;
+	    return response.getResources().get(0).getMetadata().getId();
+	} catch (Exception e) {
+	    throw new IllegalStateException(String.format(
+		    "Exception during getting route id with hostname:[%s], domainId:[%s].", hostname, domainId), e);
+	}
+    }
+
+    public String createRoute(String hostname, String domainId) {
+	try {
+	    CreateRouteRequest request = CreateRouteRequest.builder().domainId(domainId).spaceId(spaceId).host(hostname)
+		    .build();
+	    CreateRouteResponse response = cloudFoundryClient.routes().create(request).block();
+	    return response.getMetadata().getId();
+	} catch (Exception e) {
+	    throw new IllegalStateException(String.format(
+		    "Expcetion during creating route with hostname:[%s], domainId:[%s].", hostname, domainId), e);
+	}
+    }
+
+    public String getRouteHost(String routeId) {
+	GetRouteRequest request = GetRouteRequest.builder().routeId(routeId).build();
+	GetRouteResponse response = cloudFoundryClient.routes().get(request).block();
+	if (response.getEntity() == null) {
+	    return null;
+	} else {
+	    return response.getEntity().getHost();
+	}
+    }
+
+    public String getRouteDomainId(String routeId) {
+	GetRouteRequest request = GetRouteRequest.builder().routeId(routeId).build();
+	GetRouteResponse response = cloudFoundryClient.routes().get(request).block();
+	if (response.getEntity() == null) {
+	    return null;
+	} else {
+	    return response.getEntity().getDomainId();
+	}
+    }
+
+    public Route getRoute(String routeId) {
+	GetRouteRequest request = GetRouteRequest.builder().routeId(routeId).build();
+	GetRouteResponse response = cloudFoundryClient.routes().get(request).block();
+	if (response.getEntity() == null) {
+	    return null;
+	} else {
+	    String host = response.getEntity().getHost();
+	    String domainId = response.getEntity().getDomainId();
+	    return new Route(host, getDomainName(domainId));
+	}
+    }
+
+    public Set<String> listMappedRoutesId(String appId) {
+	try {
+	    ListApplicationRoutesRequest request = ListApplicationRoutesRequest.builder().applicationId(appId).build();
+	    ListApplicationRoutesResponse response = cloudFoundryClient.applicationsV2().listRoutes(request).block();
+	    return response.getResources().stream().map(resource -> resource.getMetadata().getId())
+		    .collect(Collectors.toSet());
+	} catch (Exception e) {
+	    throw new IllegalStateException(String.format("Expcetion during listing mapped routes of app: [%s]", appId),
+		    e);
+	}
+    }
+
+    public void createRouteMapping(String appId, String routeId) {
+	try {
+	    CreateRouteMappingRequest request = CreateRouteMappingRequest.builder().applicationId(appId)
+		    .routeId(routeId).build();
+	    cloudFoundryClient.routeMappings().create(request).block();
+	} catch (Exception e) {
+	    throw new IllegalStateException(String.format(
+		    "Expcetion during creating route mapping between app [%s] and route [%s].", appId, routeId), e);
+	}
+    }
+
+    public String getRouteMappingId(String appId, String routeId) {
+	try {
+	    ListRouteMappingsRequest request = ListRouteMappingsRequest.builder().applicationId(appId).routeId(routeId)
+		    .build();
+	    ListRouteMappingsResponse response = cloudFoundryClient.routeMappings().list(request).block();
+	    if (response == null) {
+		return null;
+	    }
+	    if (response.getResources() == null) {
+		return null;
+	    }
+	    if (response.getResources().get(0) == null) {
+		return null;
+	    }
+	    assert response.getResources().size() == 1;
+	    return response.getResources().get(0).getMetadata().getId();
+	} catch (Exception e) {
+	    throw new IllegalStateException(String.format(
+		    "Expcetion during getting route mapping id between app [%s] and route [%s].", appId, routeId), e);
+	}
+    }
+
+    public void deleteRouteMapping(String routeMappingId) {
+	try {
+	    DeleteRouteMappingRequest request = DeleteRouteMappingRequest.builder().routeMappingId(routeMappingId)
+		    .build();
+	    cloudFoundryClient.routeMappings().delete(request).block();
+	} catch (Exception e) {
+	    throw new IllegalStateException(
+		    String.format("Expcetion during deleting route mapping: [%s]", routeMappingId), e);
+	}
+    }
+
+    /**
+     * Update app properties. Unchanged app property parameter should be null.
+     * 
+     * @param appId
+     * @param name
+     * @param env
+     * @param instances
+     * @param state
+     */
+    public void updateApp(String appId, String name, Map<String, String> env, Integer instances,
+	    AppDesiredState state) {
+	try {
+	    UpdateApplicationRequest request = UpdateApplicationRequest.builder().applicationId(appId).name(name)
+		    .environmentJsons(env).instances(instances).state(state == null ? null : state.name()).build();
+	    cloudFoundryClient.applicationsV2().update(request).block();
+	} catch (Exception e) {
+	    throw new IllegalStateException(String.format(
+		    "Exception during updating app [%s] with arg [name=%s, env=%s, instances=%s, state=%s]", appId,
+		    name, env, instances, state), e);
 	}
 
-	private String requestOrgId() {
-		try {
-			ListOrganizationsRequest request = ListOrganizationsRequest.builder().name(siteAccessInfo.getOrg()).build();
-			ListOrganizationsResponse response = cloudFoundryClient.organizations().list(request).block();
-			logger.trace("Got organization id.");
-			return response.getResources().get(0).getMetadata().getId();
-		} catch (Exception e) {
-			throw new IllegalStateException("expcetion during getting org id", e);
-		}
-	}
-
-	private String requestSpaceId() {
-		try {
-			ListSpacesRequest request = ListSpacesRequest.builder().organizationId(requestOrgId())
-					.name(siteAccessInfo.getSpace()).build();
-			ListSpacesResponse response = cloudFoundryClient.spaces().list(request).block();
-			logger.trace("Got space id.");
-			return response.getResources().get(0).getMetadata().getId();
-		} catch (Exception e) {
-			throw new IllegalStateException("expcetion during getting space id", e);
-		}
-	}
-
-	public List<SpaceApplicationSummary> listSpaceApps() {
-		try {
-			GetSpaceSummaryRequest request = GetSpaceSummaryRequest.builder().spaceId(spaceId).build();
-			logger.trace("Start requesting space application summary...");
-			GetSpaceSummaryResponse response = cloudFoundryClient.spaces().getSummary(request).block();
-			logger.trace("Got space apps!");
-			return response.getApplications();
-		} catch (Exception e) {
-			throw new IllegalStateException("expcetion during getting space apps", e);
-		}
-	}
-
-	public SummaryApplicationResponse getAppSummary(String appId) {
-		try {
-			SummaryApplicationRequest request = SummaryApplicationRequest.builder().applicationId(appId).build();
-			SummaryApplicationResponse response = cloudFoundryClient.applicationsV2().summary(request).block();
-			return response;
-		} catch (Exception e) {
-			throw new IllegalStateException(String.format("Expcetion during getting app [%s] summary.", appId), e);
-		}
-	}
-
-	public String createApp(OverviewApp app) {
-		try {
-			CreateApplicationRequest request = CreateApplicationRequest.builder().name(app.getName()).spaceId(spaceId)
-					.instances(app.getInstances()).environmentJsons(app.getEnv()).build();
-			CreateApplicationResponse response = cloudFoundryClient.applicationsV2().create(request).block();
-			return response.getMetadata().getId();
-		} catch (Exception e) {
-			throw new IllegalStateException(String.format("Expcetion during creating app %s.", app), e);
-		}
-	}
-
-	public void deleteApp(String appId) {
-		try {
-			DeleteApplicationRequest request = DeleteApplicationRequest.builder().applicationId(appId).build();
-			cloudFoundryClient.applicationsV2().delete(request).block();
-			logger.info("App {} at {} deleted.", appId, siteAccessInfo.getName());
-		} catch (Exception e) {
-			throw new IllegalStateException("expcetion during deleting app with id: " + appId, e);
-		}
-	}
-
-	public void uploadApp(String appId, String path) {
-		try {
-			UploadApplicationRequest request = UploadApplicationRequest.builder().applicationId(appId)
-					.application(new FileInputStream(new File(path))).build();
-			logger.info("App [{}] package [{}] start uploading", appId, path);
-			cloudFoundryClient.applicationsV2().upload(request).block();
-			logger.info("App [{}] package [{}] uploaded.", appId, path);
-		} catch (IOException e) {
-			throw new IllegalStateException(String.format("IOException during uploading app with path: [%s]", path), e);
-		} catch (Exception e) {
-			throw new IllegalStateException(String.format("Expcetion during uploading app [%s]", appId), e);
-		}
-	}
-	
-	public void restageApp(String appId) {
-		RestageApplicationRequest request = RestageApplicationRequest.builder().applicationId(appId).build();
-		cloudFoundryClient.applicationsV2().restage(request).block();
-	}
-
-	public String getDomainId(String domain) {
-		try {
-			ListDomainsRequest request = ListDomainsRequest.builder().name(domain).build();
-			ListDomainsResponse response = cloudFoundryClient.domains().list(request).block();
-			if (response.getResources().size() == 0) {
-				return null;
-			}
-			assert response.getResources().size() == 1;
-			return response.getResources().get(0).getMetadata().getId();
-		} catch (Exception e) {
-			throw new IllegalStateException(
-					String.format("Expcetion during getting domain id for domain name: [%s].", domain), e);
-		}
-	}
-
-	public String getDomainName(String domainId) {
-		if (domainId == null) {
-			return null;
-		}
-		GetDomainRequest request = GetDomainRequest.builder().domainId(domainId).build();
-		GetDomainResponse response = cloudFoundryClient.domains().get(request).block();
-		if (response.getEntity() == null) {
-			return null;
-		} else {
-			return response.getEntity().getName();
-		}
-	}
-
-	public String getRouteId(String hostname, String domainId) {
-		try {
-			ListRoutesRequest request = ListRoutesRequest.builder().domainId(domainId).host(hostname).build();
-			ListRoutesResponse response = cloudFoundryClient.routes().list(request).block();
-			if (response.getResources().size() == 0) {
-				return null;
-			}
-			assert response.getResources().size() == 1;
-			return response.getResources().get(0).getMetadata().getId();
-		} catch (Exception e) {
-			throw new IllegalStateException(String.format(
-					"Exception during getting route id with hostname:[%s], domainId:[%s].", hostname, domainId), e);
-		}
-	}
-
-	public String createRoute(String hostname, String domainId) {
-		try {
-			CreateRouteRequest request = CreateRouteRequest.builder().domainId(domainId).spaceId(spaceId).host(hostname)
-					.build();
-			CreateRouteResponse response = cloudFoundryClient.routes().create(request).block();
-			return response.getMetadata().getId();
-		} catch (Exception e) {
-			throw new IllegalStateException(String.format(
-					"Expcetion during creating route with hostname:[%s], domainId:[%s].", hostname, domainId), e);
-		}
-	}
-
-	public String getRouteHost(String routeId) {
-		GetRouteRequest request = GetRouteRequest.builder().routeId(routeId).build();
-		GetRouteResponse response = cloudFoundryClient.routes().get(request).block();
-		if (response.getEntity() == null) {
-			return null;
-		} else {
-			return response.getEntity().getHost();
-		}
-	}
-
-	public String getRouteDomainId(String routeId) {
-		GetRouteRequest request = GetRouteRequest.builder().routeId(routeId).build();
-		GetRouteResponse response = cloudFoundryClient.routes().get(request).block();
-		if (response.getEntity() == null) {
-			return null;
-		} else {
-			return response.getEntity().getDomainId();
-		}
-	}
-
-	public Route getRoute(String routeId) {
-		GetRouteRequest request = GetRouteRequest.builder().routeId(routeId).build();
-		GetRouteResponse response = cloudFoundryClient.routes().get(request).block();
-		if (response.getEntity() == null) {
-			return null;
-		} else {
-			String host = response.getEntity().getHost();
-			String domainId = response.getEntity().getDomainId();
-			return new Route(host, getDomainName(domainId));
-		}
-	}
-
-	public Set<String> listMappedRoutesId(String appId) {
-		try {
-			ListApplicationRoutesRequest request = ListApplicationRoutesRequest.builder().applicationId(appId).build();
-			ListApplicationRoutesResponse response = cloudFoundryClient.applicationsV2().listRoutes(request).block();
-			return response.getResources().stream().map(resource -> resource.getMetadata().getId())
-					.collect(Collectors.toSet());
-		} catch (Exception e) {
-			throw new IllegalStateException(String.format("Expcetion during listing mapped routes of app: [%s]", appId),
-					e);
-		}
-	}
-
-	public void createRouteMapping(String appId, String routeId) {
-		try {
-			CreateRouteMappingRequest request = CreateRouteMappingRequest.builder().applicationId(appId)
-					.routeId(routeId).build();
-			cloudFoundryClient.routeMappings().create(request).block();
-		} catch (Exception e) {
-			throw new IllegalStateException(String.format(
-					"Expcetion during creating route mapping between app [%s] and route [%s].", appId, routeId), e);
-		}
-	}
-
-	public String getRouteMappingId(String appId, String routeId) {
-		try {
-			ListRouteMappingsRequest request = ListRouteMappingsRequest.builder().applicationId(appId).routeId(routeId)
-					.build();
-			ListRouteMappingsResponse response = cloudFoundryClient.routeMappings().list(request).block();
-			if (response == null) {
-				return null;
-			}
-			if (response.getResources() == null) {
-				return null;
-			}
-			if (response.getResources().get(0) == null) {
-				return null;
-			}
-			assert response.getResources().size() == 1;
-			return response.getResources().get(0).getMetadata().getId();
-		} catch (Exception e) {
-			throw new IllegalStateException(String.format(
-					"Expcetion during getting route mapping id between app [%s] and route [%s].", appId, routeId), e);
-		}
-	}
-
-	public void deleteRouteMapping(String routeMappingId) {
-		try {
-			DeleteRouteMappingRequest request = DeleteRouteMappingRequest.builder().routeMappingId(routeMappingId)
-					.build();
-			cloudFoundryClient.routeMappings().delete(request).block();
-		} catch (Exception e) {
-			throw new IllegalStateException(
-					String.format("Expcetion during deleting route mapping: [%s]", routeMappingId), e);
-		}
-	}
-
-	/**
-	 * Update app properties. Unchanged app property parameter should be null.
-	 * 
-	 * @param appId
-	 * @param name
-	 * @param env
-	 * @param instances
-	 * @param state
-	 */
-	public void updateApp(String appId, String name, Map<String, String> env, Integer instances,
-			AppDesiredState state) {
-		try {
-			UpdateApplicationRequest request = UpdateApplicationRequest.builder().applicationId(appId).name(name)
-					.environmentJsons(env).instances(instances).state(state == null ? null : state.name()).build();
-			cloudFoundryClient.applicationsV2().update(request).block();
-		} catch (Exception e) {
-			throw new IllegalStateException(String.format(
-					"Exception during updating app [%s] with arg [name=%s, env=%s, instances=%s, state=%s]", appId,
-					name, env, instances, state), e);
-		}
-
-	}
+    }
 }

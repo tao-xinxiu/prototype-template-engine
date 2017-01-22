@@ -7,46 +7,46 @@ import com.orange.model.state.AppState;
 import com.orange.model.state.OverviewApp;
 
 public class StopRestart extends OneUpdatingAppStrategy {
-	public StopRestart(Set<OverviewApp> updateApps, OverviewApp desiredApp, SiteDeploymentConfig config) {
-		super(updateApps, desiredApp, config);
+    public StopRestart(Set<OverviewApp> updateApps, OverviewApp desiredApp, SiteDeploymentConfig config) {
+	super(updateApps, desiredApp, config);
+    }
+
+    @Override
+    public Set<OverviewApp> onEnvUpdated() {
+	Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
+	AppState state = Util.searchByName(desiredRelatedApps, desiredApp.getName()) == null ? AppState.RUNNING
+		: AppState.CREATED;
+	desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(), state, desiredApp.getInstances(),
+		desiredApp.getEnv(), appTmpRoute()));
+	return desiredRelatedApps;
+    }
+
+    @Override
+    public Set<OverviewApp> onStateUpdated() {
+	Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
+	OverviewApp instantiatedDesiredApp = instantiatedDesiredApp(desiredRelatedApps);
+	if (desiredApp.getState() == AppState.RUNNING) {
+	    Set<OverviewApp> oldRunningApps = Util
+		    .searchByState(Util.exludedApps(desiredRelatedApps, instantiatedDesiredApp), AppState.RUNNING);
+	    if (oldRunningApps.isEmpty()) {
+		instantiatedDesiredApp.setState(desiredApp.getState());
+	    } else {
+		oldRunningApps.stream().forEach(app -> app.setState(AppState.STAGED));
+	    }
+	} else {
+	    instantiatedDesiredApp.setState(desiredApp.getState());
 	}
 
-	@Override
-	public Set<OverviewApp> onEnvUpdated() {
-		Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
-		AppState state = Util.searchByName(desiredRelatedApps, desiredApp.getName()) == null ? AppState.RUNNING
-				: AppState.CREATED;
-		desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(), state,
-				desiredApp.getInstances(), desiredApp.getEnv(), appTmpRoute()));
-		return desiredRelatedApps;
-	}
+	return desiredRelatedApps;
+    }
 
-	@Override
-	public Set<OverviewApp> onStateUpdated() {
-		Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
-		OverviewApp instantiatedDesiredApp = instantiatedDesiredApp(desiredRelatedApps);
-		if (desiredApp.getState() == AppState.RUNNING) {
-			Set<OverviewApp> oldRunningApps = Util.searchByState(
-					Util.exludedApps(desiredRelatedApps, instantiatedDesiredApp), AppState.RUNNING);
-			if (oldRunningApps.isEmpty()) {
-				instantiatedDesiredApp.setState(desiredApp.getState());
-			} else {
-				oldRunningApps.stream().forEach(app -> app.setState(AppState.STAGED));
-			}
-		} else {
-			instantiatedDesiredApp.setState(desiredApp.getState());
-		}
-
-		return desiredRelatedApps;
-	}
-
-	@Override
-	public Set<OverviewApp> onPathUpdated() {
-		Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
-		AppState state = Util.searchByName(desiredRelatedApps, desiredApp.getName()) == null ? AppState.RUNNING
-				: AppState.CREATED;
-		desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(), state,
-				desiredApp.getInstances(), desiredApp.getEnv(), appTmpRoute()));
-		return desiredRelatedApps;
-	}
+    @Override
+    public Set<OverviewApp> onPathUpdated() {
+	Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
+	AppState state = Util.searchByName(desiredRelatedApps, desiredApp.getName()) == null ? AppState.RUNNING
+		: AppState.CREATED;
+	desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(), state, desiredApp.getInstances(),
+		desiredApp.getEnv(), appTmpRoute()));
+	return desiredRelatedApps;
+    }
 }
