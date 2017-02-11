@@ -10,9 +10,12 @@ import com.orange.model.state.Route;
 
 public abstract class PaaSAPI {
     protected PaaSSite site;
+    // PaaS operations(except upload, prepare and start) timeout.
+    protected OperationConfig operationConfig;
 
-    public PaaSAPI(PaaSSite site) {
+    public PaaSAPI(PaaSSite site, OperationConfig operationConfig) {
 	this.site = site;
+	this.operationConfig = operationConfig;
     }
 
     public String getSiteName() {

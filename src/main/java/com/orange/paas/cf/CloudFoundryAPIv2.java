@@ -20,9 +20,9 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     private final Logger logger;
     private CloudFoundryOperations operations;
 
-    public CloudFoundryAPIv2(PaaSSite site) {
-	super(site);
-	this.operations = new CloudFoundryOperations(site.getAccessInfo());
+    public CloudFoundryAPIv2(PaaSSite site, OperationConfig operationConfig) {
+	super(site, operationConfig);
+	this.operations = new CloudFoundryOperations(site.getAccessInfo(), operationConfig);
 	this.logger = LoggerFactory.getLogger(String.format("%s(%s)", getClass(), site.getName()));
     }
 

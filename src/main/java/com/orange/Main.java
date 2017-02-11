@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -23,11 +24,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.orange.midstate.MidStateCalculator;
 import com.orange.model.DeploymentConfig;
+import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
 import com.orange.model.state.OverviewSite;
 import com.orange.model.workflow.Workflow;
+import com.orange.paas.PaaSAPI;
 import com.orange.paas.cf.CloudFoundryAPIv2;
 import com.orange.update.WorkflowCalculator;
 
@@ -38,14 +41,16 @@ public class Main {
     // storePath and MidStateCalculator(strategy&config) are specific to user
     private static final String storePath = "./store/";
     private MidStateCalculator midStateCalculator;
+    private OperationConfig operationConfig = new OperationConfig();
+    private Map<String, PaaSAPI> connectedSites = new HashMap<>();
 
     @RequestMapping(value = "/current_state", method = RequestMethod.POST)
     public @ResponseBody Overview getCurrentState(@RequestBody Collection<PaaSSite> managingSites) {
 	Map<String, PaaSSite> sites = managingSites.stream()
 		.collect(Collectors.toMap(site -> site.getName(), site -> site));
-	Map<String, OverviewSite> overviewSites = managingSites.parallelStream().collect(
-		Collectors.toMap(site -> site.getName(), site -> new CloudFoundryAPIv2(site).getOverviewSite()));
-	logger.info("Got current state!");
+	Map<String, OverviewSite> overviewSites = managingSites.parallelStream()
+		.collect(Collectors.toMap(site -> site.getName(), site -> getPaaSAPI(site).getOverviewSite()));
+	logger.info("Got current state! ");
 	return new Overview(sites, overviewSites);
     }
 
@@ -90,11 +95,11 @@ public class Main {
 	}
     }
 
-    @RequestMapping(value = "/change", method = RequestMethod.POST)
-    public @ResponseBody Overview change(@RequestBody Overview desiredState) {
+    @RequestMapping(value = "/apply", method = RequestMethod.POST)
+    public @ResponseBody Overview apply(@RequestBody Overview desiredState) {
 	Overview currentState = getCurrentState(desiredState.listPaaSSites());
 	validAndConfigAppPath(currentState, desiredState);
-	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState).getUpdateWorkflow();
+	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState).getUpdateWorkflow(operationConfig);
 	updateWorkflow.exec();
 	logger.info("Workflow {} finished!", updateWorkflow);
 	return getCurrentState(desiredState.listPaaSSites());
@@ -140,6 +145,15 @@ public class Main {
 		}
 	    }
 	}
+    }
+
+    private PaaSAPI getPaaSAPI(PaaSSite site) {
+	PaaSAPI api = connectedSites.get(site.getName());
+	if (api == null) {
+	    api = new CloudFoundryAPIv2(site, operationConfig);
+	    connectedSites.put(site.getName(), api);
+	}
+	return api;
     }
 
     public static void main(String[] args) {
