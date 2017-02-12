@@ -41,8 +41,8 @@ public class Main {
     // storePath and MidStateCalculator(strategy&config) are specific to user
     private static final String storePath = "./store/";
     private MidStateCalculator midStateCalculator;
-    private OperationConfig operationConfig = new OperationConfig();
-    private Map<String, PaaSAPI> connectedSites = new HashMap<>();
+    private static OperationConfig operationConfig = new OperationConfig();
+    private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
 
     @RequestMapping(value = "/current_state", method = RequestMethod.POST)
     public @ResponseBody Overview getCurrentState(@RequestBody Collection<PaaSSite> managingSites) {
@@ -99,7 +99,7 @@ public class Main {
     public @ResponseBody Overview apply(@RequestBody Overview desiredState) {
 	Overview currentState = getCurrentState(desiredState.listPaaSSites());
 	validAndConfigAppPath(currentState, desiredState);
-	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState).getUpdateWorkflow(operationConfig);
+	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState).getUpdateWorkflow();
 	updateWorkflow.exec();
 	logger.info("Workflow {} finished!", updateWorkflow);
 	return getCurrentState(desiredState.listPaaSSites());
@@ -147,7 +147,7 @@ public class Main {
 	}
     }
 
-    private PaaSAPI getPaaSAPI(PaaSSite site) {
+    public static PaaSAPI getPaaSAPI(PaaSSite site) {
 	PaaSAPI api = connectedSites.get(site.getName());
 	if (api == null) {
 	    api = new CloudFoundryAPIv2(site, operationConfig);
