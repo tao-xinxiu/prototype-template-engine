@@ -2,6 +2,8 @@ package com.orange.model;
 
 public class OperationConfig {
     private int generalTimeout = 60;
+    private int generalRetry = 3;
+    private int generalBackoff = 5;
     private int uploadTimeout = 15 * 60;
     private int prepareTimeout = 15 * 60;
     private int startTimeout = 15 * 60;
@@ -38,4 +40,19 @@ public class OperationConfig {
 	this.startTimeout = startTimeout;
     }
 
+    public int getGeneralRetry() {
+        return generalRetry;
+    }
+
+    public void setGeneralRetry(int generalRetry) {
+        this.generalRetry = generalRetry;
+    }
+
+    public int getGeneralBackoff() {
+        return generalBackoff;
+    }
+
+    public void setGeneralBackoff(int generalBackoff) {
+        this.generalBackoff = generalBackoff;
+    }
 }

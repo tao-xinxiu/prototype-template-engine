@@ -58,7 +58,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	    try {
 		Thread.sleep(1000);
 	    } catch (InterruptedException e) {
-		e.printStackTrace();
+		logger.error("InterruptedException", e);
 	    }
 	}
 	logger.info("App [{}] staged.", appId);
@@ -69,7 +69,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	    try {
 		Thread.sleep(1000);
 	    } catch (InterruptedException e) {
-		e.printStackTrace();
+		logger.error("InterruptedException", e);
 	    }
 	}
 	logger.info("App [{}] running.", appId);
