@@ -52,7 +52,6 @@ import org.slf4j.LoggerFactory;
 import com.orange.model.AppDesiredState;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSAccessInfo;
-import com.orange.model.state.OverviewApp;
 import com.orange.model.state.Route;
 import com.orange.util.RetryFunction;
 
@@ -122,21 +121,24 @@ public class CloudFoundryOperations {
     public SummaryApplicationResponse getAppSummary(String appId) {
 	try {
 	    SummaryApplicationRequest request = SummaryApplicationRequest.builder().applicationId(appId).build();
-	    SummaryApplicationResponse response = retry(() -> cloudFoundryClient.applicationsV2().summary(request).block());
+	    SummaryApplicationResponse response = retry(
+		    () -> cloudFoundryClient.applicationsV2().summary(request).block());
 	    return response;
 	} catch (Exception e) {
 	    throw new IllegalStateException(String.format("Expcetion during getting app [%s] summary.", appId), e);
 	}
     }
 
-    public String createApp(OverviewApp app) {
+    public String createApp(String name, int instances, Map<String, String> env) {
 	try {
-	    CreateApplicationRequest request = CreateApplicationRequest.builder().name(app.getName()).spaceId(spaceId)
-		    .instances(app.getInstances()).environmentJsons(app.getEnv()).build();
-	    CreateApplicationResponse response = retry(() -> cloudFoundryClient.applicationsV2().create(request).block());
+	    CreateApplicationRequest request = CreateApplicationRequest.builder().name(name).spaceId(spaceId)
+		    .instances(instances).environmentJsons(env).build();
+	    CreateApplicationResponse response = retry(
+		    () -> cloudFoundryClient.applicationsV2().create(request).block());
 	    return response.getMetadata().getId();
 	} catch (Exception e) {
-	    throw new IllegalStateException(String.format("Expcetion during creating app %s.", app), e);
+	    throw new IllegalStateException(String
+		    .format("Expcetion during creating app [name=%s, instances=%s, env=%s].", name, instances, env), e);
 	}
     }
 
@@ -258,7 +260,8 @@ public class CloudFoundryOperations {
     public Set<String> listMappedRoutesId(String appId) {
 	try {
 	    ListApplicationRoutesRequest request = ListApplicationRoutesRequest.builder().applicationId(appId).build();
-	    ListApplicationRoutesResponse response = retry(() -> cloudFoundryClient.applicationsV2().listRoutes(request).block());
+	    ListApplicationRoutesResponse response = retry(
+		    () -> cloudFoundryClient.applicationsV2().listRoutes(request).block());
 	    return response.getResources().stream().map(resource -> resource.getMetadata().getId())
 		    .collect(Collectors.toSet());
 	} catch (Exception e) {

@@ -1,0 +1,147 @@
+package com.orange.update;
+
+import java.util.Set;
+
+import com.orange.model.state.AppState;
+import com.orange.model.state.OverviewApp;
+import com.orange.model.state.Route;
+import com.orange.model.workflow.Step;
+import com.orange.paas.PaaSAPI;
+
+public class CloudFoundryAPIV2UpdateStepDirectory implements UpdateStepDirectory{
+    private PaaSAPI api;
+
+    public CloudFoundryAPIV2UpdateStepDirectory(PaaSAPI api) {
+	this.api = api;
+    }
+    
+    @Override
+    public Step addApp(OverviewApp app) {
+	return new Step(String.format("addApp [%s] at site [%s]", app.getName(), api.getSiteName())) {
+	    @Override
+	    public void exec() {
+		String appId = api.createAppWaitUploaded(app);
+		api.createAndMapAppRoutes(appId, app.listRoutes());
+		switch (app.getState()) {
+		case CREATED:
+		    break;
+		case STAGED:
+		    api.stageAppWaitStaged(appId);
+		    break;
+		case RUNNING:
+		    api.stageAndStartAppWaitRunning(appId);
+		    break;
+		default:
+		    throw new IllegalStateException(
+			    String.format("Unsupported desired app state [%s].", app.getState()));
+		}
+	    }
+	};
+    }
+
+    @Override
+    public Step removeApp(OverviewApp app) {
+	return new Step(String.format("removeApp [%s] at site [%s]", app.getName(), api.getSiteName())) {
+	    @Override
+	    public void exec() {
+		api.deleteApp(app.getGuid());
+	    }
+	};
+    }
+
+    @Override
+    public Step updateAppName(OverviewApp desiredApp) {
+	return new Step(String.format("updateApp [%s] name to [%s] at site [%s]", desiredApp.getGuid(),
+		desiredApp.getName(), api.getSiteName())) {
+	    @Override
+	    public void exec() {
+		api.updateAppName(desiredApp.getGuid(), desiredApp.getName());
+	    }
+	};
+    }
+
+    @Override
+    public Step updateAppEnv(OverviewApp desiredApp) {
+	return new Step(String.format("updateApp [%s] env to [%s] at site [%s]", desiredApp.getGuid(),
+		desiredApp.getEnv(), api.getSiteName())) {
+	    @Override
+	    public void exec() {
+		api.updateAppEnv(desiredApp.getGuid(), desiredApp.getEnv());
+		api.propagateEnvChange(desiredApp.getGuid());
+	    }
+	};
+    }
+
+    @Override
+    public Step addAppRoutes(String appId, Set<Route> addedRoutes) {
+	return new Step(
+		String.format("map routes %s to app [%s] at site [%s]", addedRoutes, appId, api.getSiteName())) {
+	    @Override
+	    public void exec() {
+		api.createAndMapAppRoutes(appId, addedRoutes);
+	    }
+	};
+    }
+
+    @Override
+    public Step removeAppRoutes(String appId, Set<Route> removedRoutes) {
+	return new Step(
+		String.format("unmap routes %s from app [%s] at site [%s]", removedRoutes, appId, api.getSiteName())) {
+	    @Override
+	    public void exec() {
+		api.unmapAppRoutes(appId, removedRoutes);
+	    }
+	};
+    }
+
+    @Override
+    public Step updateAppState(OverviewApp currentApp, OverviewApp desiredApp) {
+	return new Step(String.format("change app [%s] state from [%s] to [%s] at site [%s]", currentApp.getGuid(),
+		currentApp.getState(), desiredApp.getState(), api.getSiteName())) {
+	    @Override
+	    public void exec() {
+		assert currentApp.getGuid().equals(desiredApp.getGuid());
+		assert currentApp.getState() != AppState.FAILED && desiredApp.getState() != AppState.FAILED;
+		assert currentApp.getState() != desiredApp.getState();
+		switch (currentApp.getState()) {
+		case CREATED:
+		    switch (desiredApp.getState()) {
+		    case STAGED:
+			api.stageAppWaitStaged(currentApp.getGuid());
+			break;
+		    case RUNNING:
+			api.stageAndStartAppWaitRunning(currentApp.getGuid());
+		    default:
+			throw new IllegalStateException(
+				String.format("Unsupported desired app state [%s].", desiredApp.getState()));
+		    }
+		    break;
+		case STAGED:
+		    if (desiredApp.getState() == AppState.RUNNING) {
+			api.startAppWaitRunning(currentApp.getGuid());
+			break;
+		    }
+		case RUNNING:
+		    if (desiredApp.getState() == AppState.STAGED) {
+			api.stopApp(currentApp.getGuid());
+			break;
+		    }
+		default:
+		    throw new IllegalStateException(String.format("Unsupported app state change from [%s] to [%s].",
+			    currentApp.getState(), desiredApp.getState()));
+		}
+	    }
+	};
+    }
+
+    @Override
+    public Step scaleApp(String appId, int instances) {
+	return new Step(
+		String.format("scaleApp [%s] to [%s] instances at site [%s]", appId, instances, api.getSiteName())) {
+	    @Override
+	    public void exec() {
+		api.scaleApp(appId, instances);
+	    }
+	};
+    }
+}

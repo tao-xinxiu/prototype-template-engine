@@ -26,7 +26,7 @@ public class WorkflowCalculator {
 	    SiteComparator comparator = new SiteComparator(currentState.getOverviewSite(site.getName()),
 		    desiredState.getOverviewSite(site.getName()));
 	    PaaSAPI api = Main.getPaaSAPI(site);
-	    UpdateStepDirectory stepDir = new UpdateStepDirectory(api);
+	    UpdateStepDirectory stepDir = new CloudFoundryAPIV2UpdateStepDirectory(api);
 	    for (OverviewApp app : comparator.getAddedApp()) {
 		updateSite.addStep(stepDir.addApp(app));
 	    }

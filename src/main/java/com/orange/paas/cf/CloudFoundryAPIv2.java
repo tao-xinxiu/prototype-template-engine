@@ -28,7 +28,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 
     @Override
     public String createAppWaitUploaded(OverviewApp app) {
-	String appId = operations.createApp(app);
+	String appId = operations.createApp(app.getName(), app.getInstances(), app.getEnv());
 	logger.info("App [{}] created with id: [{}].", app.getName(), appId);
 	operations.uploadApp(appId, app.getPath());
 	return appId;
