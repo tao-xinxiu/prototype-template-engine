@@ -1,6 +1,5 @@
 package com.orange.paas.cf;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -9,6 +8,7 @@ import org.cloudfoundry.client.v2.spaces.SpaceApplicationSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.orange.Main;
 import com.orange.model.*;
 import com.orange.model.state.AppState;
 import com.orange.model.state.OverviewApp;
@@ -22,92 +22,13 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 
     public CloudFoundryAPIv2(PaaSSite site, OperationConfig operationConfig) {
 	super(site, operationConfig);
-	this.operations = new CloudFoundryOperations(site.getAccessInfo(), operationConfig);
+	this.operations = Main.getCloudFoundryOperations(site, operationConfig);
 	this.logger = LoggerFactory.getLogger(String.format("%s(%s)", getClass(), site.getName()));
     }
 
     @Override
-    public String createAppWaitUploaded(OverviewApp app) {
-	String appId = operations.createApp(app.getName(), app.getInstances(), app.getEnv());
-	logger.info("App [{}] created with id: [{}].", app.getName(), appId);
-	operations.uploadApp(appId, app.getPath());
-	return appId;
-    }
-
-    @Override
-    public void stageAppWaitStaged(String appId) {
-	throw new UnsupportedOperationException(
-		"CloudFoundryAPIv2 not support stage app without starting it for the moment.");
-    }
-
-    @Override
-    public void startAppWaitRunning(String appId) {
-	operations.updateApp(appId, null, null, null, AppDesiredState.STARTED);
-	waitRunning(appId);
-    }
-
-    @Override
-    public void stageAndStartAppWaitRunning(String appId) {
-	operations.updateApp(appId, null, null, null, AppDesiredState.STARTED);
-	waitStaged(appId);
-	waitRunning(appId);
-    }
-
-    private void waitStaged(String appId) {
-	while (!isAppStaged(appId)) {
-	    try {
-		Thread.sleep(1000);
-	    } catch (InterruptedException e) {
-		logger.error("InterruptedException", e);
-	    }
-	}
-	logger.info("App [{}] staged.", appId);
-    }
-
-    private void waitRunning(String appId) {
-	while (!isAppRunning(appId)) {
-	    try {
-		Thread.sleep(1000);
-	    } catch (InterruptedException e) {
-		logger.error("InterruptedException", e);
-	    }
-	}
-	logger.info("App [{}] running.", appId);
-    }
-
-    private boolean isAppStaged(String appId) {
-	return operations.getAppSummary(appId).getPackageState().equals("STAGED");
-    }
-
-    private boolean isAppRunning(String appId) {
-	Integer instance = operations.getAppSummary(appId).getRunningInstances();
-	return instance != null && instance > 0;
-    }
-
-    @Override
-    public void stopApp(String appId) {
-	operations.updateApp(appId, null, null, null, AppDesiredState.STOPPED);
-    }
-
-    @Override
-    public void deleteApp(String appId) {
-	operations.deleteApp(appId);
-    }
-
-    @Override
-    public void updateAppName(String appId, String name) {
-	operations.updateApp(appId, name, null, null, null);
-	logger.info("app [{}] name updated to [{}].", appId, name);
-    }
-
-    @Override
-    public void updateAppEnv(String appId, Map<String, String> env) {
-	operations.updateApp(appId, null, env, null, null);
-	logger.info("app [{}] env updated to [{}].", appId, env);
-    }
-
-    @Override
     public OverviewSite getOverviewSite() {
+	logger.info("Start getting the current state ...");
 	return new OverviewSite(operations.listSpaceApps()
 		.parallelStream().map(appInfo -> new OverviewApp(appInfo.getId(), appInfo.getName(), null,
 			parseState(appInfo), appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo)))
@@ -136,54 +57,5 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     private Set<Route> parseRoutes(SpaceApplicationSummary appInfo) {
 	return appInfo.getRoutes().stream().map(route -> new Route(route.getHost(), route.getDomain().getName()))
 		.collect(Collectors.toSet());
-    }
-
-    @Override
-    public void scaleApp(String appId, int instances) {
-	operations.updateApp(appId, null, null, instances, null);
-    }
-
-    @Override
-    public void propagateEnvChange(String appId) {
-	operations.restageApp(appId);
-	waitStaged(appId);
-	waitRunning(appId);
-    }
-
-    @Override
-    public Set<Route> listAppRoutes(String appId) {
-	Set<Route> appRoutes = new HashSet<>();
-	for (String routeId : operations.listMappedRoutesId(appId)) {
-	    appRoutes.add(operations.getRoute(routeId));
-	}
-	return appRoutes;
-    }
-
-    @Override
-    public void createAndMapAppRoutes(String appId, Set<Route> routes) {
-	for (Route route : routes) {
-	    String domainId = operations.getDomainId(route.getDomain());
-	    String routeId = operations.getRouteId(route.getHostname(), domainId);
-	    if (routeId == null) {
-		routeId = operations.createRoute(route.getHostname(), domainId);
-	    }
-	    operations.createRouteMapping(appId, routeId);
-	    logger.info("route [{}] mapped to the app [{}]", routeId, appId);
-	}
-    }
-
-    @Override
-    public void unmapAppRoutes(String appId, Set<Route> routes) {
-	for (Route route : routes) {
-	    String domainId = operations.getDomainId(route.getDomain());
-	    String routeId = operations.getRouteId(route.getHostname(), domainId);
-	    if (routeId != null) {
-		String routeMappingId = operations.getRouteMappingId(appId, routeId);
-		if (routeMappingId != null) {
-		    operations.deleteRouteMapping(routeMappingId);
-		}
-	    }
-	    logger.info("route [{}] unmapped from the app [{}]", routeId, appId);
-	}
     }
 }

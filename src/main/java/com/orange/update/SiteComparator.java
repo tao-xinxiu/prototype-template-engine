@@ -8,10 +8,9 @@ import com.orange.model.state.OverviewApp;
 import com.orange.model.state.OverviewSite;
 
 public class SiteComparator {
-    // list of apps to be created, i.e. apps in desiredState with guid null
+    // list of apps to be created, i.e. apps in desiredState but not in currentState
     private Set<OverviewApp> addedApp = new HashSet<>();
-    // list of apps to be deleted, i.e. app guid in currentState but not in
-    // desiredState
+    // list of apps to be deleted, i.e. apps in currentState but not in desiredState
     private Set<OverviewApp> removedApp = new HashSet<>();
     private Set<AppComparator> appComparators = new HashSet<>();
 
@@ -19,7 +18,19 @@ public class SiteComparator {
 	Set<String> desiredAppIds = new HashSet<>();
 	for (OverviewApp desiredApp : desiredState.getOverviewApps()) {
 	    if (desiredApp.getGuid() == null) {
-		addedApp.add(desiredApp);
+		OverviewApp currentApp = currentState.getOverviewApps().stream()
+			.filter(app -> app.getName().equals(desiredApp.getName())).findAny().orElse(null);
+		if (currentApp == null) {
+		    if (desiredApp.getPath() == null) {
+			throw new IllegalStateException(
+				String.format("The path of the new app [%s] is not specified.", desiredApp.getName()));
+		    }
+		    addedApp.add(desiredApp);
+		} else {
+		    desiredApp.setGuid(currentApp.getGuid());
+		    appComparators.add(new AppComparator(currentApp, desiredApp));
+		    desiredAppIds.add(desiredApp.getGuid());
+		}
 	    } else {
 		desiredAppIds.add(desiredApp.getGuid());
 		OverviewApp currentApp = currentState.getOverviewApps().stream()

@@ -1,16 +1,10 @@
 package com.orange.paas;
 
-import java.util.Map;
-import java.util.Set;
-
 import com.orange.model.*;
-import com.orange.model.state.OverviewApp;
 import com.orange.model.state.OverviewSite;
-import com.orange.model.state.Route;
 
 public abstract class PaaSAPI {
     protected PaaSSite site;
-    // PaaS operations(except upload, prepare and start) timeout.
     protected OperationConfig operationConfig;
 
     public PaaSAPI(PaaSSite site, OperationConfig operationConfig) {
@@ -18,66 +12,5 @@ public abstract class PaaSAPI {
 	this.operationConfig = operationConfig;
     }
 
-    public String getSiteName() {
-	return site.getName();
-    }
-
     public abstract OverviewSite getOverviewSite();
-
-    /**
-     * create and upload app package; i.e. app state: nonexistent -> created
-     * 
-     * @param app
-     * @return
-     */
-    public abstract String createAppWaitUploaded(OverviewApp app);
-
-    /**
-     * stage app; i.e. app state: created -> staged
-     * 
-     * @param app
-     */
-    public abstract void stageAppWaitStaged(String appId);
-
-    /**
-     * start app; i.e. app state: staged -> running
-     * 
-     * @param appId
-     */
-    public abstract void startAppWaitRunning(String appId);
-
-    /**
-     * app state: created -> running
-     * 
-     * @param appId
-     */
-    public abstract void stageAndStartAppWaitRunning(String appId);
-
-    /**
-     * app state: running -> staged
-     * 
-     * @param appId
-     */
-    public abstract void stopApp(String appId);
-
-    public abstract void deleteApp(String appId);
-
-    public abstract void updateAppName(String appId, String name);
-
-    public abstract void updateAppEnv(String appId, Map<String, String> env);
-
-    public abstract void scaleApp(String appId, int instances);
-
-    /**
-     * operations to make env change taking effect, ex. restage or restart
-     * 
-     * @param appId
-     */
-    public abstract void propagateEnvChange(String appId);
-
-    public abstract Set<Route> listAppRoutes(String appId);
-
-    public abstract void createAndMapAppRoutes(String appId, Set<Route> routes);
-
-    public abstract void unmapAppRoutes(String appId, Set<Route> routes);
 }

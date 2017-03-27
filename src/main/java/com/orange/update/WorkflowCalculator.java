@@ -1,21 +1,24 @@
 package com.orange.update;
 
 import com.orange.Main;
+import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
 import com.orange.model.workflow.ParallelWorkflow;
-import com.orange.model.workflow.SerialWorkflow;
 import com.orange.model.workflow.Workflow;
-import com.orange.paas.PaaSAPI;
+import com.orange.paas.UpdateStepDirectory;
+import com.orange.paas.cf.CloudFoundryAPIv2UpdateStepDirectory;
 
 public class WorkflowCalculator {
     private Overview currentState;
     private Overview desiredState;
+    private OperationConfig config;
 
-    public WorkflowCalculator(Overview currentState, Overview desiredState) {
+    public WorkflowCalculator(Overview currentState, Overview desiredState, OperationConfig config) {
 	this.currentState = currentState;
 	this.desiredState = desiredState;
+	this.config = config;
     }
 
     public Workflow getUpdateWorkflow() {
@@ -25,45 +28,20 @@ public class WorkflowCalculator {
 		    String.format("parallel update site %s entities", site.getName()));
 	    SiteComparator comparator = new SiteComparator(currentState.getOverviewSite(site.getName()),
 		    desiredState.getOverviewSite(site.getName()));
-	    PaaSAPI api = Main.getPaaSAPI(site);
-	    UpdateStepDirectory stepDir = new CloudFoundryAPIV2UpdateStepDirectory(api);
+	    UpdateStepDirectory directory = new CloudFoundryAPIv2UpdateStepDirectory(Main.getCloudFoundryOperations(site, config));
 	    for (OverviewApp app : comparator.getAddedApp()) {
-		updateSite.addStep(stepDir.addApp(app));
+		updateSite.addStep(directory.addApp(app));
 	    }
 	    for (OverviewApp app : comparator.getRemovedApp()) {
-		updateSite.addStep(stepDir.removeApp(app));
+		updateSite.addStep(directory.removeApp(app));
 	    }
 	    for (AppComparator appComparator : comparator.getAppComparators()) {
-		updateSite.addStep(getAppUpdateWorkflow(appComparator, stepDir,
-			String.format("serial update app from %s to %s at site %s", appComparator.getCurrentApp(),
-				appComparator.getDesiredApp(), site.getName())));
+		if (appComparator.isAppUpdated()) {
+		    updateSite.addStep(directory.updateApp(appComparator));
+		}
 	    }
 	    updateSites.addStep(updateSite);
 	}
 	return updateSites;
-    }
-
-    private Workflow getAppUpdateWorkflow(AppComparator appComparator, UpdateStepDirectory stepCalculator,
-	    String workflowName) {
-	Workflow updateApp = new SerialWorkflow(workflowName);
-	String appId = appComparator.getCurrentApp().getGuid();
-	if (appComparator.isEnvUpdated()) {
-	    updateApp.addStep(stepCalculator.updateAppEnv(appComparator.getDesiredApp()));
-	}
-	if (appComparator.isNameUpdated()) {
-	    updateApp.addStep(stepCalculator.updateAppName(appComparator.getDesiredApp()));
-	}
-	if (appComparator.isRoutesUpdated()) {
-	    updateApp.addStep(stepCalculator.addAppRoutes(appId, appComparator.getAddedRoutes()));
-	    updateApp.addStep(stepCalculator.removeAppRoutes(appId, appComparator.getRemovedRoutes()));
-	}
-	if (appComparator.isStateUpdated()) {
-	    updateApp.addStep(
-		    stepCalculator.updateAppState(appComparator.getCurrentApp(), appComparator.getDesiredApp()));
-	}
-	if (appComparator.isInstancesUpdated()) {
-	    updateApp.addStep(stepCalculator.scaleApp(appId, appComparator.getDesiredApp().getInstances()));
-	}
-	return updateApp;
     }
 }

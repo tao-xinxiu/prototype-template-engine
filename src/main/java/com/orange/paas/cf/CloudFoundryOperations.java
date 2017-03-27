@@ -82,6 +82,10 @@ public class CloudFoundryOperations {
 		.tokenProvider(tokenProvider).build();
 	this.spaceId = requestSpaceId();
     }
+    
+    public String getSiteName(){
+	return siteAccessInfo.getName();
+    }
 
     private String requestOrgId() {
 	try {
@@ -135,6 +139,7 @@ public class CloudFoundryOperations {
 		    .instances(instances).environmentJsons(env).build();
 	    CreateApplicationResponse response = retry(
 		    () -> cloudFoundryClient.applicationsV2().create(request).block());
+	    logger.info("App [{}] created.", name);
 	    return response.getMetadata().getId();
 	} catch (Exception e) {
 	    throw new IllegalStateException(String

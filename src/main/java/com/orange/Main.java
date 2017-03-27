@@ -30,8 +30,8 @@ import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
 import com.orange.model.state.OverviewSite;
 import com.orange.model.workflow.Workflow;
-import com.orange.paas.PaaSAPI;
 import com.orange.paas.cf.CloudFoundryAPIv2;
+import com.orange.paas.cf.CloudFoundryOperations;
 import com.orange.update.WorkflowCalculator;
 
 @SpringBootApplication(exclude = { org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration.class })
@@ -42,14 +42,15 @@ public class Main {
     private static final String storePath = "./store/";
     private MidStateCalculator midStateCalculator;
     private static OperationConfig operationConfig = new OperationConfig();
-    private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
+    // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
+    private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
 
     @RequestMapping(value = "/current_state", method = RequestMethod.POST)
     public @ResponseBody Overview getCurrentState(@RequestBody Collection<PaaSSite> managingSites) {
 	Map<String, PaaSSite> sites = managingSites.stream()
 		.collect(Collectors.toMap(site -> site.getName(), site -> site));
-	Map<String, OverviewSite> overviewSites = managingSites.parallelStream()
-		.collect(Collectors.toMap(site -> site.getName(), site -> getPaaSAPI(site).getOverviewSite()));
+	Map<String, OverviewSite> overviewSites = managingSites.parallelStream().collect(Collectors
+		.toMap(site -> site.getName(), site -> new CloudFoundryAPIv2(site, operationConfig).getOverviewSite()));
 	logger.info("Got current state! ");
 	return new Overview(sites, overviewSites);
     }
@@ -99,7 +100,8 @@ public class Main {
     public @ResponseBody Overview apply(@RequestBody Overview desiredState) {
 	Overview currentState = getCurrentState(desiredState.listPaaSSites());
 	validAndConfigAppPath(currentState, desiredState);
-	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState).getUpdateWorkflow();
+	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState, operationConfig)
+		.getUpdateWorkflow();
 	updateWorkflow.exec();
 	logger.info("Workflow {} finished!", updateWorkflow);
 	return getCurrentState(desiredState.listPaaSSites());
@@ -131,29 +133,24 @@ public class Main {
     private void validAndConfigAppPath(Overview currentState, Overview desiredState) {
 	for (OverviewSite site : desiredState.getOverviewSites().values()) {
 	    for (OverviewApp app : site.getOverviewApps()) {
-		if (app.getGuid() == null) {
-		    if (app.getPath() == null) {
-			throw new IllegalStateException(
-				String.format("The path of the new app [%s] is not specified.", app.getName()));
-		    } else {
-			String appName = app.getPath();
-			app.setPath(storePath + appName);
-			if (!new File(app.getPath()).exists()) {
-			    throw new IllegalStateException(String.format("App file [%s] not yet uploaded.", appName));
-			}
+		if (app.getPath() != null) {
+		    String appFilename = app.getPath();
+		    app.setPath(storePath + appFilename);
+		    if (!new File(app.getPath()).exists()) {
+			throw new IllegalStateException(String.format("App file [%s] not yet uploaded.", appFilename));
 		    }
 		}
 	    }
 	}
     }
 
-    public static PaaSAPI getPaaSAPI(PaaSSite site) {
-	PaaSAPI api = connectedSites.get(site.getName());
-	if (api == null) {
-	    api = new CloudFoundryAPIv2(site, operationConfig);
-	    connectedSites.put(site.getName(), api);
+    public static CloudFoundryOperations getCloudFoundryOperations(PaaSSite site, OperationConfig config) {
+	CloudFoundryOperations ops = connectedSites.get(site.getName());
+	if (ops == null) {
+	    ops = new CloudFoundryOperations(site.getAccessInfo(), config);
+	    connectedSites.put(site.getName(), ops);
 	}
-	return api;
+	return ops;
     }
 
     public static void main(String[] args) {
