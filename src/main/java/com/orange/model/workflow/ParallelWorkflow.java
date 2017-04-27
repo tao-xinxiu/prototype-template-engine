@@ -23,7 +23,7 @@ public class ParallelWorkflow extends Workflow {
 	if (steps.size() == 0) {
 	    return;
 	}
-	ExecutorService executor = Executors.newFixedThreadPool(steps.size());
+	ExecutorService executor = Executors.newCachedThreadPool();
 	List<Callable<Void>> tasks = new ArrayList<>();
 	for (Step step : steps) {
 	    tasks.add(new Callable<Void>() {
