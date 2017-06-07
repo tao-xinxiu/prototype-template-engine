@@ -15,20 +15,20 @@ public class CanaryMediumEconomic extends Canary {
     }
 
     @Override
-    public Set<OverviewApp> onInstancesUpdated() {
+    public Set<OverviewApp> onNbProcessesUpdated() {
 	Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
 	OverviewApp instantiatedDesiredApp = instantiatedDesiredApp(desiredRelatedApps);
 	Set<OverviewApp> oldApps = Util.exludedApps(desiredRelatedApps, instantiatedDesiredApp);
 	if (oldApps.size() == 0) { // initial deploy
-	    instantiatedDesiredApp.setInstances(desiredApp.getInstances());
+	    instantiatedDesiredApp.setNbProcesses(desiredApp.getNbProcesses());
 	} else {
 	    OverviewApp oldApp = oldApps.iterator().next();
-	    boolean oldAppsScaled = (oldApp.getInstances()
-		    + instantiatedDesiredApp.getInstances() == (desiredApp.getInstances()));
+	    boolean oldAppsScaled = (oldApp.getNbProcesses()
+		    + instantiatedDesiredApp.getNbProcesses() == (desiredApp.getNbProcesses()));
 	    if (oldAppsScaled) {
-		instantiatedDesiredApp.setInstances(instantiatedDesiredApp.getInstances() + 1);
+		instantiatedDesiredApp.setNbProcesses(instantiatedDesiredApp.getNbProcesses() + 1);
 	    } else {
-		oldApp.setInstances(oldApp.getInstances() - 1);
+		oldApp.setNbProcesses(oldApp.getNbProcesses() - 1);
 	    }
 	}
 	return desiredRelatedApps;

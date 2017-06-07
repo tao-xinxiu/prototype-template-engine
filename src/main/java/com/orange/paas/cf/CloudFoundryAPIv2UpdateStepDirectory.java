@@ -28,7 +28,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	return new Step(String.format("addApp [%s] at site [%s]", app.getName(), operations.getSiteName())) {
 	    @Override
 	    public void exec() {
-		String appId = operations.createApp(app.getName(), app.getInstances(), app.getEnv());
+		String appId = operations.createApp(app.getName(), app.getNbProcesses(), app.getEnv());
 		operations.uploadApp(appId, app.getPath());
 		app.listRoutes().parallelStream().forEach(route -> createAndMapAppRoute(appId, route));
 		switch (app.getState()) {
@@ -70,7 +70,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	if (appComparator.isPathUpdated()) {
 	    updateApp.addStep(updateAppPath(appId, appComparator.getDesiredApp().getPath()));
 	}
-	if (appComparator.isNameUpdated() || appComparator.isInstancesUpdated() || appComparator.isEnvUpdated()
+	if (appComparator.isNameUpdated() || appComparator.isNbProcessesUpdated() || appComparator.isEnvUpdated()
 		|| appComparator.isStateUpdated()) {
 	    updateApp.addStep(updateAppProperty(appComparator));
 	}
@@ -119,7 +119,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 		AppDesiredState updateState = (desiredApp.getState() == AppState.CREATED) ? null
 			: AppDesiredState.STARTED;
 		operations.updateApp(desiredApp.getGuid(), desiredApp.getName(), desiredApp.getEnv(),
-			desiredApp.getInstances(), updateState);
+			desiredApp.getNbProcesses(), updateState);
 		switch (desiredApp.getState()) {
 		case STAGED:
 		    operations.updateApp(desiredApp.getGuid(), null, null, null, AppDesiredState.STOPPED);
@@ -143,7 +143,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 		AppDesiredState updateState = desiredApp.getState() == AppState.RUNNING ? AppDesiredState.STARTED
 			: AppDesiredState.STOPPED;
 		operations.updateApp(desiredApp.getGuid(), desiredApp.getName(), desiredApp.getEnv(),
-			desiredApp.getInstances(), updateState);
+			desiredApp.getNbProcesses(), updateState);
 		if (appComparator.isEnvUpdated()) {
 		    operations.restageApp(desiredApp.getGuid());
 		    if (desiredApp.getState() == AppState.STAGED) {
@@ -167,7 +167,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 		AppDesiredState updateState = desiredApp.getState() == AppState.RUNNING ? AppDesiredState.STARTED
 			: AppDesiredState.STOPPED;
 		operations.updateApp(desiredApp.getGuid(), desiredApp.getName(), desiredApp.getEnv(),
-			desiredApp.getInstances(), updateState);
+			desiredApp.getNbProcesses(), updateState);
 		if (appComparator.isEnvUpdated()) {
 		    operations.restageApp(desiredApp.getGuid());
 		    if (desiredApp.getState() == AppState.STAGED) {
@@ -250,7 +250,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
     }
 
     private boolean isAppRunning(String appId) {
-	Integer instance = operations.getAppSummary(appId).getRunningInstances();
-	return instance != null && instance > 0;
+	Integer runningInstances = operations.getAppSummary(appId).getRunningInstances();
+	return runningInstances != null && runningInstances > 0;
     }
 }

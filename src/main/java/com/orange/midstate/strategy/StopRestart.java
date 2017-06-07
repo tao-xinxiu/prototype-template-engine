@@ -16,7 +16,7 @@ public class StopRestart extends OneUpdatingAppStrategy {
 	Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
 	AppState state = Util.searchByName(desiredRelatedApps, desiredApp.getName()) == null ? AppState.RUNNING
 		: AppState.CREATED;
-	desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(), state, desiredApp.getInstances(),
+	desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(), state, desiredApp.getNbProcesses(),
 		desiredApp.getEnv(), appTmpRoute()));
 	return desiredRelatedApps;
     }
@@ -45,7 +45,7 @@ public class StopRestart extends OneUpdatingAppStrategy {
 	Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
 	AppState state = Util.searchByName(desiredRelatedApps, desiredApp.getName()) == null ? AppState.RUNNING
 		: AppState.CREATED;
-	desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(), state, desiredApp.getInstances(),
+	desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(), state, desiredApp.getNbProcesses(),
 		desiredApp.getEnv(), appTmpRoute()));
 	return desiredRelatedApps;
     }

@@ -15,7 +15,7 @@ import com.orange.model.state.OverviewApp;
 
 public abstract class Strategy {
     protected static List<AppProperty> updateOrder = Collections.unmodifiableList(Arrays.asList(AppProperty.Path,
-	    AppProperty.Env, AppProperty.State, AppProperty.Routes, AppProperty.Instances, AppProperty.Name));
+	    AppProperty.Env, AppProperty.State, AppProperty.Routes, AppProperty.NbProcesses, AppProperty.Name));
     protected OverviewApp desiredApp;
     protected SiteDeploymentConfig config;
     protected Set<OverviewApp> currentRelatedApps;
@@ -71,8 +71,8 @@ public abstract class Strategy {
 	return directlyUpdateProperty(AppProperty.Routes);
     }
 
-    public Set<OverviewApp> onInstancesUpdated() {
-	return directlyUpdateProperty(AppProperty.Instances);
+    public Set<OverviewApp> onNbProcessesUpdated() {
+	return directlyUpdateProperty(AppProperty.NbProcesses);
     }
 
     public Set<OverviewApp> onNameUpdated() {

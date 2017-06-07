@@ -25,32 +25,32 @@ public class CanaryEconomic extends Canary {
 		    desiredApp.getEnv(), appTmpRoute()));
 	} else {
 	    OverviewApp oldApp = oldApps.iterator().next();
-	    boolean oldAppsScaled = (oldApp.getInstances() == (desiredApp.getInstances() - 1));
+	    boolean oldAppsScaled = (oldApp.getNbProcesses() == (desiredApp.getNbProcesses() - 1));
 	    if (oldAppsScaled) {
 		desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(), AppState.RUNNING, 1,
 			desiredApp.getEnv(), appTmpRoute()));
 	    } else {
-		oldApp.setInstances(desiredApp.getInstances() - 1);
+		oldApp.setNbProcesses(desiredApp.getNbProcesses() - 1);
 	    }
 	}
 	return desiredRelatedApps;
     }
 
     @Override
-    public Set<OverviewApp> onInstancesUpdated() {
+    public Set<OverviewApp> onNbProcessesUpdated() {
 	Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
 	OverviewApp instantiatedDesiredApp = instantiatedDesiredApp(desiredRelatedApps);
 	Set<OverviewApp> oldApps = Util.exludedApps(desiredRelatedApps, instantiatedDesiredApp);
 	if (oldApps.size() == 0) { // initial deploy
-	    instantiatedDesiredApp.setInstances(desiredApp.getInstances());
+	    instantiatedDesiredApp.setNbProcesses(desiredApp.getNbProcesses());
 	} else {
 	    OverviewApp oldApp = oldApps.iterator().next();
-	    boolean oldAppsScaled = (oldApp.getInstances()
-		    + instantiatedDesiredApp.getInstances() == (desiredApp.getInstances() - 1));
+	    boolean oldAppsScaled = (oldApp.getNbProcesses()
+		    + instantiatedDesiredApp.getNbProcesses() == (desiredApp.getNbProcesses() - 1));
 	    if (oldAppsScaled) {
-		instantiatedDesiredApp.setInstances(instantiatedDesiredApp.getInstances() + 1);
+		instantiatedDesiredApp.setNbProcesses(instantiatedDesiredApp.getNbProcesses() + 1);
 	    } else {
-		oldApp.setInstances(oldApp.getInstances() - 1);
+		oldApp.setNbProcesses(oldApp.getNbProcesses() - 1);
 	    }
 	}
 	return desiredRelatedApps;

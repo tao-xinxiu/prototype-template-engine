@@ -19,7 +19,7 @@ public class AppComparator {
     private Set<Route> addedRoutes = new HashSet<>();
     private Set<Route> removedRoutes = new HashSet<>();
     private boolean stateUpdated;
-    private boolean instancesUpdated;
+    private boolean nbProcessesUpdated;
     private boolean envUpdated;
 
     public AppComparator(OverviewApp currentApp, OverviewApp desiredApp) {
@@ -42,7 +42,7 @@ public class AppComparator {
 	nameUpdated = !currentApp.getName().equals(desiredApp.getName());
 	pathUpdated = (desiredApp.getPath() != null);
 	stateUpdated = !(currentApp.getState() == desiredApp.getState());
-	instancesUpdated = !(currentApp.getInstances() == desiredApp.getInstances());
+	nbProcessesUpdated = !(currentApp.getNbProcesses() == desiredApp.getNbProcesses());
 	envUpdated = !(currentApp.getEnv().equals(desiredApp.getEnv()));
     }
 
@@ -70,8 +70,8 @@ public class AppComparator {
 	return stateUpdated;
     }
 
-    public boolean isInstancesUpdated() {
-	return instancesUpdated;
+    public boolean isNbProcessesUpdated() {
+	return nbProcessesUpdated;
     }
 
     public boolean isEnvUpdated() {

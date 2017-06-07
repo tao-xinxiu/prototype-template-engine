@@ -24,7 +24,7 @@ public class BlueGreen extends OneUpdatingAppStrategy {
 	    desiredRelatedApps.remove(nameConflictedApp);
 	} else {
 	    desiredRelatedApps.add(new OverviewApp(null, newAppName, desiredApp.getPath(), AppState.RUNNING,
-		    desiredApp.getInstances(), desiredApp.getEnv(), appTmpRoute()));
+		    desiredApp.getNbProcesses(), desiredApp.getEnv(), appTmpRoute()));
 	}
 	return desiredRelatedApps;
     }

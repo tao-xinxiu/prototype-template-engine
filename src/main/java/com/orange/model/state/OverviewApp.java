@@ -11,20 +11,20 @@ public class OverviewApp {
     private String name;
     private String path;
     private AppState state;
-    private int instances;
+    private int nbProcesses;
     private Map<String, String> env = new HashMap<>();
     private Set<Route> routes = new HashSet<>();
 
     public OverviewApp() {
     }
 
-    public OverviewApp(String guid, String name, String path, AppState state, int instances, Map<String, String> env,
+    public OverviewApp(String guid, String name, String path, AppState state, int nbProcesses, Map<String, String> env,
 	    Set<Route> routes) {
 	this.guid = guid;
 	this.name = name;
 	this.path = path;
 	this.state = state;
-	this.instances = instances;
+	this.nbProcesses = nbProcesses;
 	this.env = env;
 	this.routes = routes;
     }
@@ -34,7 +34,7 @@ public class OverviewApp {
 	name = other.name;
 	path = other.path;
 	state = other.state;
-	instances = other.instances;
+	nbProcesses = other.nbProcesses;
 	env = new HashMap<>(other.env);
 	routes = new HashSet<>(other.routes);
     }
@@ -83,12 +83,12 @@ public class OverviewApp {
 	this.state = state;
     }
 
-    public int getInstances() {
-	return instances;
+    public int getNbProcesses() {
+	return nbProcesses;
     }
 
-    public void setInstances(int instances) {
-	this.instances = instances;
+    public void setNbProcesses(int nbProcesses) {
+	this.nbProcesses = nbProcesses;
     }
 
     public Map<String, String> getEnv() {
@@ -101,8 +101,8 @@ public class OverviewApp {
 
     @Override
     public String toString() {
-	return "OverviewApp [guid=" + guid + ", name=" + name + ", path=" + path + ", state=" + state + ", instances="
-		+ instances + ", env=" + env + ", routes=" + routes + "]";
+	return "OverviewApp [guid=" + guid + ", name=" + name + ", path=" + path + ", state=" + state + ", nbProcesses="
+		+ nbProcesses + ", env=" + env + ", routes=" + routes + "]";
     }
 
     @Override
@@ -111,7 +111,7 @@ public class OverviewApp {
 	int result = 1;
 	result = prime * result + ((env == null) ? 0 : env.hashCode());
 	result = prime * result + ((guid == null) ? 0 : guid.hashCode());
-	result = prime * result + instances;
+	result = prime * result + nbProcesses;
 	result = prime * result + ((name == null) ? 0 : name.hashCode());
 	result = prime * result + ((path == null) ? 0 : path.hashCode());
 	result = prime * result + ((routes == null) ? 0 : routes.hashCode());
@@ -138,7 +138,7 @@ public class OverviewApp {
 		return false;
 	} else if (!guid.equals(other.guid))
 	    return false;
-	if (instances != other.instances)
+	if (nbProcesses != other.nbProcesses)
 	    return false;
 	if (name == null) {
 	    if (other.name != null)
@@ -180,7 +180,7 @@ public class OverviewApp {
 	    return false;
 	}
 	if (!this.name.equals(desiredApp.name) || !this.state.equals(desiredApp.state)
-		|| this.instances != desiredApp.instances || !this.env.equals(desiredApp.env)
+		|| this.nbProcesses != desiredApp.nbProcesses || !this.env.equals(desiredApp.env)
 		|| !this.routes.equals(desiredApp.routes)) {
 	    return false;
 	}
