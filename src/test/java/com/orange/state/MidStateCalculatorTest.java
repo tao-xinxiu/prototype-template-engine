@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import com.orange.midstate.MidStateCalculator;
 import com.orange.model.DeploymentConfig;
-import com.orange.model.PaaSAccessInfo;
 import com.orange.model.PaaSSite;
 import com.orange.model.SiteDeploymentConfig;
 import com.orange.model.state.AppState;
@@ -713,13 +712,13 @@ public class MidStateCalculatorTest {
     }
 
     private PaaSSite site1() {
-	return new PaaSSite(site1name, new PaaSAccessInfo(site1name, "site1-api", "site1-user", "site1-pwd",
-		"site1-org", "site1-space", true));
+	return new PaaSSite(site1name, "CloudFoundry", "site1-api", "site1-user", "site1-pwd", "site1-org",
+		"site1-space", true);
     }
 
     private PaaSSite site2() {
-	return new PaaSSite(site2name, new PaaSAccessInfo(site2name, "site2-api", "site2-user", "site2-pwd",
-		"site2-org", "site2-space", true));
+	return new PaaSSite(site2name, "CloudFoundry", "site2-api", "site2-user", "site2-pwd", "site2-org",
+		"site2-space", true);
     }
 
     private Map<String, String> oldAppEnv() {

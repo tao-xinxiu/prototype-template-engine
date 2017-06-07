@@ -51,45 +51,45 @@ import org.slf4j.LoggerFactory;
 
 import com.orange.model.AppDesiredState;
 import com.orange.model.OperationConfig;
-import com.orange.model.PaaSAccessInfo;
+import com.orange.model.PaaSSite;
 import com.orange.model.state.Route;
 import com.orange.util.RetryFunction;
 
 public class CloudFoundryOperations {
     private final Logger logger;
-    private PaaSAccessInfo siteAccessInfo;
+    private PaaSSite site;
     private CloudFoundryClient cloudFoundryClient;
     private String spaceId;
     private OperationConfig opConfig;
 
-    public CloudFoundryOperations(PaaSAccessInfo siteAccessInfo, OperationConfig opConfig) {
-	this.siteAccessInfo = siteAccessInfo;
-	this.logger = LoggerFactory.getLogger(String.format("%s(%s)", getClass(), siteAccessInfo.getName()));
+    public CloudFoundryOperations(PaaSSite site, OperationConfig opConfig) {
+	this.site = site;
+	this.logger = LoggerFactory.getLogger(String.format("%s(%s)", getClass(), site.getName()));
 	this.opConfig = opConfig;
 	String proxy_host = System.getenv("proxy_host");
 	String proxy_port = System.getenv("proxy_port");
 	DefaultConnectionContext.Builder connectionContext = DefaultConnectionContext.builder()
-		.apiHost(siteAccessInfo.getApi()).skipSslValidation(siteAccessInfo.getSkipSslValidation())
+		.apiHost(site.getApi()).skipSslValidation(site.getSkipSslValidation())
 		.socketTimeout(Duration.ofSeconds(opConfig.getGeneralTimeout()));
 	if (proxy_host != null && proxy_port != null) {
 	    ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host)
 		    .port(Integer.parseInt(proxy_port)).build();
 	    connectionContext.proxyConfiguration(proxyConfiguration);
 	}
-	TokenProvider tokenProvider = PasswordGrantTokenProvider.builder().password(siteAccessInfo.getPwd())
-		.username(siteAccessInfo.getUser()).build();
+	TokenProvider tokenProvider = PasswordGrantTokenProvider.builder().password(site.getPwd())
+		.username(site.getUser()).build();
 	this.cloudFoundryClient = ReactorCloudFoundryClient.builder().connectionContext(connectionContext.build())
 		.tokenProvider(tokenProvider).build();
 	this.spaceId = requestSpaceId();
     }
     
     public String getSiteName(){
-	return siteAccessInfo.getName();
+	return site.getName();
     }
 
     private String requestOrgId() {
 	try {
-	    ListOrganizationsRequest request = ListOrganizationsRequest.builder().name(siteAccessInfo.getOrg()).build();
+	    ListOrganizationsRequest request = ListOrganizationsRequest.builder().name(site.getOrg()).build();
 	    ListOrganizationsResponse response = retry(() -> cloudFoundryClient.organizations().list(request).block());
 	    logger.trace("Got organization id.");
 	    return response.getResources().get(0).getMetadata().getId();
@@ -101,7 +101,7 @@ public class CloudFoundryOperations {
     private String requestSpaceId() {
 	try {
 	    ListSpacesRequest request = ListSpacesRequest.builder().organizationId(requestOrgId())
-		    .name(siteAccessInfo.getSpace()).build();
+		    .name(site.getSpace()).build();
 	    ListSpacesResponse response = retry(() -> cloudFoundryClient.spaces().list(request).block());
 	    logger.trace("Got space id.");
 	    return response.getResources().get(0).getMetadata().getId();
@@ -151,7 +151,7 @@ public class CloudFoundryOperations {
 	try {
 	    DeleteApplicationRequest request = DeleteApplicationRequest.builder().applicationId(appId).build();
 	    retry(() -> cloudFoundryClient.applicationsV2().delete(request).block());
-	    logger.info("App {} at {} deleted.", appId, siteAccessInfo.getName());
+	    logger.info("App {} at {} deleted.", appId, site.getName());
 	} catch (Exception e) {
 	    throw new IllegalStateException("expcetion during deleting app with id: " + appId, e);
 	}

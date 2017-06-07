@@ -147,7 +147,7 @@ public class Main {
     public static CloudFoundryOperations getCloudFoundryOperations(PaaSSite site, OperationConfig config) {
 	CloudFoundryOperations ops = connectedSites.get(site.getName());
 	if (ops == null) {
-	    ops = new CloudFoundryOperations(site.getAccessInfo(), config);
+	    ops = new CloudFoundryOperations(site, config);
 	    connectedSites.put(site.getName(), ops);
 	}
 	return ops;
