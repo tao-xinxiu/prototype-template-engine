@@ -9,6 +9,11 @@ import java.util.stream.Collectors;
 public class OverviewApp {
     private String guid;
     private String name;
+    /**
+     * disallow "_" in instanceVersion, as it's used as delimiter between name
+     * and instanceVersion in PaaS mapping as site unique micro-service name.
+     */
+    private String instanceVersion;
     private String path;
     private AppState state;
     private int nbProcesses;
@@ -18,10 +23,11 @@ public class OverviewApp {
     public OverviewApp() {
     }
 
-    public OverviewApp(String guid, String name, String path, AppState state, int nbProcesses, Map<String, String> env,
-	    Set<Route> routes) {
+    public OverviewApp(String guid, String name, String instanceVersion, String path, AppState state, int nbProcesses,
+	    Map<String, String> env, Set<Route> routes) {
 	this.guid = guid;
 	this.name = name;
+	this.instanceVersion = instanceVersion;
 	this.path = path;
 	this.state = state;
 	this.nbProcesses = nbProcesses;
@@ -32,6 +38,7 @@ public class OverviewApp {
     public OverviewApp(OverviewApp other) {
 	guid = other.guid;
 	name = other.name;
+	instanceVersion = other.instanceVersion;
 	path = other.path;
 	state = other.state;
 	nbProcesses = other.nbProcesses;
@@ -53,6 +60,14 @@ public class OverviewApp {
 
     public void setName(String name) {
 	this.name = name;
+    }
+
+    public String getInstanceVersion() {
+	return instanceVersion;
+    }
+
+    public void setInstanceVersion(String instanceVersion) {
+	this.instanceVersion = instanceVersion;
     }
 
     public Set<String> getRoutes() {
@@ -101,8 +116,9 @@ public class OverviewApp {
 
     @Override
     public String toString() {
-	return "OverviewApp [guid=" + guid + ", name=" + name + ", path=" + path + ", state=" + state + ", nbProcesses="
-		+ nbProcesses + ", env=" + env + ", routes=" + routes + "]";
+	return "OverviewApp [guid=" + guid + ", name=" + name + ", instanceVersion=" + instanceVersion + ", path="
+		+ path + ", state=" + state + ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes
+		+ "]";
     }
 
     @Override
@@ -111,8 +127,9 @@ public class OverviewApp {
 	int result = 1;
 	result = prime * result + ((env == null) ? 0 : env.hashCode());
 	result = prime * result + ((guid == null) ? 0 : guid.hashCode());
-	result = prime * result + nbProcesses;
+	result = prime * result + ((instanceVersion == null) ? 0 : instanceVersion.hashCode());
 	result = prime * result + ((name == null) ? 0 : name.hashCode());
+	result = prime * result + nbProcesses;
 	result = prime * result + ((path == null) ? 0 : path.hashCode());
 	result = prime * result + ((routes == null) ? 0 : routes.hashCode());
 	result = prime * result + ((state == null) ? 0 : state.hashCode());
@@ -138,12 +155,17 @@ public class OverviewApp {
 		return false;
 	} else if (!guid.equals(other.guid))
 	    return false;
-	if (nbProcesses != other.nbProcesses)
+	if (instanceVersion == null) {
+	    if (other.instanceVersion != null)
+		return false;
+	} else if (!instanceVersion.equals(other.instanceVersion))
 	    return false;
 	if (name == null) {
 	    if (other.name != null)
 		return false;
 	} else if (!name.equals(other.name))
+	    return false;
+	if (nbProcesses != other.nbProcesses)
 	    return false;
 	if (path == null) {
 	    if (other.path != null)
@@ -174,6 +196,9 @@ public class OverviewApp {
 	    return false;
 	}
 	if (desiredApp.guid != null && !this.guid.equals(desiredApp.guid)) {
+	    return false;
+	}
+	if (desiredApp.instanceVersion != null && !desiredApp.instanceVersion.equals(this.instanceVersion)) {
 	    return false;
 	}
 	if (desiredApp.path != null) {

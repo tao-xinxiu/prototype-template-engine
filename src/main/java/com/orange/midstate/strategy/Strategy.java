@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.orange.model.AppProperty;
@@ -15,7 +14,7 @@ import com.orange.model.state.OverviewApp;
 
 public abstract class Strategy {
     protected static List<AppProperty> updateOrder = Collections.unmodifiableList(Arrays.asList(AppProperty.Path,
-	    AppProperty.Env, AppProperty.State, AppProperty.Routes, AppProperty.NbProcesses, AppProperty.Name));
+	    AppProperty.Env, AppProperty.State, AppProperty.Routes, AppProperty.NbProcesses));
     protected OverviewApp desiredApp;
     protected SiteDeploymentConfig config;
     protected Set<OverviewApp> currentRelatedApps;
@@ -26,21 +25,23 @@ public abstract class Strategy {
      * @param desiredApp
      * @param config
      * @param relatedAppsPredicate
-     *            The predicate of which apps in the current state is related to the desired app.
+     *            The predicate of which apps in the current state is related to
+     *            the desired app.
      */
-    public Strategy(Set<OverviewApp> currentApps, OverviewApp desiredApp, SiteDeploymentConfig config,
-	    Predicate<OverviewApp> relatedAppsPredicate) {
+    public Strategy(Set<OverviewApp> currentApps, OverviewApp desiredApp, SiteDeploymentConfig config) {
 	this.desiredApp = desiredApp;
 	this.config = config;
-	this.currentRelatedApps = currentApps.stream().filter(relatedAppsPredicate).collect(Collectors.toSet());
+	this.currentRelatedApps = currentApps.stream().filter(app -> app.getName().equals(desiredApp.getName()))
+		.collect(Collectors.toSet());
     }
 
     public Strategy(Set<OverviewApp> currentApps, OverviewApp desiredApp, SiteDeploymentConfig config,
-	    Predicate<OverviewApp> relatedAppsPredicate, List<AppProperty> updateOrder) {
+	    List<AppProperty> updateOrder) {
 	this.desiredApp = desiredApp;
 	this.config = config;
-	this.currentRelatedApps = currentApps.stream().filter(relatedAppsPredicate).collect(Collectors.toSet());
-	if (updateOrder.size() != 6 || !updateOrder.containsAll(Arrays.asList(AppProperty.values()))) {
+	this.currentRelatedApps = currentApps.stream().filter(app -> app.getName().equals(desiredApp.getName()))
+		.collect(Collectors.toSet());
+	if (updateOrder.size() != 5 || !updateOrder.containsAll(Arrays.asList(AppProperty.values()))) {
 	    throw new IllegalStateException("Invalid update order.");
 	}
 	Strategy.updateOrder = Collections.unmodifiableList(updateOrder);
@@ -73,10 +74,6 @@ public abstract class Strategy {
 
     public Set<OverviewApp> onNbProcessesUpdated() {
 	return directlyUpdateProperty(AppProperty.NbProcesses);
-    }
-
-    public Set<OverviewApp> onNameUpdated() {
-	return directlyUpdateProperty(AppProperty.Name);
     }
 
     public Set<OverviewApp> nothingUpdated() {

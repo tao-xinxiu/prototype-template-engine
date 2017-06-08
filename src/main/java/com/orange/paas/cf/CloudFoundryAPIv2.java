@@ -29,10 +29,37 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     @Override
     public OverviewSite getOverviewSite() {
 	logger.info("Start getting the current state ...");
-	return new OverviewSite(operations.listSpaceApps()
-		.parallelStream().map(appInfo -> new OverviewApp(appInfo.getId(), appInfo.getName(), null,
-			parseState(appInfo), appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo)))
+	return new OverviewSite(operations.listSpaceApps().parallelStream()
+		.map(appInfo -> new OverviewApp(appInfo.getId(), parseName(appInfo.getName()),
+			parseInstVersion(appInfo.getName()), null, parseState(appInfo), appInfo.getInstances(),
+			parseEnv(appInfo), parseRoutes(appInfo)))
 		.collect(Collectors.toSet()));
+    }
+
+    /**
+     * Get OverviewApp name from CF stored appName
+     * 
+     * @param appName
+     *            CF stored microservice instance unique name, mapped as "name"
+     *            + "_" + "instanceVersion" to microservice model (OverviewApp)
+     * @return
+     */
+    private String parseName(String appName) {
+	int delimiterPosition = appName.lastIndexOf("_");
+	if (delimiterPosition == -1) {
+	    return appName;
+	} else {
+	    return appName.substring(0, delimiterPosition);
+	}
+    }
+
+    private String parseInstVersion(String appName) {
+	int delimiterPosition = appName.lastIndexOf("_");
+	if (delimiterPosition == -1) {
+	    return null;
+	} else {
+	    return appName.substring(appName.lastIndexOf("_") + 1);
+	}
     }
 
     private AppState parseState(SpaceApplicationSummary appInfo) {

@@ -12,7 +12,6 @@ public class AppComparator {
     private OverviewApp desiredApp;
 
     private boolean appUpdated;
-    private boolean nameUpdated;
     private boolean pathUpdated;
     private boolean routesAdded;
     private boolean routesRemoved;
@@ -39,7 +38,6 @@ public class AppComparator {
 		    .collect(Collectors.toSet());
 	    routesRemoved = !removedRoutes.isEmpty();
 	}
-	nameUpdated = !currentApp.getName().equals(desiredApp.getName());
 	pathUpdated = (desiredApp.getPath() != null);
 	stateUpdated = !(currentApp.getState() == desiredApp.getState());
 	nbProcessesUpdated = !(currentApp.getNbProcesses() == desiredApp.getNbProcesses());
@@ -52,10 +50,6 @@ public class AppComparator {
 
     public OverviewApp getDesiredApp() {
 	return desiredApp;
-    }
-
-    public boolean isNameUpdated() {
-	return nameUpdated;
     }
 
     public Set<Route> getAddedRoutes() {

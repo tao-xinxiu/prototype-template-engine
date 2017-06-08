@@ -70,8 +70,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	if (appComparator.isPathUpdated()) {
 	    updateApp.addStep(updateAppPath(appId, appComparator.getDesiredApp().getPath()));
 	}
-	if (appComparator.isNameUpdated() || appComparator.isNbProcessesUpdated() || appComparator.isEnvUpdated()
-		|| appComparator.isStateUpdated()) {
+	if (appComparator.isNbProcessesUpdated() || appComparator.isEnvUpdated() || appComparator.isStateUpdated()) {
 	    updateApp.addStep(updateAppProperty(appComparator));
 	}
 	if (appComparator.isRoutesAdded()) {
@@ -84,7 +83,8 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
     }
 
     private Step updateAppPath(String id, String path) {
-	return new Step(String.format("upload app [%s] with path [%s] at site [%s]", id, path, operations.getSiteName())) {
+	return new Step(
+		String.format("upload app [%s] with path [%s] at site [%s]", id, path, operations.getSiteName())) {
 	    @Override
 	    public void exec() {
 		// change app desired state to STOPPED before upload package.
@@ -183,7 +183,8 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
     }
 
     private Step addAppRoutes(String appId, Set<Route> addedRoutes) {
-	return new Step(String.format("map routes %s to app [%s] at site [%s]", addedRoutes, appId, operations.getSiteName())) {
+	return new Step(
+		String.format("map routes %s to app [%s] at site [%s]", addedRoutes, appId, operations.getSiteName())) {
 	    @Override
 	    public void exec() {
 		addedRoutes.parallelStream().forEach(route -> createAndMapAppRoute(appId, route));
@@ -202,8 +203,8 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
     }
 
     private Step removeAppRoutes(String appId, Set<Route> removedRoutes) {
-	return new Step(
-		String.format("unmap routes %s from app [%s] at site [%s]", removedRoutes, appId, operations.getSiteName())) {
+	return new Step(String.format("unmap routes %s from app [%s] at site [%s]", removedRoutes, appId,
+		operations.getSiteName())) {
 	    @Override
 	    public void exec() {
 		removedRoutes.parallelStream().forEach(route -> unmapAppRoute(appId, route));
