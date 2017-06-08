@@ -1,4 +1,4 @@
-package com.orange.midstate.strategy;
+package com.orange.util;
 
 import java.util.Set;
 import java.util.function.Predicate;
@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import com.orange.model.state.AppState;
 import com.orange.model.state.OverviewApp;
 
-public class Util {
+public class SetUtil {
     public static Set<OverviewApp> deepCopy(Set<OverviewApp> apps) {
 	return apps.stream().map(OverviewApp::new).collect(Collectors.toSet());
     }

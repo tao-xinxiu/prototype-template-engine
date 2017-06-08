@@ -56,7 +56,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     private String parseInstVersion(String appName) {
 	int delimiterPosition = appName.lastIndexOf("_");
 	if (delimiterPosition == -1) {
-	    return null;
+	    return "";
 	} else {
 	    return appName.substring(appName.lastIndexOf("_") + 1);
 	}

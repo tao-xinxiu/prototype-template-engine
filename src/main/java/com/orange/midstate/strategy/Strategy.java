@@ -6,11 +6,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.orange.model.AppProperty;
 import com.orange.model.SiteDeploymentConfig;
 import com.orange.model.state.OverviewApp;
+import com.orange.util.SetUtil;
 
 public abstract class Strategy {
     protected static List<AppProperty> updateOrder = Collections.unmodifiableList(Arrays.asList(AppProperty.Path,
@@ -31,16 +31,14 @@ public abstract class Strategy {
     public Strategy(Set<OverviewApp> currentApps, OverviewApp desiredApp, SiteDeploymentConfig config) {
 	this.desiredApp = desiredApp;
 	this.config = config;
-	this.currentRelatedApps = currentApps.stream().filter(app -> app.getName().equals(desiredApp.getName()))
-		.collect(Collectors.toSet());
+	this.currentRelatedApps = SetUtil.search(currentApps, app -> app.getName().equals(desiredApp.getName()));
     }
 
     public Strategy(Set<OverviewApp> currentApps, OverviewApp desiredApp, SiteDeploymentConfig config,
 	    List<AppProperty> updateOrder) {
 	this.desiredApp = desiredApp;
 	this.config = config;
-	this.currentRelatedApps = currentApps.stream().filter(app -> app.getName().equals(desiredApp.getName()))
-		.collect(Collectors.toSet());
+	this.currentRelatedApps = SetUtil.search(currentApps, app -> app.getName().equals(desiredApp.getName()));
 	if (updateOrder.size() != 5 || !updateOrder.containsAll(Arrays.asList(AppProperty.values()))) {
 	    throw new IllegalStateException("Invalid update order.");
 	}
@@ -77,13 +75,13 @@ public abstract class Strategy {
     }
 
     public Set<OverviewApp> nothingUpdated() {
-	Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
-	desiredRelatedApps.remove(Util.exludedApps(desiredRelatedApps, instantiatedDesiredApp(desiredRelatedApps)));
+	Set<OverviewApp> desiredRelatedApps = SetUtil.deepCopy(currentRelatedApps);
+	desiredRelatedApps.remove(SetUtil.exludedApps(desiredRelatedApps, instantiatedDesiredApp(desiredRelatedApps)));
 	return desiredRelatedApps;
     }
 
     protected Set<OverviewApp> directlyUpdateProperty(AppProperty property) {
-	Set<OverviewApp> desiredRelatedApps = Util.deepCopy(currentRelatedApps);
+	Set<OverviewApp> desiredRelatedApps = SetUtil.deepCopy(currentRelatedApps);
 	try {
 	    Method getPropertyMethod = OverviewApp.class.getMethod("get" + property);
 	    Method setPropertyMethod = OverviewApp.class.getMethod("set" + property, getPropertyMethod.getReturnType());

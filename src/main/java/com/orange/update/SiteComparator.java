@@ -2,15 +2,17 @@ package com.orange.update;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.orange.model.state.OverviewApp;
 import com.orange.model.state.OverviewSite;
+import com.orange.util.SetUtil;
 
 public class SiteComparator {
-    // list of apps to be created, i.e. apps in desiredState but not in currentState
+    // list of apps to be created, i.e. apps in desiredState but not in
+    // currentState
     private Set<OverviewApp> addedApp = new HashSet<>();
-    // list of apps to be deleted, i.e. apps in currentState but not in desiredState
+    // list of apps to be deleted, i.e. apps in currentState but not in
+    // desiredState
     private Set<OverviewApp> removedApp = new HashSet<>();
     private Set<AppComparator> appComparators = new HashSet<>();
 
@@ -18,8 +20,9 @@ public class SiteComparator {
 	Set<String> desiredAppIds = new HashSet<>();
 	for (OverviewApp desiredApp : desiredState.getOverviewApps()) {
 	    if (desiredApp.getGuid() == null) {
-		OverviewApp currentApp = currentState.getOverviewApps().stream()
-			.filter(app -> app.getName().equals(desiredApp.getName())).findAny().orElse(null);
+		OverviewApp currentApp = SetUtil.searchApp(currentState.getOverviewApps(),
+			app -> app.getName().equals(desiredApp.getName())
+				&& app.getInstanceVersion().equals(desiredApp.getInstanceVersion()));
 		if (currentApp == null) {
 		    if (desiredApp.getPath() == null) {
 			throw new IllegalStateException(
@@ -33,8 +36,8 @@ public class SiteComparator {
 		}
 	    } else {
 		desiredAppIds.add(desiredApp.getGuid());
-		OverviewApp currentApp = currentState.getOverviewApps().stream()
-			.filter(app -> app.getGuid().equals(desiredApp.getGuid())).findAny().orElse(null);
+		OverviewApp currentApp = SetUtil.searchApp(currentState.getOverviewApps(),
+			app -> app.getGuid().equals(desiredApp.getGuid()));
 		if (currentApp == null) {
 		    throw new IllegalStateException(String.format(
 			    "Desired app guid [%s] is not present in the current state.", desiredApp.getGuid()));
@@ -42,8 +45,8 @@ public class SiteComparator {
 		appComparators.add(new AppComparator(currentApp, desiredApp));
 	    }
 	}
-	removedApp = currentState.getOverviewApps().stream()
-		.filter(currentApp -> !desiredAppIds.contains(currentApp.getGuid())).collect(Collectors.toSet());
+	removedApp = SetUtil.search(currentState.getOverviewApps(),
+		currentApp -> !desiredAppIds.contains(currentApp.getGuid()));
     }
 
     public Set<OverviewApp> getAddedApp() {
