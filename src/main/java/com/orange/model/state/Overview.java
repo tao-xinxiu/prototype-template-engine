@@ -132,4 +132,9 @@ public class Overview {
 	}
 	return true;
     }
+
+    @Override
+    public String toString() {
+	return "Overview [sites=" + sites + ", overviewSites=" + overviewSites + "]";
+    }
 }

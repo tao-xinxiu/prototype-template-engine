@@ -1,18 +1,11 @@
 package com.orange.midstate;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Set;
 
 import com.orange.midstate.strategy.Strategy;
-import com.orange.model.AppProperty;
+import com.orange.midstate.strategy.TransitPoint;
 import com.orange.model.DeploymentConfig;
-import com.orange.model.PaaSSite;
-import com.orange.model.SiteDeploymentConfig;
 import com.orange.model.state.Overview;
-import com.orange.model.state.OverviewApp;
-import com.orange.model.state.OverviewSite;
 
 public class MidStateCalculator {
     private String strategyClass;
@@ -24,72 +17,34 @@ public class MidStateCalculator {
     }
 
     /**
-     * calculate next mid state to achieve the final state, based on current state and different deployment
-     * configurations and update strategies.
+     * calculate next mid state to achieve the final state, based on current
+     * state and different deployment configurations and update strategies.
      * 
      * @param currentState
      * @param finalState
      * @return
      */
-    @SuppressWarnings("unchecked")
     public Overview calcMidStates(final Overview currentState, final Overview finalState) {
 	// return null when arrived final state
 	if (currentState.isInstantiation(finalState)) {
 	    return null;
 	}
-	Overview midState = new Overview();
-	for (PaaSSite site : finalState.listPaaSSites()) {
-	    OverviewSite siteMidState = new OverviewSite();
-	    SiteDeploymentConfig config = deploymentConfig.getSiteDeploymentConfig(site.getName());
-	    Set<OverviewApp> currentApps = currentState.getOverviewSite(site.getName()).getOverviewApps();
-	    for (OverviewApp desiredApp : finalState.getOverviewSite(site.getName()).getOverviewApps()) {
-		try {
-		    Strategy strategy = (Strategy) Class.forName(strategyClass)
-			    .getConstructor(Set.class, OverviewApp.class, SiteDeploymentConfig.class)
-			    .newInstance(currentApps, desiredApp, config);
-		    OverviewApp instantiatedDesiredApp = strategy.getInstantiatedDesiredApp();
-		    if (instantiatedDesiredApp == null) {
-			siteMidState.addOverviewApps(strategy.onNoInstantiatedDesiredApp());
-			continue;
-		    }
-		    List<AppProperty> updateOrder = Strategy.getUpdateOrder();
-		    for (AppProperty property : updateOrder) {
-			if (propertyChanged(instantiatedDesiredApp, desiredApp, property)) {
-			    siteMidState.addOverviewApps((Set<OverviewApp>) strategy.getClass()
-				    .getMethod(String.format("on%sUpdated", property)).invoke(strategy));
-			    break;
-			}
-			if (property == updateOrder.get(updateOrder.size() - 1)) {
-			    siteMidState.addOverviewApps(strategy.nothingUpdated());
-			}
-		    }
-		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException
-			| IllegalArgumentException | InvocationTargetException | NoSuchMethodException
-			| SecurityException e) {
-		    throw new IllegalStateException(
-			    String.format("Exception [%s] in Strategy [%s] instantiation or method calling.",
-				    e.getClass().getName(), strategyClass),
-			    e);
+	try {
+	    Strategy strategy = (Strategy) Class.forName(strategyClass).getConstructor(DeploymentConfig.class)
+		    .newInstance(deploymentConfig);
+	    if (!strategy.valid(currentState, finalState)) {
+		throw new IllegalStateException("Strategy disallowed situation");
+	    }
+	    for (TransitPoint transitPoint : strategy.transitPoints()) {
+		if (transitPoint.condition(currentState, finalState)) {
+		    return transitPoint.next(currentState, finalState);
 		}
 	    }
-	    midState.addPaaSSite(site, siteMidState);
-	}
-	return midState;
-    }
-
-    private boolean propertyChanged(OverviewApp currentApp, OverviewApp desiredApp, AppProperty property) {
-	try {
-	    if (property == AppProperty.Path) {
-		return desiredApp.getPath() != null;
-	    }
-	    Method getPropertyMethod = OverviewApp.class.getMethod("get" + property);
-	    return !getPropertyMethod.invoke(currentApp).equals(getPropertyMethod.invoke(desiredApp));
-	} catch (NoSuchMethodException | SecurityException e) {
-	    throw new IllegalStateException(String.format("Exception [%s] in getting [%s].[%s] method.",
-		    e.getClass().getName(), OverviewApp.class, "get" + property), e);
-	} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-	    throw new IllegalStateException(String.format("Exception [%s] in calling [%s].[%s] method.",
-		    e.getClass().getName(), OverviewApp.class, "get" + property), e);
+	    return finalState;
+	} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+		| NoSuchMethodException | SecurityException | ClassNotFoundException e) {
+	    throw new IllegalStateException(String.format("Exception [%s] in Strategy [%s] instantiation.",
+		    e.getClass().getName(), strategyClass), e);
 	}
     }
 }

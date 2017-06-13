@@ -60,4 +60,9 @@ public class OverviewSite {
 	    return false;
 	return true;
     }
+
+    @Override
+    public String toString() {
+	return "OverviewSite [overviewApps=" + overviewApps + "]";
+    }
 }

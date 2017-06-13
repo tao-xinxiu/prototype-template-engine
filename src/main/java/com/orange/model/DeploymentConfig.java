@@ -6,19 +6,11 @@ import java.util.Map;
 public class DeploymentConfig {
     private Map<String, SiteDeploymentConfig> deploymentConfig = new HashMap<>();
 
-    public DeploymentConfig() {
+    public void setDeploymentConfig(String site, SiteDeploymentConfig siteConfig) {
+	deploymentConfig.put(site, siteConfig);
     }
 
-    public void setDeploymentConfig(Map<String, SiteDeploymentConfig> deploymentConfig) {
-	this.deploymentConfig = deploymentConfig;
-    }
-
-    public SiteDeploymentConfig getSiteDeploymentConfig(String siteName) {
-	SiteDeploymentConfig siteDeploymentConfig = deploymentConfig.get(siteName);
-	if (siteDeploymentConfig == null) {
-	    siteDeploymentConfig = new SiteDeploymentConfig();
-	    deploymentConfig.put(siteName, siteDeploymentConfig);
-	}
-	return siteDeploymentConfig;
+    public SiteDeploymentConfig getSiteConfig(String siteName) {
+	return deploymentConfig.get(siteName);
     }
 }

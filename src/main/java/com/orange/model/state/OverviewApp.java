@@ -192,21 +192,15 @@ public class OverviewApp {
 	if (desiredApp == null) {
 	    return false;
 	}
-	if (this.guid == null || this.path != null) {
-	    return false;
-	}
-	if (desiredApp.guid != null && !this.guid.equals(desiredApp.guid)) {
+	if (desiredApp.guid != null && !desiredApp.guid.equals(this.guid)) {
 	    return false;
 	}
 	if (desiredApp.instanceVersion != null && !desiredApp.instanceVersion.equals(this.instanceVersion)) {
 	    return false;
 	}
-	if (desiredApp.path != null) {
-	    return false;
-	}
-	if (!this.name.equals(desiredApp.name) || !this.state.equals(desiredApp.state)
-		|| this.nbProcesses != desiredApp.nbProcesses || !this.env.equals(desiredApp.env)
-		|| !this.routes.equals(desiredApp.routes)) {
+	if (!this.name.equals(desiredApp.name) || !this.path.equals(desiredApp.path)
+		|| !this.state.equals(desiredApp.state) || this.nbProcesses != desiredApp.nbProcesses
+		|| !this.env.equals(desiredApp.env) || !this.routes.equals(desiredApp.routes)) {
 	    return false;
 	}
 	return true;

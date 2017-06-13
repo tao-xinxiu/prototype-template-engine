@@ -6,6 +6,10 @@ public class SiteDeploymentConfig {
     private String tmpRouteDomain;
     // TODO add timeout, retry times of deployment operations
 
+    public SiteDeploymentConfig(String tmpRouteDomain) {
+	this.tmpRouteDomain = tmpRouteDomain;
+    }
+
     public String getTmpRouteHostSuffix() {
 	return tmpRouteHostSuffix;
     }
@@ -24,5 +28,9 @@ public class SiteDeploymentConfig {
 
     public static String getDefaulttmproutehostsuffix() {
 	return defaultTmpRouteHostSuffix;
+    }
+
+    public String getTmpRoute(String appName) {
+	return appName + tmpRouteHostSuffix + "." + tmpRouteDomain;
     }
 }
