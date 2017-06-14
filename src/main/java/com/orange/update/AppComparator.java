@@ -21,6 +21,9 @@ public class AppComparator {
     private boolean nbProcessesUpdated;
     private boolean envUpdated;
 
+    private boolean nameUpdated;
+    private boolean instVersionUpdated;
+
     public AppComparator(OverviewApp currentApp, OverviewApp desiredApp) {
 	if (!currentApp.getGuid().equals(desiredApp.getGuid())) {
 	    throw new IllegalStateException(
@@ -38,10 +41,13 @@ public class AppComparator {
 		    .collect(Collectors.toSet());
 	    routesRemoved = !removedRoutes.isEmpty();
 	}
-	pathUpdated = (desiredApp.getPath() != null);
+	pathUpdated = !(currentApp.getPath() == desiredApp.getPath());
 	stateUpdated = !(currentApp.getState() == desiredApp.getState());
 	nbProcessesUpdated = !(currentApp.getNbProcesses() == desiredApp.getNbProcesses());
 	envUpdated = !(currentApp.getEnv().equals(desiredApp.getEnv()));
+
+	nameUpdated = !(currentApp.getName().equals(desiredApp.getName()));
+	instVersionUpdated = !(currentApp.getInstanceVersion().equals(desiredApp.getInstanceVersion()));
     }
 
     public OverviewApp getCurrentApp() {
@@ -73,18 +79,26 @@ public class AppComparator {
     }
 
     public boolean isAppUpdated() {
-        return appUpdated;
+	return appUpdated;
     }
 
     public boolean isPathUpdated() {
-        return pathUpdated;
+	return pathUpdated;
     }
 
     public boolean isRoutesAdded() {
-        return routesAdded;
+	return routesAdded;
     }
 
     public boolean isRoutesRemoved() {
-        return routesRemoved;
+	return routesRemoved;
+    }
+
+    public boolean isNameUpdated() {
+	return nameUpdated;
+    }
+
+    public boolean isInstVersionUpdated() {
+	return instVersionUpdated;
     }
 }

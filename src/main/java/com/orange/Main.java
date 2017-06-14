@@ -27,7 +27,6 @@ import com.orange.model.DeploymentConfig;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.state.Overview;
-import com.orange.model.state.OverviewApp;
 import com.orange.model.state.OverviewSite;
 import com.orange.model.workflow.Workflow;
 import com.orange.paas.cf.CloudFoundryAPIv2;
@@ -39,7 +38,7 @@ import com.orange.update.WorkflowCalculator;
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     // storePath and MidStateCalculator(strategy&config) are specific to user
-    private static final String storePath = "./store/";
+    public static final String storePath = "./store/";
     private MidStateCalculator midStateCalculator;
     private static OperationConfig operationConfig = new OperationConfig();
     // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
@@ -99,7 +98,6 @@ public class Main {
     @RequestMapping(value = "/apply", method = RequestMethod.POST)
     public @ResponseBody Overview apply(@RequestBody Overview desiredState) {
 	Overview currentState = getCurrentState(desiredState.listPaaSSites());
-	validAndConfigAppPath(currentState, desiredState);
 	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState, operationConfig)
 		.getUpdateWorkflow();
 	updateWorkflow.exec();
@@ -128,20 +126,6 @@ public class Main {
     public boolean isInstantiation(@RequestBody Overview desiredState) {
 	Overview currentState = getCurrentState(desiredState.listPaaSSites());
 	return currentState.isInstantiation(desiredState);
-    }
-
-    private void validAndConfigAppPath(Overview currentState, Overview desiredState) {
-	for (OverviewSite site : desiredState.getOverviewSites().values()) {
-	    for (OverviewApp app : site.getOverviewApps()) {
-		if (app.getPath() != null) {
-		    String appFilename = app.getPath();
-		    app.setPath(storePath + appFilename);
-		    if (!new File(app.getPath()).exists()) {
-			throw new IllegalStateException(String.format("App file [%s] not yet uploaded.", appFilename));
-		    }
-		}
-	    }
-	}
     }
 
     public static CloudFoundryOperations getCloudFoundryOperations(PaaSSite site, OperationConfig config) {

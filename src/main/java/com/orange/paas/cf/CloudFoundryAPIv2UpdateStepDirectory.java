@@ -1,5 +1,7 @@
 package com.orange.paas.cf;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -25,11 +27,13 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 
     @Override
     public Step addApp(OverviewApp app) {
-	return new Step(String.format("addApp [%s] at site [%s]", app.getName(), operations.getSiteName())) {
+	app.setName(app.getName() + "_" + app.getInstanceVersion());
+	return new Step(String.format("addApp [%s, %s] at site [%s]", app.getName(), app.getInstanceVersion(),
+		operations.getSiteName())) {
 	    @Override
 	    public void exec() {
 		String appId = operations.createApp(app.getName(), app.getNbProcesses(), app.getEnv());
-		operations.uploadApp(appId, app.getPath());
+		updateAppPath(appId, app.getPath(), app.getEnv()).exec();
 		app.listRoutes().parallelStream().forEach(route -> createAndMapAppRoute(appId, route));
 		switch (app.getState()) {
 		case CREATED:
@@ -54,7 +58,8 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 
     @Override
     public Step removeApp(OverviewApp app) {
-	return new Step(String.format("removeApp [%s] at site [%s]", app.getName(), operations.getSiteName())) {
+	return new Step(String.format("removeApp [%s] ([%s,%s]) at site [%s]", app.getGuid(), app.getName(),
+		app.getInstanceVersion(), operations.getSiteName())) {
 	    @Override
 	    public void exec() {
 		operations.deleteApp(app.getGuid());
@@ -64,13 +69,17 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 
     @Override
     public Step updateApp(AppComparator appComparator) {
+	OverviewApp desiredApp = appComparator.getDesiredApp();
+	desiredApp.setName(desiredApp.getName() + "_" + desiredApp.getInstanceVersion());
 	Workflow updateApp = new SerialWorkflow(String.format("serial update app from %s to %s at site %s",
-		appComparator.getCurrentApp(), appComparator.getDesiredApp(), operations.getSiteName()));
+		appComparator.getCurrentApp(), desiredApp, operations.getSiteName()));
 	String appId = appComparator.getCurrentApp().getGuid();
 	if (appComparator.isPathUpdated()) {
-	    updateApp.addStep(updateAppPath(appId, appComparator.getDesiredApp().getPath()));
+	    updateApp.addStep(updateAppPath(appId, desiredApp.getPath(), appComparator.getCurrentApp().getEnv()));
 	}
-	if (appComparator.isNbProcessesUpdated() || appComparator.isEnvUpdated() || appComparator.isStateUpdated()) {
+	//TODO fix: now currentApp updated, can't use same appComparator!!!!
+	if (appComparator.isNbProcessesUpdated() || appComparator.isEnvUpdated() || appComparator.isStateUpdated()
+		|| appComparator.isNameUpdated() || appComparator.isInstVersionUpdated()) {
 	    updateApp.addStep(updateAppProperty(appComparator));
 	}
 	if (appComparator.isRoutesAdded()) {
@@ -82,14 +91,17 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	return updateApp;
     }
 
-    private Step updateAppPath(String id, String path) {
-	return new Step(
-		String.format("upload app [%s] with path [%s] at site [%s]", id, path, operations.getSiteName())) {
+    private Step updateAppPath(String appId, String desiredPath, Map<String, String> currentEnv) {
+	return new Step(String.format("upload app [%s] with path [%s] at site [%s]", appId, desiredPath,
+		operations.getSiteName())) {
 	    @Override
 	    public void exec() {
-		// change app desired state to STOPPED before upload package.
-		operations.updateApp(id, null, null, null, AppDesiredState.STOPPED);
-		operations.uploadApp(id, path);
+		//TODO: fix change app desired state to STOPPED before upload package.
+		operations.updateApp(appId, null, null, null, AppDesiredState.STOPPED);
+		operations.uploadApp(appId, desiredPath);
+		Map<String, String> envWithUpdatedPath = new HashMap<>(currentEnv);
+		envWithUpdatedPath.put(CloudFoundryAPIv2.pathKeyInEnv, desiredPath);
+		operations.updateApp(appId, null, envWithUpdatedPath, null, null);
 	    }
 	};
     }

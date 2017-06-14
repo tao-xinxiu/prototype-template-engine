@@ -5,6 +5,9 @@ import java.util.Map;
 
 public class DeploymentConfig {
     private Map<String, SiteDeploymentConfig> deploymentConfig = new HashMap<>();
+    
+    public DeploymentConfig() {
+    }
 
     public void setDeploymentConfig(String site, SiteDeploymentConfig siteConfig) {
 	deploymentConfig.put(site, siteConfig);

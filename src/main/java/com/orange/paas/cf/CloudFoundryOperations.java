@@ -49,6 +49,7 @@ import org.cloudfoundry.reactor.tokenprovider.PasswordGrantTokenProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.orange.Main;
 import com.orange.model.AppDesiredState;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
@@ -68,8 +69,8 @@ public class CloudFoundryOperations {
 	this.opConfig = opConfig;
 	String proxy_host = System.getenv("proxy_host");
 	String proxy_port = System.getenv("proxy_port");
-	DefaultConnectionContext.Builder connectionContext = DefaultConnectionContext.builder()
-		.apiHost(site.getApi()).skipSslValidation(site.getSkipSslValidation())
+	DefaultConnectionContext.Builder connectionContext = DefaultConnectionContext.builder().apiHost(site.getApi())
+		.skipSslValidation(site.getSkipSslValidation())
 		.socketTimeout(Duration.ofSeconds(opConfig.getGeneralTimeout()));
 	if (proxy_host != null && proxy_port != null) {
 	    ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host)
@@ -82,8 +83,8 @@ public class CloudFoundryOperations {
 		.tokenProvider(tokenProvider).build();
 	this.spaceId = requestSpaceId();
     }
-    
-    public String getSiteName(){
+
+    public String getSiteName() {
 	return site.getName();
     }
 
@@ -100,8 +101,8 @@ public class CloudFoundryOperations {
 
     private String requestSpaceId() {
 	try {
-	    ListSpacesRequest request = ListSpacesRequest.builder().organizationId(requestOrgId())
-		    .name(site.getSpace()).build();
+	    ListSpacesRequest request = ListSpacesRequest.builder().organizationId(requestOrgId()).name(site.getSpace())
+		    .build();
 	    ListSpacesResponse response = retry(() -> cloudFoundryClient.spaces().list(request).block());
 	    logger.trace("Got space id.");
 	    return response.getResources().get(0).getMetadata().getId();
@@ -160,7 +161,7 @@ public class CloudFoundryOperations {
     public void uploadApp(String appId, String path) {
 	try {
 	    UploadApplicationRequest request = UploadApplicationRequest.builder().applicationId(appId)
-		    .application(new FileInputStream(new File(path))).build();
+		    .application(new FileInputStream(new File(Main.storePath + path))).build();
 	    logger.info("App [{}] package [{}] start uploading", appId, path);
 	    retry(() -> cloudFoundryClient.applicationsV2().upload(request).block());
 	    logger.info("App [{}] package [{}] uploaded.", appId, path);

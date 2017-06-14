@@ -26,7 +26,8 @@ public class SiteComparator {
 		if (currentApp == null) {
 		    if (desiredApp.getPath() == null) {
 			throw new IllegalStateException(
-				String.format("The path of the new app [%s] is not specified.", desiredApp.getName()));
+				String.format("The path of the new app [%s, %s] is not specified.",
+					desiredApp.getName(), desiredApp.getInstanceVersion()));
 		    }
 		    addedApp.add(desiredApp);
 		} else {

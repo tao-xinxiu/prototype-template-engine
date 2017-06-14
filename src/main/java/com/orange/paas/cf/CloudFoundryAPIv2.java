@@ -1,5 +1,6 @@
 package com.orange.paas.cf;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import com.orange.paas.PaaSAPI;
 public class CloudFoundryAPIv2 extends PaaSAPI {
     private final Logger logger;
     private CloudFoundryOperations operations;
+    public static final String pathKeyInEnv = "RUM_PATH";
 
     public CloudFoundryAPIv2(PaaSSite site, OperationConfig operationConfig) {
 	super(site, operationConfig);
@@ -31,8 +33,8 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	logger.info("Start getting the current state ...");
 	return new OverviewSite(operations.listSpaceApps().parallelStream()
 		.map(appInfo -> new OverviewApp(appInfo.getId(), parseName(appInfo.getName()),
-			parseInstVersion(appInfo.getName()), null, parseState(appInfo), appInfo.getInstances(),
-			parseEnv(appInfo), parseRoutes(appInfo)))
+			parseInstVersion(appInfo.getName()), parsePath(appInfo), parseState(appInfo),
+			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo)))
 		.collect(Collectors.toSet()));
     }
 
@@ -77,12 +79,18 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     private Map<String, String> parseEnv(SpaceApplicationSummary appInfo) {
-	return appInfo.getEnvironmentJsons().entrySet().stream()
-		.collect(Collectors.toMap(entry -> entry.getKey(), entry -> (String) entry.getValue()));
+	Map<String, String> env = new HashMap<>(appInfo.getEnvironmentJsons().entrySet().stream()
+		.collect(Collectors.toMap(entry -> entry.getKey(), entry -> (String) entry.getValue())));
+	env.remove(pathKeyInEnv);
+	return env;
     }
 
     private Set<Route> parseRoutes(SpaceApplicationSummary appInfo) {
 	return appInfo.getRoutes().stream().map(route -> new Route(route.getHost(), route.getDomain().getName()))
 		.collect(Collectors.toSet());
+    }
+
+    private String parsePath(SpaceApplicationSummary appInfo) {
+	return (String) appInfo.getEnvironmentJsons().get(pathKeyInEnv);
     }
 }
