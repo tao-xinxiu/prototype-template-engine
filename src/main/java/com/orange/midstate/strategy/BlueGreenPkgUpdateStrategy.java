@@ -55,7 +55,10 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (desiredApp.getPath() != null) {
+		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
+			    app -> app.getName().equals(desiredApp.getName())
+				    && app.getPath().equals(desiredApp.getPath()))
+			    .isEmpty()) {
 			OverviewApp newApp = new OverviewApp(desiredApp);
 			newApp.setRoutes(
 				Collections.singleton(config.getSiteConfig(site).getTmpRoute(desiredApp.getName())));
