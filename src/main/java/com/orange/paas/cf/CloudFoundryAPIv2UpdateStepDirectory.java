@@ -1,23 +1,39 @@
 package com.orange.paas.cf;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.model.AppDesiredState;
-import com.orange.model.state.AppState;
 import com.orange.model.state.OverviewApp;
 import com.orange.model.state.Route;
+import com.orange.model.state.cf.CFAppDesiredState;
+import com.orange.model.state.cf.CFAppState;
+import com.orange.model.state.cf.CFOverviewApp;
 import com.orange.model.workflow.SerialWorkflow;
 import com.orange.model.workflow.Step;
 import com.orange.model.workflow.Workflow;
 import com.orange.paas.UpdateStepDirectory;
-import com.orange.update.AppComparator;
 
 public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory {
+    abstract class SiteStep extends Step {
+	public SiteStep(String stepName) {
+	    super(stepName + " at site " + operations.getSiteName());
+	}
+    }
+
+    class SiteSerialWorkflow extends SerialWorkflow {
+	public SiteSerialWorkflow(String stepName) {
+	    super(stepName + " at site " + operations.getSiteName());
+	}
+    }
+
     private final Logger logger = LoggerFactory.getLogger(CloudFoundryAPIv2UpdateStepDirectory.class);
     private CloudFoundryOperations operations;
 
@@ -27,39 +43,25 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 
     @Override
     public Step addApp(OverviewApp app) {
-	app.setName(app.getName() + "_" + app.getInstanceVersion());
-	return new Step(String.format("addApp [%s, %s] at site [%s]", app.getName(), app.getInstanceVersion(),
-		operations.getSiteName())) {
+	CFOverviewApp desiredApp = new CFOverviewApp(app);
+	return new Step(String.format("addApp %s", desiredApp)) {
 	    @Override
 	    public void exec() {
-		String appId = operations.createApp(app.getName(), app.getNbProcesses(), app.getEnv());
-		updateAppPath(appId, app.getPath(), app.getEnv()).exec();
-		app.listRoutes().parallelStream().forEach(route -> createAndMapAppRoute(appId, route));
-		switch (app.getState()) {
-		case CREATED:
-		    return;
-		case STAGED:
-		    operations.updateApp(appId, null, null, null, AppDesiredState.STARTED);
-		    operations.updateApp(appId, null, null, null, AppDesiredState.STOPPED);
-		    waitStaged(appId);
-		    break;
-		case RUNNING:
-		    operations.updateApp(appId, null, null, null, AppDesiredState.STARTED);
-		    waitStaged(appId);
-		    waitRunning(appId);
-		    break;
-		default:
-		    throw new IllegalStateException(
-			    String.format("Unsupported desired app state [%s].", app.getState()));
+		String appId = operations.createApp(desiredApp.getName(), desiredApp.getNbProcesses(),
+			desiredApp.getEnv());
+		CFOverviewApp currentApp = new CFOverviewApp(appId, desiredApp.getName(), null, CFAppState.CREATED,
+			desiredApp.getNbProcesses(), desiredApp.getEnv(), Collections.emptySet());
+		if (currentApp.getState() != desiredApp.getState()) {
+		    updateAppState(currentApp, desiredApp).exec();
 		}
+		updateAppRoutes(appId, currentApp.getRoutes(), desiredApp.getRoutes()).exec();
 	    }
 	};
     }
 
     @Override
     public Step removeApp(OverviewApp app) {
-	return new Step(String.format("removeApp [%s] ([%s,%s]) at site [%s]", app.getGuid(), app.getName(),
-		app.getInstanceVersion(), operations.getSiteName())) {
+	return new SiteStep(String.format("removeApp [%s]", app.getGuid())) {
 	    @Override
 	    public void exec() {
 		operations.deleteApp(app.getGuid());
@@ -68,36 +70,54 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
     }
 
     @Override
-    public Step updateApp(AppComparator appComparator) {
-	OverviewApp desiredApp = appComparator.getDesiredApp();
-	desiredApp.setName(desiredApp.getName() + "_" + desiredApp.getInstanceVersion());
-	Workflow updateApp = new SerialWorkflow(String.format("serial update app from %s to %s at site %s",
-		appComparator.getCurrentApp(), desiredApp, operations.getSiteName()));
-	String appId = appComparator.getCurrentApp().getGuid();
-	if (appComparator.isPathUpdated()) {
-	    updateApp.addStep(updateAppPath(appId, desiredApp.getPath(), appComparator.getCurrentApp().getEnv()));
+    public Step updateApp(OverviewApp currentApp, OverviewApp desiredApp) {
+	CFOverviewApp currentCFApp = new CFOverviewApp(currentApp);
+	CFOverviewApp desiredCFApp = new CFOverviewApp(desiredApp);
+
+	Workflow serial = new SiteSerialWorkflow(
+		String.format("serial update app properties from %s to %s", currentCFApp, desiredCFApp));
+	String appId = currentCFApp.getGuid();
+	if (!currentCFApp.getRoutes().equals(desiredCFApp.getRoutes())) {
+	    serial.addStep(updateAppRoutes(appId, currentCFApp.getRoutes(), desiredCFApp.getRoutes()));
+	    currentCFApp.setRoutes(desiredCFApp.getRoutes());
 	}
-	//TODO fix: now currentApp updated, can't use same appComparator!!!!
-	if (appComparator.isNbProcessesUpdated() || appComparator.isEnvUpdated() || appComparator.isStateUpdated()
-		|| appComparator.isNameUpdated() || appComparator.isInstVersionUpdated()) {
-	    updateApp.addStep(updateAppProperty(appComparator));
+	if (!currentCFApp.getName().equals(desiredCFApp.getName())) {
+	    serial.addStep(updateAppName(appId, desiredCFApp.getName()));
 	}
-	if (appComparator.isRoutesAdded()) {
-	    updateApp.addStep(addAppRoutes(appId, appComparator.getAddedRoutes()));
+
+	if (desiredCFApp.getState() != CFAppState.CREATED && desiredCFApp.getPath() != null
+		&& !desiredCFApp.getPath().equals(currentCFApp.getPath())) {
+	    serial.addStep(updateAppPath(appId, desiredCFApp.getPath(), currentCFApp.getEnv()));
+	    currentCFApp.setPath(desiredCFApp.getPath());
+	    currentCFApp.setState(CFAppState.UPLOADED);
 	}
-	if (appComparator.isRoutesRemoved()) {
-	    updateApp.addStep(removeAppRoutes(appId, appComparator.getRemovedRoutes()));
+	if (!currentCFApp.getEnv().equals(desiredCFApp.getEnv())) {
+	    serial.addStep(updateAppEnv(appId, desiredCFApp.getEnv()));
+	    currentCFApp.setEnv(desiredCFApp.getEnv());
+	    Set<CFAppState> upstagedStates = new HashSet<>(Arrays.asList(CFAppState.CREATED, CFAppState.UPLOADED));
+	    if (!upstagedStates.contains(currentCFApp.getState())) {
+		serial.addStep(restageApp(appId));
+		currentCFApp.setState(CFAppState.staging);
+	    }
 	}
-	return updateApp;
+	if (currentCFApp.getNbProcesses() != desiredCFApp.getNbProcesses()) {
+	    serial.addStep(updateAppNbProcesses(appId, desiredCFApp.getNbProcesses()));
+	    currentCFApp.setNbProcesses(desiredCFApp.getNbProcesses());
+	}
+	if (currentCFApp.getState() != desiredCFApp.getState()) {
+	    serial.addStep(updateAppState(currentCFApp, desiredCFApp));
+	    currentCFApp.setState(desiredCFApp.getState());
+	}
+	return serial;
     }
 
     private Step updateAppPath(String appId, String desiredPath, Map<String, String> currentEnv) {
-	return new Step(String.format("upload app [%s] with path [%s] at site [%s]", appId, desiredPath,
-		operations.getSiteName())) {
+	return new SiteStep(String.format("upload app [%s] with path [%s]", appId, desiredPath)) {
 	    @Override
 	    public void exec() {
-		//TODO: fix change app desired state to STOPPED before upload package.
-		operations.updateApp(appId, null, null, null, AppDesiredState.STOPPED);
+		// app should be STOPPED before upload, so that it could be
+		// staged later by operation of starting
+		operations.updateApp(appId, null, null, null, CFAppDesiredState.STOPPED);
 		operations.uploadApp(appId, desiredPath);
 		Map<String, String> envWithUpdatedPath = new HashMap<>(currentEnv);
 		envWithUpdatedPath.put(CloudFoundryAPIv2.pathKeyInEnv, desiredPath);
@@ -106,156 +126,165 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	};
     }
 
-    private Step updateAppProperty(AppComparator appComparator) {
-	if (appComparator.isPathUpdated()) {
-	    updateFromCREATEDApp(appComparator);
-	}
-	switch (appComparator.getCurrentApp().getState()) {
-	case CREATED:
-	    return updateFromCREATEDApp(appComparator);
-	case STAGED:
-	    return updateFromSTAGEDApp(appComparator);
+    private Step updateAppEnv(String appId, Map<String, String> env) {
+	return new SiteStep(String.format("update app [%s] env to [%s]", appId, env)) {
+	    @Override
+	    public void exec() {
+		operations.updateApp(appId, null, env, null, null);
+	    }
+	};
+    }
+
+    private Step updateAppNbProcesses(String appId, int nbProcesses) {
+	return new SiteStep(String.format("update app [%s] nbProcesses to [%d]", appId, nbProcesses)) {
+	    @Override
+	    public void exec() {
+		operations.updateApp(appId, null, null, nbProcesses, null);
+	    }
+	};
+    }
+
+    private Step updateAppName(String appId, String name) {
+	return new SiteStep(String.format("update app [%s] name to [%d]", appId, name)) {
+	    @Override
+	    public void exec() {
+		operations.updateApp(appId, name, null, null, null);
+	    }
+	};
+    }
+
+    private Step updateAppRoutes(String appId, Set<Route> currentRoutes, Set<Route> desiredRoutes) {
+	return new SiteStep(
+		String.format("update app [%s] routes from [%s] to [%s]", appId, currentRoutes, desiredRoutes)) {
+	    @Override
+	    public void exec() {
+		Set<Route> addedRoutes = desiredRoutes.stream().filter(route -> !currentRoutes.contains(route))
+			.collect(Collectors.toSet());
+		Set<Route> removedRoutes = currentRoutes.stream().filter(route -> !desiredRoutes.contains(route))
+			.collect(Collectors.toSet());
+		addedRoutes.stream().forEach(route -> operations.createAndMapAppRoute(appId, route));
+		removedRoutes.stream().forEach(route -> operations.unmapAppRoute(appId, route));
+	    }
+	};
+    }
+
+    private Step updateAppState(CFOverviewApp currentApp, CFOverviewApp desiredApp) {
+	String appId = currentApp.getGuid();
+	Workflow serial = new SiteSerialWorkflow(String.format("update app [%s] state from [%s] to [%s]", appId,
+		currentApp.getState(), desiredApp.getState()));
+	switch (desiredApp.getState()) {
 	case RUNNING:
-	    return updateFromRUNNINGApp(appComparator);
+	    switch (currentApp.getState()) {
+	    case CREATED:
+		serial.addStep(updateAppPath(appId, desiredApp.getPath(), currentApp.getEnv()));
+	    case UPLOADED:
+	    case STAGED:
+		serial.addStep(startApp(appId));
+	    case staging:
+		serial.addStep(waitStaged(appId));
+	    case starting:
+		serial.addStep(waitRunning(appId));
+		break;
+	    default:
+		throw new IllegalStateException(String.format("Unsupported current state [%s] to update to [%s]",
+			currentApp.getState(), desiredApp.getState()));
+	    }
+	    break;
+	case STAGED:
+	    switch (currentApp.getState()) {
+	    case CREATED:
+		serial.addStep(updateAppPath(appId, desiredApp.getPath(), currentApp.getEnv()));
+	    case UPLOADED:
+		serial.addStep(startApp(appId));
+	    case staging:
+		serial.addStep(waitStaged(appId));
+	    case starting:
+	    case RUNNING:
+		serial.addStep(stopApp(appId));
+		break;
+	    default:
+		throw new IllegalStateException(String.format("Unsupported current state [%s] to update to [%s]",
+			currentApp.getState(), desiredApp.getState()));
+	    }
+	    break;
+	case UPLOADED:
+	    switch (currentApp.getState()) {
+	    case CREATED:
+		serial.addStep(updateAppPath(appId, desiredApp.getPath(), currentApp.getEnv()));
+		break;
+	    default:
+		throw new IllegalStateException(String.format("Unsupported current state [%s] to update to [%s]",
+			currentApp.getState(), desiredApp.getState()));
+	    }
+	    break;
 	default:
-	    throw new IllegalStateException("Not yet support to transform app state from FAILED state");
+	    throw new IllegalStateException(String.format("Unsupported desired state [%s]", desiredApp.getState()));
 	}
+	return serial;
     }
 
-    private Step updateFromCREATEDApp(AppComparator appComparator) {
-	return new Step(String.format("updateApp [%s] to [%s] at site [%s]", appComparator.getCurrentApp(),
-		appComparator.getDesiredApp(), operations.getSiteName())) {
+    private Step startApp(String appId) {
+	return new SiteStep(String.format("start app [%s]", appId)) {
 	    @Override
 	    public void exec() {
-		OverviewApp desiredApp = appComparator.getDesiredApp();
-		AppDesiredState updateState = (desiredApp.getState() == AppState.CREATED) ? null
-			: AppDesiredState.STARTED;
-		operations.updateApp(desiredApp.getGuid(), desiredApp.getName(), desiredApp.getEnv(),
-			desiredApp.getNbProcesses(), updateState);
-		switch (desiredApp.getState()) {
-		case STAGED:
-		    operations.updateApp(desiredApp.getGuid(), null, null, null, AppDesiredState.STOPPED);
-		    waitStaged(desiredApp.getGuid());
-		case RUNNING:
-		    waitStaged(desiredApp.getGuid());
-		    waitRunning(desiredApp.getGuid());
-		default:
-		    break;
-		}
+		// as in CF, app desired state may currently be "STARTED", so we
+		// need to change it to "STOPPED" first to assure that app will
+		// be started.
+		operations.updateApp(appId, null, null, null, CFAppDesiredState.STOPPED);
+		operations.updateApp(appId, null, null, null, CFAppDesiredState.STARTED);
 	    }
 	};
     }
 
-    private Step updateFromSTAGEDApp(AppComparator appComparator) {
-	return new Step(String.format("updateApp [%s] to [%s] at site [%s]", appComparator.getCurrentApp(),
-		appComparator.getDesiredApp(), operations.getSiteName())) {
+    private Step stopApp(String appId) {
+	return new SiteStep(String.format("stop app [%s]", appId)) {
 	    @Override
 	    public void exec() {
-		OverviewApp desiredApp = appComparator.getDesiredApp();
-		AppDesiredState updateState = desiredApp.getState() == AppState.RUNNING ? AppDesiredState.STARTED
-			: AppDesiredState.STOPPED;
-		operations.updateApp(desiredApp.getGuid(), desiredApp.getName(), desiredApp.getEnv(),
-			desiredApp.getNbProcesses(), updateState);
-		if (appComparator.isEnvUpdated()) {
-		    operations.restageApp(desiredApp.getGuid());
-		    if (desiredApp.getState() == AppState.STAGED) {
-			operations.updateApp(desiredApp.getGuid(), null, null, null, AppDesiredState.STOPPED);
-		    }
-		    waitStaged(desiredApp.getGuid());
-		}
-		if (desiredApp.getState() == AppState.RUNNING) {
-		    waitRunning(desiredApp.getGuid());
-		}
+		operations.updateApp(appId, null, null, null, CFAppDesiredState.STOPPED);
 	    }
 	};
     }
 
-    private Step updateFromRUNNINGApp(AppComparator appComparator) {
-	return new Step(String.format("updateApp [%s] to [%s] at site [%s]", appComparator.getCurrentApp(),
-		appComparator.getDesiredApp(), operations.getSiteName())) {
+    private Step restageApp(String appId) {
+	return new SiteStep(String.format("restage app [%s]", appId)) {
 	    @Override
 	    public void exec() {
-		OverviewApp desiredApp = appComparator.getDesiredApp();
-		AppDesiredState updateState = desiredApp.getState() == AppState.RUNNING ? AppDesiredState.STARTED
-			: AppDesiredState.STOPPED;
-		operations.updateApp(desiredApp.getGuid(), desiredApp.getName(), desiredApp.getEnv(),
-			desiredApp.getNbProcesses(), updateState);
-		if (appComparator.isEnvUpdated()) {
-		    operations.restageApp(desiredApp.getGuid());
-		    if (desiredApp.getState() == AppState.STAGED) {
-			operations.updateApp(desiredApp.getGuid(), null, null, null, AppDesiredState.STOPPED);
-		    }
-		    waitStaged(desiredApp.getGuid());
-		    if (desiredApp.getState() == AppState.RUNNING) {
-			waitRunning(desiredApp.getGuid());
+		operations.restageApp(appId);
+	    }
+	};
+    }
+
+    private Step waitStaged(String appId) {
+	return new SiteStep(String.format("wait until app [%s] staged", appId)) {
+	    @Override
+	    public void exec() {
+		while (!isAppStaged(appId)) {
+		    try {
+			Thread.sleep(1000);
+		    } catch (InterruptedException e) {
+			logger.error("InterruptedException", e);
 		    }
 		}
+		logger.info("App [{}] staged.", appId);
 	    }
 	};
+
     }
 
-    private Step addAppRoutes(String appId, Set<Route> addedRoutes) {
-	return new Step(
-		String.format("map routes %s to app [%s] at site [%s]", addedRoutes, appId, operations.getSiteName())) {
+    private Step waitRunning(String appId) {
+	return new SiteStep(String.format("wait until app [%s] running", appId)) {
 	    @Override
 	    public void exec() {
-		addedRoutes.parallelStream().forEach(route -> createAndMapAppRoute(appId, route));
+		while (!isAppRunning(appId)) {
+		    try {
+			Thread.sleep(1000);
+		    } catch (InterruptedException e) {
+			logger.error("InterruptedException", e);
+		    }
+		}
+		logger.info("App [{}] running.", appId);
 	    }
 	};
-    }
-
-    private void createAndMapAppRoute(String appId, Route route) {
-	String domainId = operations.getDomainId(route.getDomain());
-	String routeId = operations.getRouteId(route.getHostname(), domainId);
-	if (routeId == null) {
-	    routeId = operations.createRoute(route.getHostname(), domainId);
-	}
-	operations.createRouteMapping(appId, routeId);
-	logger.info("route [{}] mapped to the app [{}]", routeId, appId);
-    }
-
-    private Step removeAppRoutes(String appId, Set<Route> removedRoutes) {
-	return new Step(String.format("unmap routes %s from app [%s] at site [%s]", removedRoutes, appId,
-		operations.getSiteName())) {
-	    @Override
-	    public void exec() {
-		removedRoutes.parallelStream().forEach(route -> unmapAppRoute(appId, route));
-	    }
-	};
-    }
-
-    private void unmapAppRoute(String appId, Route route) {
-	String domainId = operations.getDomainId(route.getDomain());
-	String routeId = operations.getRouteId(route.getHostname(), domainId);
-	if (routeId != null) {
-	    String routeMappingId = operations.getRouteMappingId(appId, routeId);
-	    if (routeMappingId != null) {
-		operations.deleteRouteMapping(routeMappingId);
-	    }
-	}
-	logger.info("route [{}] unmapped from the app [{}]", routeId, appId);
-    }
-
-    private void waitStaged(String appId) {
-	while (!isAppStaged(appId)) {
-	    try {
-		Thread.sleep(1000);
-	    } catch (InterruptedException e) {
-		logger.error("InterruptedException", e);
-	    }
-	}
-	logger.info("App [{}] staged.", appId);
-    }
-
-    private void waitRunning(String appId) {
-	while (!isAppRunning(appId)) {
-	    try {
-		Thread.sleep(1000);
-	    } catch (InterruptedException e) {
-		logger.error("InterruptedException", e);
-	    }
-	}
-	logger.info("App [{}] running.", appId);
     }
 
     private boolean isAppStaged(String appId) {

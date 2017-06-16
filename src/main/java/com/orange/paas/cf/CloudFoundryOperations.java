@@ -50,10 +50,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.Main;
-import com.orange.model.AppDesiredState;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.state.Route;
+import com.orange.model.state.cf.CFAppDesiredState;
 import com.orange.util.RetryFunction;
 
 public class CloudFoundryOperations {
@@ -176,7 +176,7 @@ public class CloudFoundryOperations {
 	retry(() -> cloudFoundryClient.applicationsV2().restage(request).block());
     }
 
-    public String getDomainId(String domain) {
+    private String getDomainId(String domain) {
 	try {
 	    ListDomainsRequest request = ListDomainsRequest.builder().name(domain).build();
 	    ListDomainsResponse response = retry(() -> cloudFoundryClient.domains().list(request).block());
@@ -204,7 +204,29 @@ public class CloudFoundryOperations {
 	}
     }
 
-    public String getRouteId(String hostname, String domainId) {
+    public void createAndMapAppRoute(String appId, Route route) {
+	String domainId = getDomainId(route.getDomain());
+	String routeId = getRouteId(route.getHostname(), domainId);
+	if (routeId == null) {
+	    routeId = createRoute(route.getHostname(), domainId);
+	}
+	createRouteMapping(appId, routeId);
+	logger.info("route [{}] mapped to the app [{}]", routeId, appId);
+    }
+
+    public void unmapAppRoute(String appId, Route route) {
+	String domainId = getDomainId(route.getDomain());
+	String routeId = getRouteId(route.getHostname(), domainId);
+	if (routeId != null) {
+	    String routeMappingId = getRouteMappingId(appId, routeId);
+	    if (routeMappingId != null) {
+		deleteRouteMapping(routeMappingId);
+	    }
+	}
+	logger.info("route [{}] unmapped from the app [{}]", routeId, appId);
+    }
+    
+    private String getRouteId(String hostname, String domainId) {
 	try {
 	    ListRoutesRequest request = ListRoutesRequest.builder().domainId(domainId).host(hostname).build();
 	    ListRoutesResponse response = retry(() -> cloudFoundryClient.routes().list(request).block());
@@ -219,7 +241,7 @@ public class CloudFoundryOperations {
 	}
     }
 
-    public String createRoute(String hostname, String domainId) {
+    private String createRoute(String hostname, String domainId) {
 	try {
 	    CreateRouteRequest request = CreateRouteRequest.builder().domainId(domainId).spaceId(spaceId).host(hostname)
 		    .build();
@@ -276,7 +298,7 @@ public class CloudFoundryOperations {
 	}
     }
 
-    public void createRouteMapping(String appId, String routeId) {
+    private void createRouteMapping(String appId, String routeId) {
 	try {
 	    CreateRouteMappingRequest request = CreateRouteMappingRequest.builder().applicationId(appId)
 		    .routeId(routeId).build();
@@ -287,7 +309,7 @@ public class CloudFoundryOperations {
 	}
     }
 
-    public String getRouteMappingId(String appId, String routeId) {
+    private String getRouteMappingId(String appId, String routeId) {
 	try {
 	    ListRouteMappingsRequest request = ListRouteMappingsRequest.builder().applicationId(appId).routeId(routeId)
 		    .build();
@@ -309,7 +331,7 @@ public class CloudFoundryOperations {
 	}
     }
 
-    public void deleteRouteMapping(String routeMappingId) {
+    private void deleteRouteMapping(String routeMappingId) {
 	try {
 	    DeleteRouteMappingRequest request = DeleteRouteMappingRequest.builder().routeMappingId(routeMappingId)
 		    .build();
@@ -330,7 +352,7 @@ public class CloudFoundryOperations {
      * @param state
      */
     public void updateApp(String appId, String name, Map<String, String> env, Integer instances,
-	    AppDesiredState state) {
+	    CFAppDesiredState state) {
 	try {
 	    UpdateApplicationRequest request = UpdateApplicationRequest.builder().applicationId(appId).name(name)
 		    .environmentJsons(env).instances(instances).state(state == null ? null : state.name()).build();

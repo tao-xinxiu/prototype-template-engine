@@ -60,7 +60,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	if (delimiterPosition == -1) {
 	    return "";
 	} else {
-	    return appName.substring(appName.lastIndexOf("_") + 1);
+	    return appName.substring(delimiterPosition + 1);
 	}
     }
 

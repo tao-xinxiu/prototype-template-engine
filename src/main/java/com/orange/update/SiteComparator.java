@@ -1,6 +1,8 @@
 package com.orange.update;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.orange.model.state.OverviewApp;
@@ -14,7 +16,7 @@ public class SiteComparator {
     // list of apps to be deleted, i.e. apps in currentState but not in
     // desiredState
     private Set<OverviewApp> removedApp = new HashSet<>();
-    private Set<AppComparator> appComparators = new HashSet<>();
+    private Map<OverviewApp, OverviewApp> updatedApp = new HashMap<>();
 
     public SiteComparator(OverviewSite currentState, OverviewSite desiredState) {
 	Set<String> desiredAppIds = new HashSet<>();
@@ -32,7 +34,9 @@ public class SiteComparator {
 		    addedApp.add(desiredApp);
 		} else {
 		    desiredApp.setGuid(currentApp.getGuid());
-		    appComparators.add(new AppComparator(currentApp, desiredApp));
+		    if (!currentApp.equals(desiredApp)) {
+			updatedApp.put(currentApp, desiredApp);
+		    }
 		    desiredAppIds.add(desiredApp.getGuid());
 		}
 	    } else {
@@ -43,7 +47,9 @@ public class SiteComparator {
 		    throw new IllegalStateException(String.format(
 			    "Desired app guid [%s] is not present in the current state.", desiredApp.getGuid()));
 		}
-		appComparators.add(new AppComparator(currentApp, desiredApp));
+		if (!currentApp.equals(desiredApp)) {
+		    updatedApp.put(currentApp, desiredApp);
+		}
 	    }
 	}
 	removedApp = SetUtil.search(currentState.getOverviewApps(),
@@ -58,7 +64,7 @@ public class SiteComparator {
 	return removedApp;
     }
 
-    public Set<AppComparator> getAppComparators() {
-	return appComparators;
+    public Map<OverviewApp, OverviewApp> getUpdatedApp() {
+	return updatedApp;
     }
 }

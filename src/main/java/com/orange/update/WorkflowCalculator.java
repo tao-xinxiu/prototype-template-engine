@@ -1,5 +1,7 @@
 package com.orange.update;
 
+import java.util.Map.Entry;
+
 import com.orange.Main;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
@@ -28,17 +30,16 @@ public class WorkflowCalculator {
 		    String.format("parallel update site %s entities", site.getName()));
 	    SiteComparator comparator = new SiteComparator(currentState.getOverviewSite(site.getName()),
 		    desiredState.getOverviewSite(site.getName()));
-	    UpdateStepDirectory directory = new CloudFoundryAPIv2UpdateStepDirectory(Main.getCloudFoundryOperations(site, config));
+	    UpdateStepDirectory directory = new CloudFoundryAPIv2UpdateStepDirectory(
+		    Main.getCloudFoundryOperations(site, config));
 	    for (OverviewApp app : comparator.getAddedApp()) {
 		updateSite.addStep(directory.addApp(app));
 	    }
 	    for (OverviewApp app : comparator.getRemovedApp()) {
 		updateSite.addStep(directory.removeApp(app));
 	    }
-	    for (AppComparator appComparator : comparator.getAppComparators()) {
-		if (appComparator.isAppUpdated()) {
-		    updateSite.addStep(directory.updateApp(appComparator));
-		}
+	    for (Entry<OverviewApp, OverviewApp> updatedApp : comparator.getUpdatedApp().entrySet()) {
+		updateSite.addStep(directory.updateApp(updatedApp.getKey(), updatedApp.getValue()));
 	    }
 	    updateSites.addStep(updateSite);
 	}

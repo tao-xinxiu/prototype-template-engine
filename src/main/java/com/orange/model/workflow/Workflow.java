@@ -18,4 +18,7 @@ public abstract class Workflow extends Step {
 	this.steps.addAll(steps);
     }
 
+    public boolean isEmpty() {
+	return steps.isEmpty();
+    }
 }
