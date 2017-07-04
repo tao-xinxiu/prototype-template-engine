@@ -74,7 +74,12 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	case "STAGED":
 	    return AppState.STAGED;
 	default:
-	    return AppState.CREATED;
+	    if (appInfo.getPackageUpdatedAt() == null) {
+		return AppState.CREATED;
+	    }
+	    else {
+		return AppState.UPLOADED;
+	    }
 	}
     }
 

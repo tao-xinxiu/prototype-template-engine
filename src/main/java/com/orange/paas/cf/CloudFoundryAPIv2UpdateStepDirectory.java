@@ -145,7 +145,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
     }
 
     private Step updateAppName(String appId, String name) {
-	return new SiteStep(String.format("update app [%s] name to [%d]", appId, name)) {
+	return new SiteStep(String.format("update app [%s] name to [%s]", appId, name)) {
 	    @Override
 	    public void exec() {
 		operations.updateApp(appId, name, null, null, null);
