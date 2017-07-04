@@ -19,12 +19,13 @@ public class OverviewApp {
     private int nbProcesses;
     private Map<String, String> env = new HashMap<>();
     private Set<Route> routes = new HashSet<>();
+    private Set<String> services = new HashSet<>();
 
     public OverviewApp() {
     }
 
     public OverviewApp(String guid, String name, String instanceVersion, String path, AppState state, int nbProcesses,
-	    Map<String, String> env, Set<Route> routes) {
+	    Map<String, String> env, Set<Route> routes, Set<String> services) {
 	this.guid = guid;
 	this.name = name;
 	this.instanceVersion = instanceVersion;
@@ -33,6 +34,7 @@ public class OverviewApp {
 	this.nbProcesses = nbProcesses;
 	this.env = env;
 	this.routes = routes;
+	this.services = services;
     }
 
     public OverviewApp(OverviewApp other) {
@@ -44,6 +46,7 @@ public class OverviewApp {
 	nbProcesses = other.nbProcesses;
 	env = new HashMap<>(other.env);
 	routes = new HashSet<>(other.routes);
+	services = new HashSet<>(other.services);
     }
 
     public String getGuid() {
@@ -118,7 +121,7 @@ public class OverviewApp {
     public String toString() {
 	return "OverviewApp [guid=" + guid + ", name=" + name + ", instanceVersion=" + instanceVersion + ", path="
 		+ path + ", state=" + state + ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes
-		+ "]";
+		+ ", services=" + services + "]";
     }
 
     @Override
@@ -132,6 +135,7 @@ public class OverviewApp {
 	result = prime * result + nbProcesses;
 	result = prime * result + ((path == null) ? 0 : path.hashCode());
 	result = prime * result + ((routes == null) ? 0 : routes.hashCode());
+	result = prime * result + ((services == null) ? 0 : services.hashCode());
 	result = prime * result + ((state == null) ? 0 : state.hashCode());
 	return result;
     }
@@ -177,6 +181,11 @@ public class OverviewApp {
 		return false;
 	} else if (!routes.equals(other.routes))
 	    return false;
+	if (services == null) {
+	    if (other.services != null)
+		return false;
+	} else if (!services.equals(other.services))
+	    return false;
 	if (state != other.state)
 	    return false;
 	return true;
@@ -204,5 +213,13 @@ public class OverviewApp {
 	    return false;
 	}
 	return true;
+    }
+
+    public Set<String> getServices() {
+        return services;
+    }
+
+    public void setServices(Set<String> services) {
+        this.services = services;
     }
 }

@@ -1,6 +1,7 @@
 package com.orange.paas.cf;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -34,7 +35,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	return new OverviewSite(operations.listSpaceApps().parallelStream()
 		.map(appInfo -> new OverviewApp(appInfo.getId(), parseName(appInfo.getName()),
 			parseInstVersion(appInfo.getName()), parsePath(appInfo), parseState(appInfo),
-			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo)))
+			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo), parseServices(appInfo)))
 		.collect(Collectors.toSet()));
     }
 
@@ -76,8 +77,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	default:
 	    if (appInfo.getPackageUpdatedAt() == null) {
 		return AppState.CREATED;
-	    }
-	    else {
+	    } else {
 		return AppState.UPLOADED;
 	    }
 	}
@@ -97,5 +97,9 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 
     private String parsePath(SpaceApplicationSummary appInfo) {
 	return (String) appInfo.getEnvironmentJsons().get(pathKeyInEnv);
+    }
+
+    private Set<String> parseServices(SpaceApplicationSummary appInfo) {
+	return new HashSet<>(appInfo.getServiceNames());
     }
 }
