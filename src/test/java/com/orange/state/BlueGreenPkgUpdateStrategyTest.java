@@ -11,9 +11,9 @@ import org.junit.Test;
 
 import com.orange.midstate.strategy.BlueGreenPkgUpdateStrategy;
 import com.orange.midstate.strategy.Strategy;
-import com.orange.model.DeploymentConfig;
+import com.orange.model.StrategyConfig;
 import com.orange.model.PaaSSite;
-import com.orange.model.SiteDeploymentConfig;
+import com.orange.model.StrategySiteConfig;
 import com.orange.model.state.AppState;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
@@ -31,7 +31,7 @@ public class BlueGreenPkgUpdateStrategyTest {
     private static final Map<String, String> appEnv = new HashMap<>(Collections.singletonMap("foo", "bar"));
     private static final Set<Route> appRoutes = Collections.singleton(new Route("app", appDomain));
     private static final Set<Route> appTmpRoutes = Collections
-	    .singleton(new Route(appName + SiteDeploymentConfig.getDefaulttmproutehostsuffix(), appDomain));
+	    .singleton(new Route(appName + StrategySiteConfig.getDefaulttmproutehostsuffix(), appDomain));
     private static final String oldAppSite1Id = "oldApp-guid-site1";
     private static final String oldAppSite2Id = "oldApp-guid-site2";
     private static final String newAppSite1Id = "newApp-guid-site1";
@@ -39,7 +39,7 @@ public class BlueGreenPkgUpdateStrategyTest {
     private static final String oldAppPath = String.format("/app/path/app_%s.zip", oldAppInstVersion);
     private static final String newAppPath = String.format("/app/path/app_%s.zip", newAppInstVersion);
 
-    private final static DeploymentConfig config = config();
+    private final static StrategyConfig config = config();
 
     private static final PaaSSite site1 = new PaaSSite(site1name, "CloudFoundry", "site1-api", "site1-user",
 	    "site1-pwd", "site1-org", "site1-space", true);
@@ -82,10 +82,10 @@ public class BlueGreenPkgUpdateStrategyTest {
 	Assert.assertTrue(midState3.isInstantiation(finalState));
     }
 
-    private final static DeploymentConfig config() {
-	DeploymentConfig config = new DeploymentConfig();
-	config.setDeploymentConfig(site1name, new SiteDeploymentConfig(appDomain));
-	config.setDeploymentConfig(site2name, new SiteDeploymentConfig(appDomain));
+    private final static StrategyConfig config() {
+	StrategyConfig config = new StrategyConfig();
+	config.setSiteConfig(site1name, new StrategySiteConfig(appDomain));
+	config.setSiteConfig(site2name, new StrategySiteConfig(appDomain));
 	return config;
     }
 

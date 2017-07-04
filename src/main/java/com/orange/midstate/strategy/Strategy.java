@@ -2,13 +2,13 @@ package com.orange.midstate.strategy;
 
 import java.util.List;
 
-import com.orange.model.DeploymentConfig;
+import com.orange.model.StrategyConfig;
 import com.orange.model.state.Overview;
 
 public abstract class Strategy {
-    protected DeploymentConfig config;
+    protected StrategyConfig config;
 
-    public Strategy(DeploymentConfig config) {
+    public Strategy(StrategyConfig config) {
 	this.config = config;
     }
 

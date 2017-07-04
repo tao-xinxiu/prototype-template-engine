@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.orange.midstate.MidStateCalculator;
-import com.orange.model.DeploymentConfig;
+import com.orange.model.StrategyConfig;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.state.Overview;
@@ -55,10 +55,12 @@ public class Main {
     }
 
     /**
-     * Upload the app binary or source file which is supposed to be uploaded to the PaaS
+     * Upload the app binary or source file which is supposed to be uploaded to
+     * the PaaS
      * 
      * @param file
-     * @return the stored file name, which is supposed to fill out app path in the desired state description
+     * @return the stored file name, which is supposed to fill out app path in
+     *         the desired state description
      */
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
     public @ResponseBody String handleFileUpload(@RequestParam("file") MultipartFile file) {
@@ -115,11 +117,10 @@ public class Main {
     }
 
     @RequestMapping(value = "/set_update_config", method = RequestMethod.PUT)
-    public void setUpdateConfig(@RequestParam("strategy") String strategy,
-	    @RequestBody DeploymentConfig deploymentConfig) {
+    public void setUpdateConfig(@RequestParam("strategy") String strategy, @RequestBody StrategyConfig config) {
 	strategy = "com.orange.midstate.strategy." + strategy;
-	this.midStateCalculator = new MidStateCalculator(strategy, deploymentConfig);
-	logger.info("Update config set!");
+	this.midStateCalculator = new MidStateCalculator(strategy, config);
+	logger.info("Update config set! [{}]", config);
     }
 
     @RequestMapping(value = "/is_instantiation", method = RequestMethod.POST)

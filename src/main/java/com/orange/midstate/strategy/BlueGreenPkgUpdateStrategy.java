@@ -5,14 +5,14 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import com.orange.model.DeploymentConfig;
+import com.orange.model.StrategyConfig;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
 import com.orange.util.SetUtil;
 import com.orange.util.VersionGenerator;
 
 public class BlueGreenPkgUpdateStrategy extends Strategy {
-    public BlueGreenPkgUpdateStrategy(DeploymentConfig config) {
+    public BlueGreenPkgUpdateStrategy(StrategyConfig config) {
 	super(config);
     }
 

@@ -8,6 +8,7 @@ import com.orange.model.PaaSSite;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
 import com.orange.model.workflow.ParallelWorkflow;
+import com.orange.model.workflow.SerialWorkflow;
 import com.orange.model.workflow.Workflow;
 import com.orange.paas.UpdateStepDirectory;
 import com.orange.paas.cf.CloudFoundryAPIv2UpdateStepDirectory;
@@ -26,8 +27,9 @@ public class WorkflowCalculator {
     public Workflow getUpdateWorkflow() {
 	Workflow updateSites = new ParallelWorkflow("parallel update sites");
 	for (PaaSSite site : desiredState.listPaaSSites()) {
-	    Workflow updateSite = new ParallelWorkflow(
-		    String.format("parallel update site %s entities", site.getName()));
+	    Workflow updateSite = config.isParallelUpdateApps()
+		    ? new ParallelWorkflow(String.format("parallel update site %s entities", site.getName()))
+		    : new SerialWorkflow(String.format("parallel update site %s entities", site.getName()));
 	    SiteComparator comparator = new SiteComparator(currentState.getOverviewSite(site.getName()),
 		    desiredState.getOverviewSite(site.getName()));
 	    UpdateStepDirectory directory = new CloudFoundryAPIv2UpdateStepDirectory(

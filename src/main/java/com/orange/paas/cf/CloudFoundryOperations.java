@@ -62,10 +62,12 @@ public class CloudFoundryOperations {
     private CloudFoundryClient cloudFoundryClient;
     private String spaceId;
     private OperationConfig opConfig;
+    private final String siteInfo;
 
     public CloudFoundryOperations(PaaSSite site, OperationConfig opConfig) {
 	this.site = site;
 	this.logger = LoggerFactory.getLogger(String.format("%s(%s)", getClass(), site.getName()));
+	this.siteInfo = String.format(" at site [%s]", site.getName());
 	this.opConfig = opConfig;
 	String proxy_host = System.getenv("proxy_host");
 	String proxy_port = System.getenv("proxy_port");
@@ -95,7 +97,7 @@ public class CloudFoundryOperations {
 	    logger.trace("Got organization id.");
 	    return response.getResources().get(0).getMetadata().getId();
 	} catch (Exception e) {
-	    throw new IllegalStateException("expcetion during getting org id", e);
+	    throw new IllegalStateException("expcetion during getting org id" + siteInfo, e);
 	}
     }
 
@@ -107,7 +109,7 @@ public class CloudFoundryOperations {
 	    logger.trace("Got space id.");
 	    return response.getResources().get(0).getMetadata().getId();
 	} catch (Exception e) {
-	    throw new IllegalStateException("expcetion during getting space id", e);
+	    throw new IllegalStateException("expcetion during getting space id" + siteInfo, e);
 	}
     }
 
@@ -119,7 +121,7 @@ public class CloudFoundryOperations {
 	    logger.trace("Got space apps!");
 	    return response.getApplications();
 	} catch (Exception e) {
-	    throw new IllegalStateException("expcetion during getting space apps", e);
+	    throw new IllegalStateException("expcetion during getting space apps" + siteInfo, e);
 	}
     }
 
@@ -130,7 +132,8 @@ public class CloudFoundryOperations {
 		    () -> cloudFoundryClient.applicationsV2().summary(request).block());
 	    return response;
 	} catch (Exception e) {
-	    throw new IllegalStateException(String.format("Expcetion during getting app [%s] summary.", appId), e);
+	    throw new IllegalStateException(
+		    String.format("Expcetion during getting app [%s] summary." + siteInfo, appId), e);
 	}
     }
 
@@ -143,8 +146,10 @@ public class CloudFoundryOperations {
 	    logger.info("App [{}] created.", name);
 	    return response.getMetadata().getId();
 	} catch (Exception e) {
-	    throw new IllegalStateException(String
-		    .format("Expcetion during creating app [name=%s, instances=%s, env=%s].", name, instances, env), e);
+	    throw new IllegalStateException(
+		    String.format("Expcetion during creating app [name=%s, instances=%s, env=%s]." + siteInfo, name,
+			    instances, env),
+		    e);
 	}
     }
 
@@ -154,7 +159,7 @@ public class CloudFoundryOperations {
 	    retry(() -> cloudFoundryClient.applicationsV2().delete(request).block());
 	    logger.info("App {} at {} deleted.", appId, site.getName());
 	} catch (Exception e) {
-	    throw new IllegalStateException("expcetion during deleting app with id: " + appId, e);
+	    throw new IllegalStateException("expcetion during deleting app with id: " + appId + siteInfo, e);
 	}
     }
 
@@ -167,7 +172,7 @@ public class CloudFoundryOperations {
 	    logger.info("App [{}] package [{}] uploaded.", appId, path);
 	} catch (Exception e) {
 	    throw new IllegalStateException(
-		    String.format("Expcetion during uploading app [%s] with path [%s]", appId, path), e);
+		    String.format("Expcetion during uploading app [%s] with path [%s]", appId, path) + siteInfo, e);
 	}
     }
 
@@ -187,7 +192,7 @@ public class CloudFoundryOperations {
 	    return response.getResources().get(0).getMetadata().getId();
 	} catch (Exception e) {
 	    throw new IllegalStateException(
-		    String.format("Expcetion during getting domain id for domain name: [%s].", domain), e);
+		    String.format("Expcetion during getting domain id for domain name: [%s].", domain) + siteInfo, e);
 	}
     }
 
@@ -225,7 +230,7 @@ public class CloudFoundryOperations {
 	}
 	logger.info("route [{}] unmapped from the app [{}]", routeId, appId);
     }
-    
+
     private String getRouteId(String hostname, String domainId) {
 	try {
 	    ListRoutesRequest request = ListRoutesRequest.builder().domainId(domainId).host(hostname).build();
@@ -236,8 +241,10 @@ public class CloudFoundryOperations {
 	    assert response.getResources().size() == 1;
 	    return response.getResources().get(0).getMetadata().getId();
 	} catch (Exception e) {
-	    throw new IllegalStateException(String.format(
-		    "Exception during getting route id with hostname:[%s], domainId:[%s].", hostname, domainId), e);
+	    throw new IllegalStateException(
+		    String.format("Exception during getting route id with hostname:[%s], domainId:[%s].", hostname,
+			    domainId) + siteInfo,
+		    e);
 	}
     }
 
@@ -248,8 +255,10 @@ public class CloudFoundryOperations {
 	    CreateRouteResponse response = retry(() -> cloudFoundryClient.routes().create(request).block());
 	    return response.getMetadata().getId();
 	} catch (Exception e) {
-	    throw new IllegalStateException(String.format(
-		    "Expcetion during creating route with hostname:[%s], domainId:[%s].", hostname, domainId), e);
+	    throw new IllegalStateException(
+		    String.format("Expcetion during creating route with hostname:[%s], domainId:[%s].", hostname,
+			    domainId) + siteInfo,
+		    e);
 	}
     }
 
@@ -293,8 +302,8 @@ public class CloudFoundryOperations {
 	    return response.getResources().stream().map(resource -> resource.getMetadata().getId())
 		    .collect(Collectors.toSet());
 	} catch (Exception e) {
-	    throw new IllegalStateException(String.format("Expcetion during listing mapped routes of app: [%s]", appId),
-		    e);
+	    throw new IllegalStateException(
+		    String.format("Expcetion during listing mapped routes of app: [%s]", appId) + siteInfo, e);
 	}
     }
 
@@ -304,8 +313,10 @@ public class CloudFoundryOperations {
 		    .routeId(routeId).build();
 	    retry(() -> cloudFoundryClient.routeMappings().create(request).block());
 	} catch (Exception e) {
-	    throw new IllegalStateException(String.format(
-		    "Expcetion during creating route mapping between app [%s] and route [%s].", appId, routeId), e);
+	    throw new IllegalStateException(
+		    String.format("Expcetion during creating route mapping between app [%s] and route [%s].", appId,
+			    routeId) + siteInfo,
+		    e);
 	}
     }
 
@@ -326,8 +337,10 @@ public class CloudFoundryOperations {
 	    assert response.getResources().size() == 1;
 	    return response.getResources().get(0).getMetadata().getId();
 	} catch (Exception e) {
-	    throw new IllegalStateException(String.format(
-		    "Expcetion during getting route mapping id between app [%s] and route [%s].", appId, routeId), e);
+	    throw new IllegalStateException(
+		    String.format("Expcetion during getting route mapping id between app [%s] and route [%s].", appId,
+			    routeId) + siteInfo,
+		    e);
 	}
     }
 
@@ -338,7 +351,7 @@ public class CloudFoundryOperations {
 	    retry(() -> cloudFoundryClient.routeMappings().delete(request).block());
 	} catch (Exception e) {
 	    throw new IllegalStateException(
-		    String.format("Expcetion during deleting route mapping: [%s]", routeMappingId), e);
+		    String.format("Expcetion during deleting route mapping: [%s]", routeMappingId) + siteInfo, e);
 	}
     }
 
@@ -360,7 +373,7 @@ public class CloudFoundryOperations {
 	} catch (Exception e) {
 	    throw new IllegalStateException(String.format(
 		    "Exception during updating app [%s] with arg [name=%s, env=%s, instances=%s, state=%s]", appId,
-		    name, env, instances, state), e);
+		    name, env, instances, state) + siteInfo, e);
 	}
 
     }

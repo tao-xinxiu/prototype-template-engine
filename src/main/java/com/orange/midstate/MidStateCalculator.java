@@ -4,14 +4,14 @@ import java.lang.reflect.InvocationTargetException;
 
 import com.orange.midstate.strategy.Strategy;
 import com.orange.midstate.strategy.TransitPoint;
-import com.orange.model.DeploymentConfig;
+import com.orange.model.StrategyConfig;
 import com.orange.model.state.Overview;
 
 public class MidStateCalculator {
     private String strategyClass;
-    private DeploymentConfig deploymentConfig;
+    private StrategyConfig deploymentConfig;
 
-    public MidStateCalculator(String strategyClass, DeploymentConfig deploymentConfig) {
+    public MidStateCalculator(String strategyClass, StrategyConfig deploymentConfig) {
 	this.strategyClass = strategyClass;
 	this.deploymentConfig = deploymentConfig;
     }
@@ -30,7 +30,7 @@ public class MidStateCalculator {
 	    return null;
 	}
 	try {
-	    Strategy strategy = (Strategy) Class.forName(strategyClass).getConstructor(DeploymentConfig.class)
+	    Strategy strategy = (Strategy) Class.forName(strategyClass).getConstructor(StrategyConfig.class)
 		    .newInstance(deploymentConfig);
 	    if (!strategy.valid(currentState, finalState)) {
 		throw new IllegalStateException("Strategy disallowed situation");

@@ -7,6 +7,7 @@ public class OperationConfig {
     private int uploadTimeout = 15 * 60;
     private int prepareTimeout = 15 * 60;
     private int startTimeout = 15 * 60;
+    private boolean parallelUpdateApps = false;
 
     public int getGeneralTimeout() {
 	return generalTimeout;
@@ -41,18 +42,26 @@ public class OperationConfig {
     }
 
     public int getGeneralRetry() {
-        return generalRetry;
+	return generalRetry;
     }
 
     public void setGeneralRetry(int generalRetry) {
-        this.generalRetry = generalRetry;
+	this.generalRetry = generalRetry;
     }
 
     public int getGeneralBackoff() {
-        return generalBackoff;
+	return generalBackoff;
     }
 
     public void setGeneralBackoff(int generalBackoff) {
-        this.generalBackoff = generalBackoff;
+	this.generalBackoff = generalBackoff;
+    }
+
+    public boolean isParallelUpdateApps() {
+	return parallelUpdateApps;
+    }
+
+    public void setParallelUpdateApps(boolean parallelUpdateApps) {
+	this.parallelUpdateApps = parallelUpdateApps;
     }
 }

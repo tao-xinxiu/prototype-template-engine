@@ -1,12 +1,15 @@
 package com.orange.model;
 
-public class SiteDeploymentConfig {
+public class StrategySiteConfig {
     private static final String defaultTmpRouteHostSuffix = "-tmp";
     private String tmpRouteHostSuffix = defaultTmpRouteHostSuffix;
     private String tmpRouteDomain;
     // TODO add timeout, retry times of deployment operations
 
-    public SiteDeploymentConfig(String tmpRouteDomain) {
+    public StrategySiteConfig() {
+    }
+
+    public StrategySiteConfig(String tmpRouteDomain) {
 	this.tmpRouteDomain = tmpRouteDomain;
     }
 
