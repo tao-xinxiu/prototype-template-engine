@@ -50,7 +50,8 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 		String appId = operations.createApp(desiredApp.getName(), desiredApp.getNbProcesses(),
 			desiredApp.getEnv());
 		CFOverviewApp currentApp = new CFOverviewApp(appId, desiredApp.getName(), null, CFAppState.CREATED,
-			desiredApp.getNbProcesses(), desiredApp.getEnv(), Collections.emptySet());
+			desiredApp.getNbProcesses(), desiredApp.getEnv(), Collections.emptySet(), new HashSet<>());
+		updateAppServices(appId, currentApp.getServices(), desiredApp.getServices()).exec();
 		if (currentApp.getState() != desiredApp.getState()) {
 		    updateAppState(currentApp, desiredApp).exec();
 		}
@@ -91,14 +92,15 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	    currentCFApp.setPath(desiredCFApp.getPath());
 	    currentCFApp.setState(CFAppState.UPLOADED);
 	}
+	if (!currentCFApp.getServices().equals(desiredApp.getServices())) {
+	    serial.addStep(updateAppServices(appId, currentCFApp.getServices(), desiredCFApp.getServices()));
+	    currentCFApp.setServices(desiredCFApp.getServices());
+	    restageIfNeeded(currentCFApp, serial);
+	}
 	if (!currentCFApp.getEnv().equals(desiredCFApp.getEnv())) {
 	    serial.addStep(updateAppEnv(appId, desiredCFApp.getEnv()));
 	    currentCFApp.setEnv(desiredCFApp.getEnv());
-	    Set<CFAppState> upstagedStates = new HashSet<>(Arrays.asList(CFAppState.CREATED, CFAppState.UPLOADED));
-	    if (!upstagedStates.contains(currentCFApp.getState())) {
-		serial.addStep(restageApp(appId));
-		currentCFApp.setState(CFAppState.staging);
-	    }
+	    restageIfNeeded(currentCFApp, serial);
 	}
 	if (currentCFApp.getNbProcesses() != desiredCFApp.getNbProcesses()) {
 	    serial.addStep(updateAppNbProcesses(appId, desiredCFApp.getNbProcesses()));
@@ -109,6 +111,22 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	    currentCFApp.setState(desiredCFApp.getState());
 	}
 	return serial;
+    }
+
+    /**
+     * add step restage currentCFApp into the workflow if needed
+     * 
+     * @param currentCFApp
+     *            The current microservice overview, its state might be updated
+     * @param workflow
+     *            The workflow within which to add restage step if needed
+     */
+    private void restageIfNeeded(CFOverviewApp currentCFApp, Workflow workflow) {
+	Set<CFAppState> upstagedStates = new HashSet<>(Arrays.asList(CFAppState.CREATED, CFAppState.UPLOADED));
+	if (!upstagedStates.contains(currentCFApp.getState())) {
+	    workflow.addStep(restageApp(currentCFApp.getGuid()));
+	    currentCFApp.setState(CFAppState.staging);
+	}
     }
 
     private Step updateAppPath(String appId, String desiredPath, Map<String, String> currentEnv) {
@@ -164,6 +182,21 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 			.collect(Collectors.toSet());
 		addedRoutes.stream().forEach(route -> operations.createAndMapAppRoute(appId, route));
 		removedRoutes.stream().forEach(route -> operations.unmapAppRoute(appId, route));
+	    }
+	};
+    }
+
+    private Step updateAppServices(String appId, Set<String> currentServices, Set<String> desiredServices) {
+	return new SiteStep(String.format("update app [%s] bound services from [%s] to [%s]", appId, currentServices,
+		desiredServices)) {
+	    @Override
+	    public void exec() {
+		Set<String> bindServices = desiredServices.stream()
+			.filter(service -> !currentServices.contains(service)).collect(Collectors.toSet());
+		Set<String> unbindServiecs = currentServices.stream()
+			.filter(service -> !desiredServices.contains(service)).collect(Collectors.toSet());
+		bindServices.stream().forEach(service -> operations.bindAppServices(appId, service));
+		unbindServiecs.stream().forEach(service -> operations.unbindAppServices(appId, service));
 	    }
 	};
     }

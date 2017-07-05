@@ -16,9 +16,10 @@ public class CFOverviewApp {
     private int nbProcesses;
     private Map<String, String> env = new HashMap<>();
     private Set<Route> routes = new HashSet<>();
+    private Set<String> services = new HashSet<>();
 
     public CFOverviewApp(String guid, String name, String path, CFAppState state, int nbProcesses,
-	    Map<String, String> env, Set<Route> routes) {
+	    Map<String, String> env, Set<Route> routes, Set<String> services) {
 	super();
 	this.guid = guid;
 	this.name = name;
@@ -27,6 +28,7 @@ public class CFOverviewApp {
 	this.nbProcesses = nbProcesses;
 	this.env = env;
 	this.routes = routes;
+	this.services = services;
     }
 
     public CFOverviewApp(OverviewApp app) {
@@ -37,6 +39,7 @@ public class CFOverviewApp {
 	this.nbProcesses = app.getNbProcesses();
 	this.env = app.getEnv();
 	this.routes = app.listRoutes();
+	this.services = app.getServices();
     }
 
     public String getGuid() {
@@ -87,10 +90,18 @@ public class CFOverviewApp {
 	this.routes = routes;
     }
 
+    public Set<String> getServices() {
+	return services;
+    }
+
+    public void setServices(Set<String> services) {
+	this.services = services;
+    }
+
     @Override
     public String toString() {
 	return "CFOverviewApp [guid=" + guid + ", name=" + name + ", path=" + path + ", state=" + state
-		+ ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes + "]";
+		+ ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes + ", services=" + services
+		+ "]";
     }
-
 }

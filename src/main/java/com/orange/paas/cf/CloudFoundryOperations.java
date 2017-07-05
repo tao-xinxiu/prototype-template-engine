@@ -36,8 +36,14 @@ import org.cloudfoundry.client.v2.routes.GetRouteRequest;
 import org.cloudfoundry.client.v2.routes.GetRouteResponse;
 import org.cloudfoundry.client.v2.routes.ListRoutesRequest;
 import org.cloudfoundry.client.v2.routes.ListRoutesResponse;
+import org.cloudfoundry.client.v2.servicebindings.CreateServiceBindingRequest;
+import org.cloudfoundry.client.v2.servicebindings.DeleteServiceBindingRequest;
+import org.cloudfoundry.client.v2.servicebindings.ListServiceBindingsRequest;
+import org.cloudfoundry.client.v2.servicebindings.ListServiceBindingsResponse;
 import org.cloudfoundry.client.v2.spaces.GetSpaceSummaryRequest;
 import org.cloudfoundry.client.v2.spaces.GetSpaceSummaryResponse;
+import org.cloudfoundry.client.v2.spaces.ListSpaceServiceInstancesRequest;
+import org.cloudfoundry.client.v2.spaces.ListSpaceServiceInstancesResponse;
 import org.cloudfoundry.client.v2.spaces.ListSpacesRequest;
 import org.cloudfoundry.client.v2.spaces.ListSpacesResponse;
 import org.cloudfoundry.client.v2.spaces.SpaceApplicationSummary;
@@ -376,6 +382,48 @@ public class CloudFoundryOperations {
 		    name, env, instances, state) + siteInfo, e);
 	}
 
+    }
+
+    public void bindAppServices(String appId, String serviceName) {
+	CreateServiceBindingRequest bindRequest = CreateServiceBindingRequest.builder().applicationId(appId)
+		.serviceInstanceId(getServiceInstanceId(serviceName)).build();
+	retry(() -> cloudFoundryClient.serviceBindingsV2().create(bindRequest).block());
+    }
+
+    public void unbindAppServices(String appId, String serviceName) {
+	String serviceBindId = getServiceBindingId(appId, getServiceInstanceId(serviceName));
+	if (serviceBindId == null) {
+	    logger.error(
+		    "The binding between App [{}] and service instance [{}] not exists. Therefore the unbind is not performed.");
+	    return;
+	}
+	DeleteServiceBindingRequest unBindRequest = DeleteServiceBindingRequest.builder()
+		.serviceBindingId(serviceBindId).build();
+	retry(() -> cloudFoundryClient.serviceBindingsV2().delete(unBindRequest).block());
+    }
+
+    private String getServiceBindingId(String appId, String serviceId) {
+	ListServiceBindingsRequest request = ListServiceBindingsRequest.builder().applicationId(appId)
+		.serviceInstanceId(serviceId).build();
+	ListServiceBindingsResponse response = retry(
+		() -> cloudFoundryClient.serviceBindingsV2().list(request).block());
+	if (response.getResources().size() == 0) {
+	    return null;
+	}
+	assert response.getResources().size() == 1;
+	return response.getResources().get(0).getMetadata().getId();
+    }
+
+    private String getServiceInstanceId(String serviceName) {
+	ListSpaceServiceInstancesRequest serviceInstancesRequest = ListSpaceServiceInstancesRequest.builder()
+		.spaceId(spaceId).name(serviceName).returnUserProvidedServiceInstances(true).build();
+	ListSpaceServiceInstancesResponse serviceInstancesResponse = retry(
+		() -> cloudFoundryClient.spaces().listServiceInstances(serviceInstancesRequest).block());
+	if (serviceInstancesResponse.getResources().size() == 0) {
+	    throw new IllegalStateException(String.format("Service instance [%s] not exists" + siteInfo, serviceName));
+	}
+	assert serviceInstancesResponse.getResources().size() == 1;
+	return serviceInstancesResponse.getResources().get(0).getMetadata().getId();
     }
 
     private <T> T retry(Supplier<T> function) {
