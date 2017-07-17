@@ -96,7 +96,8 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     private String parsePath(SpaceApplicationSummary appInfo) {
-	return (String) appInfo.getEnvironmentJsons().get(pathKeyInEnv);
+	String path = (String) appInfo.getEnvironmentJsons().get(pathKeyInEnv);
+	return path == null ? "" : path;
     }
 
     private Set<String> parseServices(SpaceApplicationSummary appInfo) {

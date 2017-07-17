@@ -51,11 +51,11 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 			desiredApp.getEnv());
 		CFOverviewApp currentApp = new CFOverviewApp(appId, desiredApp.getName(), null, CFAppState.CREATED,
 			desiredApp.getNbProcesses(), desiredApp.getEnv(), Collections.emptySet(), new HashSet<>());
+		updateAppRoutes(appId, currentApp.getRoutes(), desiredApp.getRoutes()).exec();
 		updateAppServices(appId, currentApp.getServices(), desiredApp.getServices()).exec();
 		if (currentApp.getState() != desiredApp.getState()) {
 		    updateAppState(currentApp, desiredApp).exec();
 		}
-		updateAppRoutes(appId, currentApp.getRoutes(), desiredApp.getRoutes()).exec();
 	    }
 	};
     }
@@ -65,6 +65,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	return new SiteStep(String.format("removeApp [%s]", app.getGuid())) {
 	    @Override
 	    public void exec() {
+		updateAppServices(app.getGuid(), app.getServices(), new HashSet<>()).exec();
 		operations.deleteApp(app.getGuid());
 	    }
 	};

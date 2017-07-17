@@ -75,21 +75,25 @@ public class CloudFoundryOperations {
 	this.logger = LoggerFactory.getLogger(String.format("%s(%s)", getClass(), site.getName()));
 	this.siteInfo = String.format(" at site [%s]", site.getName());
 	this.opConfig = opConfig;
-	String proxy_host = System.getenv("proxy_host");
-	String proxy_port = System.getenv("proxy_port");
-	DefaultConnectionContext.Builder connectionContext = DefaultConnectionContext.builder().apiHost(site.getApi())
-		.skipSslValidation(site.getSkipSslValidation())
-		.socketTimeout(Duration.ofSeconds(opConfig.getGeneralTimeout()));
-	if (proxy_host != null && proxy_port != null) {
-	    ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host)
-		    .port(Integer.parseInt(proxy_port)).build();
-	    connectionContext.proxyConfiguration(proxyConfiguration);
+	try {
+	    String proxy_host = System.getenv("proxy_host");
+	    String proxy_port = System.getenv("proxy_port");
+	    DefaultConnectionContext.Builder connectionContext = DefaultConnectionContext.builder()
+		    .apiHost(site.getApi()).skipSslValidation(site.getSkipSslValidation())
+		    .socketTimeout(Duration.ofSeconds(opConfig.getGeneralTimeout()));
+	    if (proxy_host != null && proxy_port != null) {
+		ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host)
+			.port(Integer.parseInt(proxy_port)).build();
+		connectionContext.proxyConfiguration(proxyConfiguration);
+	    }
+	    TokenProvider tokenProvider = PasswordGrantTokenProvider.builder().password(site.getPwd())
+		    .username(site.getUser()).build();
+	    this.cloudFoundryClient = ReactorCloudFoundryClient.builder().connectionContext(connectionContext.build())
+		    .tokenProvider(tokenProvider).build();
+	    this.spaceId = requestSpaceId();
+	} catch (Exception e) {
+	    throw new IllegalStateException("expcetion during connection" + siteInfo, e);
 	}
-	TokenProvider tokenProvider = PasswordGrantTokenProvider.builder().password(site.getPwd())
-		.username(site.getUser()).build();
-	this.cloudFoundryClient = ReactorCloudFoundryClient.builder().connectionContext(connectionContext.build())
-		.tokenProvider(tokenProvider).build();
-	this.spaceId = requestSpaceId();
     }
 
     public String getSiteName() {

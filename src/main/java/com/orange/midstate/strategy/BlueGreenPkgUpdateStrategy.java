@@ -60,6 +60,7 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 				    && app.getPath().equals(desiredApp.getPath()))
 			    .isEmpty()) {
 			OverviewApp newApp = new OverviewApp(desiredApp);
+			newApp.setGuid(null);
 			newApp.setRoutes(
 				Collections.singleton(config.getSiteConfig(site).getTmpRoute(desiredApp.getName())));
 			newApp.setInstanceVersion(VersionGenerator.fromPackage(desiredApp.getPath()));
@@ -88,6 +89,7 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 	    return false;
 	}
 
+	// assume that it doesn't exist two apps with same pkg and name
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
 	    Overview nextState = new Overview(currentState);
