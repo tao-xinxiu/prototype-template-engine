@@ -29,7 +29,7 @@ public class WorkflowCalculator {
 	for (PaaSSite site : desiredState.listPaaSSites()) {
 	    Workflow updateSite = config.isParallelUpdateApps()
 		    ? new ParallelWorkflow(String.format("parallel update site %s entities", site.getName()))
-		    : new SerialWorkflow(String.format("parallel update site %s entities", site.getName()));
+		    : new SerialWorkflow(String.format("serial update site %s entities", site.getName()));
 	    SiteComparator comparator = new SiteComparator(currentState.getOverviewSite(site.getName()),
 		    desiredState.getOverviewSite(site.getName()));
 	    UpdateStepDirectory directory = new CloudFoundryAPIv2UpdateStepDirectory(

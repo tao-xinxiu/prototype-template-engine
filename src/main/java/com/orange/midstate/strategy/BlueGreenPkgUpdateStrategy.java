@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.orange.model.StrategyConfig;
 import com.orange.model.state.Overview;
@@ -18,14 +20,6 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 
     @Override
     public boolean valid(Overview currentState, Overview finalState) {
-	for (String site : finalState.listSitesName()) {
-	    for (OverviewApp app : finalState.getOverviewSite(site).getOverviewApps()) {
-		// app package name doesn't conform "xxxxx_va.b.c.yyy"
-		if (!VersionGenerator.validPackage(app.getPath())) {
-		    return false;
-		}
-	    }
-	}
 	return true;
     }
 
@@ -54,6 +48,8 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 	public Overview next(Overview currentState, Overview finalState) {
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
+		Set<String> usedVersions = currentState.getOverviewSite(site).getOverviewApps().stream()
+			.map(app -> app.getInstanceVersion()).collect(Collectors.toSet());
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
 		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
 			    app -> app.getName().equals(desiredApp.getName())
@@ -63,7 +59,8 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 			newApp.setGuid(null);
 			newApp.setRoutes(
 				Collections.singleton(config.getSiteConfig(site).getTmpRoute(desiredApp.getName())));
-			newApp.setInstanceVersion(VersionGenerator.fromPackage(desiredApp.getPath()));
+			newApp.setInstanceVersion(VersionGenerator.random(usedVersions));
+			usedVersions.add(newApp.getInstanceVersion());
 			nextState.getOverviewSite(site).addOverviewApp(newApp);
 		    }
 		}

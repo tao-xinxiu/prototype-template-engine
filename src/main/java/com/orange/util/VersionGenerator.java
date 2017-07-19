@@ -1,33 +1,36 @@
 package com.orange.util;
 
 import java.sql.Timestamp;
+import java.util.Set;
+import java.util.UUID;
 
 public class VersionGenerator {
-    public static String fromTimestamp() {
+    public static String fromTimestamp(Set<String> noCollision) {
+	String timeStamp = fromTimestamp();
+	while (noCollision.contains(timeStamp)) {
+	    try {
+		Thread.sleep(1);
+	    } catch (InterruptedException e) {
+		e.printStackTrace();
+	    }
+	    timeStamp = fromTimestamp();
+	}
+	return timeStamp;
+    }
+    
+    private static String fromTimestamp() {
 	return "v" + new Timestamp(System.currentTimeMillis()).toInstant();
     }
 
-    /**
-     * This function is to obtain the "va.b.c" from path.
-     * 
-     * @param pkgPath
-     *            It should conform the format ""xxxxx_va.b.c.yyy"" and "va.b.c"
-     *            not contains "_". ex. "app_v1.2.0.zip"
-     * @return
-     */
-    public static String fromPackage(String pkgPath) {
-	return pkgPath.substring(pkgPath.lastIndexOf("_") + 1, pkgPath.lastIndexOf("."));
+    public static String random(Set<String> noCollision) {
+	String random = random();
+	while (noCollision.contains(random)) {
+	    random = random();
+	}
+	return random;
     }
 
-    /**
-     * Verify whether pkgPath conforms ""xxxxx_va.b.c.yyy""
-     * 
-     * @param pkgPath
-     * @return
-     */
-    public static boolean validPackage(String pkgPath) {
-	int startIndex = pkgPath.lastIndexOf("_");
-	int endIndex = pkgPath.lastIndexOf(".");
-	return startIndex != -1 && startIndex < endIndex;
+    private static String random() {
+	return UUID.randomUUID().toString().substring(0, 8);
     }
 }
