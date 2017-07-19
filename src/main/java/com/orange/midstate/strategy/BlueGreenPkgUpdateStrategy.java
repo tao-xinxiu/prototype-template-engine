@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.orange.model.StrategySiteConfig;
 import com.orange.model.StrategyConfig;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
@@ -28,7 +29,7 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 	return Arrays.asList(pkgUpdateTransit, routeUpdateTransit, removeUndesiredTransit);
     }
 
-    private TransitPoint pkgUpdateTransit = new TransitPoint() {
+    protected TransitPoint pkgUpdateTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
@@ -50,6 +51,7 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 	    for (String site : finalState.listSitesName()) {
 		Set<String> usedVersions = currentState.getOverviewSite(site).getOverviewApps().stream()
 			.map(app -> app.getInstanceVersion()).collect(Collectors.toSet());
+		StrategySiteConfig siteConfig = config.getSiteConfig(site);
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
 		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
 			    app -> app.getName().equals(desiredApp.getName())
@@ -57,8 +59,7 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 			    .isEmpty()) {
 			OverviewApp newApp = new OverviewApp(desiredApp);
 			newApp.setGuid(null);
-			newApp.setRoutes(
-				Collections.singleton(config.getSiteConfig(site).getTmpRoute(desiredApp.getName())));
+			newApp.setRoutes(Collections.singleton(siteConfig.getTmpRoute(desiredApp.getName())));
 			newApp.setInstanceVersion(VersionGenerator.random(usedVersions));
 			usedVersions.add(newApp.getInstanceVersion());
 			nextState.getOverviewSite(site).addOverviewApp(newApp);
@@ -69,7 +70,7 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 	}
     };
 
-    private TransitPoint routeUpdateTransit = new TransitPoint() {
+    protected TransitPoint routeUpdateTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
@@ -106,16 +107,13 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 	}
     };
 
-    private TransitPoint removeUndesiredTransit = new TransitPoint() {
+    protected TransitPoint removeUndesiredTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp currentApp : currentState.getOverviewSite(site).getOverviewApps()) {
 		    if (SetUtil.search(finalState.getOverviewSite(site).getOverviewApps(),
-			    desiredApp -> desiredApp.getName().equals(currentApp.getName())
-				    && desiredApp.getPath().equals(currentApp.getPath())
-				    && desiredApp.listRoutes().equals(currentApp.listRoutes()))
-			    .isEmpty()) {
+			    desiredApp -> currentApp.isInstantiation(desiredApp)).isEmpty()) {
 			return true;
 		    }
 		}
@@ -131,10 +129,7 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 		while (iterator.hasNext()) {
 		    OverviewApp app = iterator.next();
 		    if (SetUtil.search(finalState.getOverviewSite(site).getOverviewApps(),
-			    desiredApp -> desiredApp.getName().equals(app.getName())
-				    && desiredApp.getPath().equals(app.getPath())
-				    && desiredApp.listRoutes().equals(app.listRoutes()))
-			    .isEmpty()) {
+			    desiredApp -> app.isInstantiation(desiredApp)).isEmpty()) {
 			iterator.remove();
 		    }
 		}

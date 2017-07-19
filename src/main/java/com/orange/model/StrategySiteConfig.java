@@ -4,7 +4,6 @@ public class StrategySiteConfig {
     private static final String defaultTmpRouteHostSuffix = "-tmp";
     private String tmpRouteHostSuffix = defaultTmpRouteHostSuffix;
     private String tmpRouteDomain;
-    // TODO add timeout, retry times of deployment operations
 
     public StrategySiteConfig() {
     }
