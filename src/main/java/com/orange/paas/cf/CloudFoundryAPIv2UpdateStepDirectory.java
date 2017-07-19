@@ -322,11 +322,10 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
     }
 
     private boolean isAppStaged(String appId) {
-	return operations.getAppSummary(appId).getPackageState().equals("STAGED");
+	return operations.appStaged(appId);
     }
 
     private boolean isAppRunning(String appId) {
-	Integer runningInstances = operations.getAppSummary(appId).getRunningInstances();
-	return runningInstances != null && runningInstances > 0;
+	return operations.appRunning(appId);
     }
 }

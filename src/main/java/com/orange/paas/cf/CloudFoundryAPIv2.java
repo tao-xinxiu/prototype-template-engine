@@ -66,7 +66,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     private AppState parseState(SpaceApplicationSummary appInfo) {
-	if (appInfo.getRunningInstances() > 0) {
+	if (operations.appRunning(appInfo.getId())) {
 	    return AppState.RUNNING;
 	}
 	switch (appInfo.getPackageState()) {

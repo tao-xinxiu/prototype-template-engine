@@ -10,6 +10,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.cloudfoundry.client.CloudFoundryClient;
+import org.cloudfoundry.client.v2.applications.ApplicationInstancesRequest;
+import org.cloudfoundry.client.v2.applications.ApplicationInstancesResponse;
 import org.cloudfoundry.client.v2.applications.CreateApplicationRequest;
 import org.cloudfoundry.client.v2.applications.CreateApplicationResponse;
 import org.cloudfoundry.client.v2.applications.DeleteApplicationRequest;
@@ -69,6 +71,8 @@ public class CloudFoundryOperations {
     private String spaceId;
     private OperationConfig opConfig;
     private final String siteInfo;
+    private static final String runningState = "RUNNING";
+    private static final String stagedState = "STAGED";
 
     public CloudFoundryOperations(PaaSSite site, OperationConfig opConfig) {
 	this.site = site;
@@ -145,6 +149,23 @@ public class CloudFoundryOperations {
 	    throw new IllegalStateException(
 		    String.format("Expcetion during getting app [%s] summary." + siteInfo, appId), e);
 	}
+    }
+
+    public boolean appRunning(String appId) {
+	try {
+	    ApplicationInstancesRequest request = ApplicationInstancesRequest.builder().applicationId(appId).build();
+	    ApplicationInstancesResponse response = retry(
+		    () -> cloudFoundryClient.applicationsV2().instances(request).block());
+	    return response.getInstances().entrySet().stream()
+		    .anyMatch(entity -> entity.getValue().getState().equals(runningState));
+	} catch (Exception e) {
+	    throw new IllegalStateException(
+		    String.format("Expcetion during getting whether app [%s] running." + siteInfo, appId), e);
+	}
+    }
+
+    public boolean appStaged(String appId) {
+	return getAppSummary(appId).getPackageState().equals(stagedState);
     }
 
     public String createApp(String name, int instances, Map<String, String> env) {
