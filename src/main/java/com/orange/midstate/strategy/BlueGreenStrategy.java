@@ -20,23 +20,19 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 
     @Override
     public List<TransitPoint> transitPoints() {
-	return Arrays.asList(pkgEnvUpdateTransit, routeUpdateTransit, removeUndesiredTransit);
+	return Arrays.asList(newPkgEnvTransit, updateExceptPkgEnvTransit, removeUndesiredTransit);
     }
 
-    protected TransitPoint pkgEnvUpdateTransit = new TransitPoint() {
+    protected TransitPoint newPkgEnvTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil
-			    .search(currentState.getOverviewSite(site).getOverviewApps(),
-				    app -> app.getName().equals(desiredApp.getName())
-					    && app.getPath().equals(desiredApp.getPath()))
-			    .isEmpty()
-			    || SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
-				    app -> app.getName().equals(desiredApp.getName())
-					    && app.getEnv().equals(desiredApp.getEnv()))
-				    .isEmpty()) {
+		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
+			    app -> app.getName().equals(desiredApp.getName())
+				    && app.getPath().equals(desiredApp.getPath())
+				    && app.getEnv().equals(desiredApp.getEnv()))
+			    .isEmpty()) {
 			return true;
 		    }
 		}
@@ -74,6 +70,44 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 			newApp.setInstanceVersion(VersionGenerator.random(usedVersions));
 			usedVersions.add(newApp.getInstanceVersion());
 			nextState.getOverviewSite(site).addOverviewApp(newApp);
+		    }
+		}
+	    }
+	    return nextState;
+	}
+    };
+
+    protected TransitPoint updateExceptPkgEnvTransit = new TransitPoint() {
+	@Override
+	public boolean condition(Overview currentState, Overview finalState) {
+	    for (String site : finalState.listSitesName()) {
+		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
+		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
+			    app -> app.isInstantiation(desiredApp)).isEmpty()) {
+			return true;
+		    }
+		}
+	    }
+	    return false;
+	}
+
+	// assume that it doesn't exist two apps with same pkg and name
+	@Override
+	public Overview next(Overview currentState, Overview finalState) {
+	    Overview nextState = new Overview(currentState);
+	    for (String site : finalState.listSitesName()) {
+		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
+		    for (OverviewApp nextApp : nextState.getOverviewSite(site).getOverviewApps()) {
+			if (nextApp.getName().equals(desiredApp.getName())
+				&& nextApp.getPath().equals(desiredApp.getPath())
+				&& nextApp.getEnv().equals(desiredApp.getEnv())) {
+			    if (!nextApp.isInstantiation(desiredApp)) {
+				nextApp.setRoutes(desiredApp.getRoutes());
+				nextApp.setNbProcesses(desiredApp.getNbProcesses());
+				nextApp.setServices(desiredApp.getServices());
+				nextApp.setState(desiredApp.getState());
+			    }
+			}
 		    }
 		}
 	    }

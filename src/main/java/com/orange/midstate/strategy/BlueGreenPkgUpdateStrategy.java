@@ -26,10 +26,10 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 
     @Override
     public List<TransitPoint> transitPoints() {
-	return Arrays.asList(pkgUpdateTransit, routeUpdateTransit, removeUndesiredTransit);
+	return Arrays.asList(newPkgTransit, updateExceptPkgTransit, removeUndesiredTransit);
     }
 
-    protected TransitPoint pkgUpdateTransit = new TransitPoint() {
+    protected TransitPoint newPkgTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
@@ -70,16 +70,13 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 	}
     };
 
-    protected TransitPoint routeUpdateTransit = new TransitPoint() {
+    protected TransitPoint updateExceptPkgTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
 		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.getName().equals(desiredApp.getName())
-				    && app.getPath().equals(desiredApp.getPath())
-				    && app.getRoutes().equals(desiredApp.getRoutes()))
-			    .isEmpty()) {
+			    app -> app.isInstantiation(desiredApp)).isEmpty()) {
 			return true;
 		    }
 		}
@@ -96,8 +93,12 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 		    for (OverviewApp nextApp : nextState.getOverviewSite(site).getOverviewApps()) {
 			if (nextApp.getName().equals(desiredApp.getName())
 				&& nextApp.getPath().equals(desiredApp.getPath())) {
-			    if (!nextApp.getRoutes().equals(desiredApp.getRoutes())) {
+			    if (!nextApp.isInstantiation(desiredApp)) {
 				nextApp.setRoutes(desiredApp.getRoutes());
+				nextApp.setEnv(desiredApp.getEnv());
+				nextApp.setNbProcesses(desiredApp.getNbProcesses());
+				nextApp.setServices(desiredApp.getServices());
+				nextApp.setState(desiredApp.getState());
 			    }
 			}
 		    }
