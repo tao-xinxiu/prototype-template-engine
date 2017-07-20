@@ -55,7 +55,7 @@ public class BlueGreenPkgUpdateStrategyTest {
 	Assert.assertFalse(initState.isInstantiation(finalState));
 	Assert.assertTrue(bgStrategy.valid(initState, finalState));
 	Assert.assertTrue(bgStrategy.transitPoints().get(0).condition(initState, finalState));
-	Assert.assertEquals(midState1(), bgStrategy.transitPoints().get(0).next(initState, finalState));
+	Assert.assertTrue(bgStrategy.transitPoints().get(0).next(initState, finalState).isInstantiation(midState1()));
     }
 
     @Test
@@ -110,14 +110,14 @@ public class BlueGreenPkgUpdateStrategyTest {
 
     private final static Overview midState1() {
 	Set<OverviewApp> site1Apps = new HashSet<>();
-	site1Apps.add(new OverviewApp(oldAppSite1Id, appName, oldAppInstVersion, oldAppPath, AppState.RUNNING,
+	site1Apps.add(new OverviewApp(oldAppSite1Id, appName, null, oldAppPath, AppState.RUNNING,
 		appNbProcesses, appEnv, appRoutes, appServices));
-	site1Apps.add(new OverviewApp(null, appName, newAppInstVersion, newAppPath, AppState.RUNNING, appNbProcesses,
+	site1Apps.add(new OverviewApp(null, appName, null, newAppPath, AppState.RUNNING, appNbProcesses,
 		appEnv, appTmpRoutes, appServices));
 	Set<OverviewApp> site2Apps = new HashSet<>();
-	site2Apps.add(new OverviewApp(oldAppSite2Id, appName, oldAppInstVersion, oldAppPath, AppState.RUNNING,
+	site2Apps.add(new OverviewApp(oldAppSite2Id, appName, null, oldAppPath, AppState.RUNNING,
 		appNbProcesses, appEnv, appRoutes, appServices));
-	site2Apps.add(new OverviewApp(null, appName, newAppInstVersion, newAppPath, AppState.RUNNING, appNbProcesses,
+	site2Apps.add(new OverviewApp(null, appName, null, newAppPath, AppState.RUNNING, appNbProcesses,
 		appEnv, appTmpRoutes, appServices));
 	Overview midState1 = new Overview();
 	midState1.addPaaSSite(site1, new OverviewSite(site1Apps));
