@@ -153,11 +153,14 @@ public class CloudFoundryOperations {
 
     public boolean appRunning(String appId) {
 	try {
+	    if (!CFAppDesiredState.STARTED.toString().equals(getAppSummary(appId).getState())) {
+		return false;
+	    }
 	    ApplicationInstancesRequest request = ApplicationInstancesRequest.builder().applicationId(appId).build();
 	    ApplicationInstancesResponse response = retry(
 		    () -> cloudFoundryClient.applicationsV2().instances(request).block());
 	    return response.getInstances().entrySet().stream()
-		    .anyMatch(entity -> entity.getValue().getState().equals(runningState));
+		    .anyMatch(entity -> runningState.equals(entity.getValue().getState()));
 	} catch (Exception e) {
 	    throw new IllegalStateException(
 		    String.format("Expcetion during getting whether app [%s] running." + siteInfo, appId), e);
@@ -165,7 +168,7 @@ public class CloudFoundryOperations {
     }
 
     public boolean appStaged(String appId) {
-	return getAppSummary(appId).getPackageState().equals(stagedState);
+	return stagedState.equals(getAppSummary(appId).getPackageState());
     }
 
     public String createApp(String name, int instances, Map<String, String> env) {
