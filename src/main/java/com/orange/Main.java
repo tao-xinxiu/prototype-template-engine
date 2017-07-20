@@ -123,6 +123,12 @@ public class Main {
 	logger.info("Update config set! [{}]", config);
     }
 
+    @RequestMapping(value = "/set_operation_config", method = RequestMethod.PUT)
+    public void setOperationConfig(@RequestBody OperationConfig config) {
+	operationConfig = config;
+	logger.info("Operation config set! [{}]", config);
+    }
+
     @RequestMapping(value = "/is_instantiation", method = RequestMethod.POST)
     public boolean isInstantiation(@RequestBody Overview desiredState) {
 	Overview currentState = getCurrentState(desiredState.listPaaSSites());

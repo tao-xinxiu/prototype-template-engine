@@ -9,6 +9,9 @@ public class OperationConfig {
     private int startTimeout = 15 * 60;
     private boolean parallelUpdateApps = false;
 
+    public OperationConfig() {
+    }
+
     public int getGeneralTimeout() {
 	return generalTimeout;
     }
@@ -63,5 +66,13 @@ public class OperationConfig {
 
     public void setParallelUpdateApps(boolean parallelUpdateApps) {
 	this.parallelUpdateApps = parallelUpdateApps;
+    }
+
+    @Override
+    public String toString() {
+	return "OperationConfig [generalTimeout=" + generalTimeout + ", generalRetry=" + generalRetry
+		+ ", generalBackoff=" + generalBackoff + ", uploadTimeout=" + uploadTimeout + ", prepareTimeout="
+		+ prepareTimeout + ", startTimeout=" + startTimeout + ", parallelUpdateApps=" + parallelUpdateApps
+		+ "]";
     }
 }

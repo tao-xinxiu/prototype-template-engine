@@ -35,4 +35,10 @@ public class StrategySiteConfig {
     public String getTmpRoute(String appName) {
 	return appName + tmpRouteHostSuffix + "." + tmpRouteDomain;
     }
+
+    @Override
+    public String toString() {
+	return "StrategySiteConfig [tmpRouteHostSuffix=" + tmpRouteHostSuffix + ", tmpRouteDomain=" + tmpRouteDomain
+		+ "]";
+    }
 }

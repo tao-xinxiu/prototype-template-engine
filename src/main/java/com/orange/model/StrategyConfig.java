@@ -29,4 +29,9 @@ public class StrategyConfig {
     public void setDeploymentConfig(Map<String, StrategySiteConfig> deploymentConfig) {
         this.deploymentConfig = deploymentConfig;
     }
+
+    @Override
+    public String toString() {
+	return "StrategyConfig [deploymentConfig=" + deploymentConfig + "]";
+    }
 }
