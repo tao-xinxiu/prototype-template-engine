@@ -1,8 +1,6 @@
 package com.orange.paas.cf;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -83,8 +81,7 @@ public class CloudFoundryOperations {
 	    String proxy_host = System.getenv("proxy_host");
 	    String proxy_port = System.getenv("proxy_port");
 	    DefaultConnectionContext.Builder connectionContext = DefaultConnectionContext.builder()
-		    .apiHost(site.getApi()).skipSslValidation(site.getSkipSslValidation())
-		    .socketTimeout(Duration.ofSeconds(opConfig.getGeneralTimeout()));
+		    .apiHost(site.getApi()).skipSslValidation(site.getSkipSslValidation());
 	    if (proxy_host != null && proxy_port != null) {
 		ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host)
 			.port(Integer.parseInt(proxy_port)).build();
@@ -200,7 +197,7 @@ public class CloudFoundryOperations {
     public void uploadApp(String appId, String path) {
 	try {
 	    UploadApplicationRequest request = UploadApplicationRequest.builder().applicationId(appId)
-		    .application(new FileInputStream(new File(Main.storePath + path))).build();
+		    .application(new File(Main.storePath + path).toPath()).build();
 	    logger.info("App [{}] package [{}] start uploading", appId, path);
 	    retry(() -> cloudFoundryClient.applicationsV2().upload(request).block());
 	    logger.info("App [{}] package [{}] uploaded.", appId, path);
