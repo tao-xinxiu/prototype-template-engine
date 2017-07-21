@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.orange.model.StrategySiteConfig;
 import com.orange.model.StrategyConfig;
 import com.orange.model.state.Overview;
@@ -14,6 +17,8 @@ import com.orange.util.SetUtil;
 import com.orange.util.VersionGenerator;
 
 public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
+    private static final Logger logger = LoggerFactory.getLogger(BlueGreenStrategy.class);
+
     public BlueGreenStrategy(StrategyConfig config) {
 	super(config);
     }
@@ -33,6 +38,7 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 				    && app.getPath().equals(desiredApp.getPath())
 				    && app.getEnv().equals(desiredApp.getEnv()))
 			    .isEmpty()) {
+			logger.info("newPkgEnvTransit detected for microservice {}", desiredApp);
 			return true;
 		    }
 		}
@@ -42,34 +48,26 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
+	    logger.info("start getting next architecture by adding microservice with new pkg and env");
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
-		Set<String> usedVersions = currentState.getOverviewSite(site).getOverviewApps().stream()
-			.map(app -> app.getInstanceVersion()).collect(Collectors.toSet());
+		Set<OverviewApp> currentApps = currentState.getOverviewSite(site).getOverviewApps();
+		Set<String> usedVersions = currentApps.stream().map(app -> app.getInstanceVersion())
+			.collect(Collectors.toSet());
 		StrategySiteConfig siteConfig = (StrategySiteConfig) (config.getSiteConfig(site));
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
+		    if (SetUtil.noneMatch(currentApps,
 			    app -> app.getName().equals(desiredApp.getName())
-				    && app.getPath().equals(desiredApp.getPath()))
-			    .isEmpty()) {
+				    && app.getPath().equals(desiredApp.getPath())
+				    && app.getEnv().equals(desiredApp.getPath()))) {
 			OverviewApp newApp = new OverviewApp(desiredApp);
 			newApp.setGuid(null);
 			newApp.setRoutes(Collections.singleton(siteConfig.getTmpRoute(desiredApp.getName())));
 			newApp.setInstanceVersion(VersionGenerator.random(usedVersions));
 			usedVersions.add(newApp.getInstanceVersion());
 			nextState.getOverviewSite(site).addOverviewApp(newApp);
+			logger.info("Added a new microservice: {} ", newApp);
 			continue;
-		    }
-		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.getName().equals(desiredApp.getName())
-				    && app.getEnv().equals(desiredApp.getEnv()))
-			    .isEmpty()) {
-			OverviewApp newApp = new OverviewApp(desiredApp);
-			newApp.setGuid(null);
-			newApp.setRoutes(Collections.singleton(siteConfig.getTmpRoute(desiredApp.getName())));
-			newApp.setInstanceVersion(VersionGenerator.random(usedVersions));
-			usedVersions.add(newApp.getInstanceVersion());
-			nextState.getOverviewSite(site).addOverviewApp(newApp);
 		    }
 		}
 	    }
@@ -84,6 +82,7 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
 		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
 			    app -> app.isInstantiation(desiredApp)).isEmpty()) {
+			logger.info("updateExceptPkgEnvTransit detected");
 			return true;
 		    }
 		}
@@ -94,6 +93,7 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 	// assume that it doesn't exist two apps with same pkg and name
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
+	    logger.info("start getting next architecture by updating desired microservice properties");
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
@@ -106,6 +106,8 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 				nextApp.setNbProcesses(desiredApp.getNbProcesses());
 				nextApp.setServices(desiredApp.getServices());
 				nextApp.setState(desiredApp.getState());
+				logger.info("Updated microservice [{}_{}] to {} ", nextApp.getName(),
+					nextApp.getInstanceVersion(), nextApp);
 			    }
 			}
 		    }

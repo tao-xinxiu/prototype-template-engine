@@ -24,6 +24,10 @@ public class SetUtil {
 	return apps.stream().filter(predicate).collect(Collectors.toSet());
     }
 
+    public static boolean noneMatch(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
+	return apps.stream().noneMatch(predicate);
+    }
+
     public static OverviewApp searchApp(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
 	Set<OverviewApp> result = search(apps, predicate);
 	switch (result.size()) {
