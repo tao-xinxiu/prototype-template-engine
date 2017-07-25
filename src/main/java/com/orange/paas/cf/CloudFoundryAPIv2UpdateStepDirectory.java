@@ -219,9 +219,14 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	    case starting:
 		serial.addStep(waitRunning(appId));
 		break;
+	    case FAILED:
+		serial.addStep(restageApp(appId));
+		serial.addStep(waitStaged(appId));
+		serial.addStep(waitRunning(appId));
+		break;
 	    default:
-		throw new IllegalStateException(String.format("Unsupported current state [%s] to update to [%s]",
-			currentApp.getState(), desiredApp.getState()));
+		throw new IllegalStateException(String.format("Unsupported app [%s] to update state from [%s] to [%s]",
+			appId, currentApp.getState(), desiredApp.getState()));
 	    }
 	    break;
 	case STAGED:
@@ -236,9 +241,14 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	    case RUNNING:
 		serial.addStep(stopApp(appId));
 		break;
+	    case FAILED:
+		serial.addStep(restageApp(appId));
+		serial.addStep(waitStaged(appId));
+		serial.addStep(stopApp(appId));
+		break;
 	    default:
-		throw new IllegalStateException(String.format("Unsupported current state [%s] to update to [%s]",
-			currentApp.getState(), desiredApp.getState()));
+		throw new IllegalStateException(String.format("Unsupported app [%s] to update state from [%s] to [%s]",
+			appId, currentApp.getState(), desiredApp.getState()));
 	    }
 	    break;
 	case UPLOADED:
@@ -247,8 +257,8 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 		serial.addStep(updateAppPath(appId, desiredApp.getPath(), currentApp.getEnv()));
 		break;
 	    default:
-		throw new IllegalStateException(String.format("Unsupported current state [%s] to update to [%s]",
-			currentApp.getState(), desiredApp.getState()));
+		throw new IllegalStateException(String.format("Unsupported app [%s] to update state from [%s] to [%s]",
+			appId, currentApp.getState(), desiredApp.getState()));
 	    }
 	    break;
 	default:

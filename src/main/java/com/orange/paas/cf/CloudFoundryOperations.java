@@ -1,6 +1,7 @@
 package com.orange.paas.cf;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,7 +82,8 @@ public class CloudFoundryOperations {
 	    String proxy_host = System.getenv("proxy_host");
 	    String proxy_port = System.getenv("proxy_port");
 	    DefaultConnectionContext.Builder connectionContext = DefaultConnectionContext.builder()
-		    .apiHost(site.getApi()).skipSslValidation(site.getSkipSslValidation());
+		    .apiHost(site.getApi()).skipSslValidation(site.getSkipSslValidation())
+		    .connectTimeout(Duration.ofSeconds(opConfig.getGeneralTimeout()));
 	    if (proxy_host != null && proxy_port != null) {
 		ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host)
 			.port(Integer.parseInt(proxy_port)).build();
