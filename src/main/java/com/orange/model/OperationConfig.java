@@ -2,6 +2,7 @@ package com.orange.model;
 
 public class OperationConfig {
     private int generalTimeout = 5 * 60;
+    private int connectTimeout = 60;
     private int generalRetry = 5;
     private int generalBackoff = 5;
     private int uploadTimeout = 15 * 60;
@@ -18,6 +19,14 @@ public class OperationConfig {
 
     public void setGeneralTimeout(int generalTimeout) {
 	this.generalTimeout = generalTimeout;
+    }
+
+    public int getConnectTimeout() {
+	return connectTimeout;
+    }
+
+    public void setConnectTimeout(int connectTimeout) {
+	this.connectTimeout = connectTimeout;
     }
 
     public int getUploadTimeout() {
@@ -70,9 +79,9 @@ public class OperationConfig {
 
     @Override
     public String toString() {
-	return "OperationConfig [generalTimeout=" + generalTimeout + ", generalRetry=" + generalRetry
-		+ ", generalBackoff=" + generalBackoff + ", uploadTimeout=" + uploadTimeout + ", prepareTimeout="
-		+ prepareTimeout + ", startTimeout=" + startTimeout + ", parallelUpdateApps=" + parallelUpdateApps
-		+ "]";
+	return "OperationConfig [generalTimeout=" + generalTimeout + ", connectTimeout=" + connectTimeout
+		+ ", generalRetry=" + generalRetry + ", generalBackoff=" + generalBackoff + ", uploadTimeout="
+		+ uploadTimeout + ", prepareTimeout=" + prepareTimeout + ", startTimeout=" + startTimeout
+		+ ", parallelUpdateApps=" + parallelUpdateApps + "]";
     }
 }

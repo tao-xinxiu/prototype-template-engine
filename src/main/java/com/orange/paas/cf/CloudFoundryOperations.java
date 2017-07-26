@@ -82,11 +82,13 @@ public class CloudFoundryOperations {
 	this.siteInfo = String.format(" at site [%s]", site.getName());
 	this.opConfig = opConfig;
 	this.timeout = Duration.ofSeconds(opConfig.getGeneralTimeout());
+	String proxy_host = System.getenv("proxy_host");
+	String proxy_port = System.getenv("proxy_port");
+	Duration connectTimeout = Duration.ofSeconds(opConfig.getConnectTimeout());
 	try {
-	    String proxy_host = System.getenv("proxy_host");
-	    String proxy_port = System.getenv("proxy_port");
 	    DefaultConnectionContext.Builder connectionContext = DefaultConnectionContext.builder()
-		    .apiHost(site.getApi()).skipSslValidation(site.getSkipSslValidation());
+		    .apiHost(site.getApi()).skipSslValidation(site.getSkipSslValidation())
+		    .connectTimeout(connectTimeout).sslHandshakeTimeout(connectTimeout);
 	    if (proxy_host != null && proxy_port != null) {
 		ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host)
 			.port(Integer.parseInt(proxy_port)).build();
@@ -96,16 +98,16 @@ public class CloudFoundryOperations {
 		    .username(site.getUser()).build();
 	    this.cloudFoundryClient = ReactorCloudFoundryClient.builder().connectionContext(connectionContext.build())
 		    .tokenProvider(tokenProvider).build();
-	    this.spaceId = requestSpaceId();
 	} catch (Exception e) {
 	    throw new IllegalStateException("expcetion during creating client" + siteInfo, e);
 	}
+	this.spaceId = requestSpaceId();
     }
 
     public OperationConfig getOpConfig() {
-        return opConfig;
+	return opConfig;
     }
-    
+
     public String getSiteName() {
 	return site.getName();
     }
