@@ -2,11 +2,11 @@ package com.orange.model;
 
 public class OperationConfig {
     private int generalTimeout = 5 * 60;
-    private int generalRetry = 3;
+    private int generalRetry = 5;
     private int generalBackoff = 5;
     private int uploadTimeout = 15 * 60;
     private int prepareTimeout = 15 * 60;
-    private int startTimeout = 15 * 60;
+    private int startTimeout = 20 * 60;
     private boolean parallelUpdateApps = false;
 
     public OperationConfig() {

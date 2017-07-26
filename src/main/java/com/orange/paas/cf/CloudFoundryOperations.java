@@ -64,26 +64,29 @@ import com.orange.model.state.cf.CFAppDesiredState;
 import com.orange.util.RetryFunction;
 
 public class CloudFoundryOperations {
+    private static final String runningState = "RUNNING";
+    private static final String stagedState = "STAGED";
+
     private final Logger logger;
+    private final String siteInfo;
+
     private PaaSSite site;
     private CloudFoundryClient cloudFoundryClient;
     private String spaceId;
     private OperationConfig opConfig;
-    private final String siteInfo;
-    private static final String runningState = "RUNNING";
-    private static final String stagedState = "STAGED";
+    private Duration timeout;
 
     public CloudFoundryOperations(PaaSSite site, OperationConfig opConfig) {
 	this.site = site;
 	this.logger = LoggerFactory.getLogger(String.format("%s(%s)", getClass(), site.getName()));
 	this.siteInfo = String.format(" at site [%s]", site.getName());
 	this.opConfig = opConfig;
+	this.timeout = Duration.ofSeconds(opConfig.getGeneralTimeout());
 	try {
 	    String proxy_host = System.getenv("proxy_host");
 	    String proxy_port = System.getenv("proxy_port");
 	    DefaultConnectionContext.Builder connectionContext = DefaultConnectionContext.builder()
-		    .apiHost(site.getApi()).skipSslValidation(site.getSkipSslValidation())
-		    .connectTimeout(Duration.ofSeconds(opConfig.getGeneralTimeout()));
+		    .apiHost(site.getApi()).skipSslValidation(site.getSkipSslValidation());
 	    if (proxy_host != null && proxy_port != null) {
 		ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host)
 			.port(Integer.parseInt(proxy_port)).build();
@@ -95,10 +98,14 @@ public class CloudFoundryOperations {
 		    .tokenProvider(tokenProvider).build();
 	    this.spaceId = requestSpaceId();
 	} catch (Exception e) {
-	    throw new IllegalStateException("expcetion during connection" + siteInfo, e);
+	    throw new IllegalStateException("expcetion during creating client" + siteInfo, e);
 	}
     }
 
+    public OperationConfig getOpConfig() {
+        return opConfig;
+    }
+    
     public String getSiteName() {
 	return site.getName();
     }
@@ -106,7 +113,8 @@ public class CloudFoundryOperations {
     private String requestOrgId() {
 	try {
 	    ListOrganizationsRequest request = ListOrganizationsRequest.builder().name(site.getOrg()).build();
-	    ListOrganizationsResponse response = retry(() -> cloudFoundryClient.organizations().list(request).block());
+	    ListOrganizationsResponse response = retry(
+		    () -> cloudFoundryClient.organizations().list(request).block(timeout));
 	    logger.trace("Got organization id.");
 	    return response.getResources().get(0).getMetadata().getId();
 	} catch (Exception e) {
@@ -118,7 +126,7 @@ public class CloudFoundryOperations {
 	try {
 	    ListSpacesRequest request = ListSpacesRequest.builder().organizationId(requestOrgId()).name(site.getSpace())
 		    .build();
-	    ListSpacesResponse response = retry(() -> cloudFoundryClient.spaces().list(request).block());
+	    ListSpacesResponse response = retry(() -> cloudFoundryClient.spaces().list(request).block(timeout));
 	    logger.trace("Got space id.");
 	    return response.getResources().get(0).getMetadata().getId();
 	} catch (Exception e) {
@@ -130,7 +138,8 @@ public class CloudFoundryOperations {
 	try {
 	    GetSpaceSummaryRequest request = GetSpaceSummaryRequest.builder().spaceId(spaceId).build();
 	    logger.trace("Start requesting space application summary...");
-	    GetSpaceSummaryResponse response = retry(() -> cloudFoundryClient.spaces().getSummary(request).block());
+	    GetSpaceSummaryResponse response = retry(
+		    () -> cloudFoundryClient.spaces().getSummary(request).block(timeout));
 	    logger.trace("Got space apps!");
 	    return response.getApplications();
 	} catch (Exception e) {
@@ -142,7 +151,7 @@ public class CloudFoundryOperations {
 	try {
 	    SummaryApplicationRequest request = SummaryApplicationRequest.builder().applicationId(appId).build();
 	    SummaryApplicationResponse response = retry(
-		    () -> cloudFoundryClient.applicationsV2().summary(request).block());
+		    () -> cloudFoundryClient.applicationsV2().summary(request).block(timeout));
 	    return response;
 	} catch (Exception e) {
 	    throw new IllegalStateException(
@@ -157,7 +166,7 @@ public class CloudFoundryOperations {
 	    }
 	    ApplicationInstancesRequest request = ApplicationInstancesRequest.builder().applicationId(appId).build();
 	    ApplicationInstancesResponse response = retry(
-		    () -> cloudFoundryClient.applicationsV2().instances(request).block());
+		    () -> cloudFoundryClient.applicationsV2().instances(request).block(timeout));
 	    return response.getInstances().entrySet().stream()
 		    .anyMatch(entity -> runningState.equals(entity.getValue().getState()));
 	} catch (Exception e) {
@@ -175,7 +184,7 @@ public class CloudFoundryOperations {
 	    CreateApplicationRequest request = CreateApplicationRequest.builder().name(name).spaceId(spaceId)
 		    .instances(instances).environmentJsons(env).build();
 	    CreateApplicationResponse response = retry(
-		    () -> cloudFoundryClient.applicationsV2().create(request).block());
+		    () -> cloudFoundryClient.applicationsV2().create(request).block(timeout));
 	    logger.info("App [{}] created.", name);
 	    return response.getMetadata().getId();
 	} catch (Exception e) {
@@ -189,7 +198,7 @@ public class CloudFoundryOperations {
     public void deleteApp(String appId) {
 	try {
 	    DeleteApplicationRequest request = DeleteApplicationRequest.builder().applicationId(appId).build();
-	    retry(() -> cloudFoundryClient.applicationsV2().delete(request).block());
+	    retry(() -> cloudFoundryClient.applicationsV2().delete(request).block(timeout));
 	    logger.info("App {} at {} deleted.", appId, site.getName());
 	} catch (Exception e) {
 	    throw new IllegalStateException("expcetion during deleting app with id: " + appId + siteInfo, e);
@@ -201,7 +210,8 @@ public class CloudFoundryOperations {
 	    UploadApplicationRequest request = UploadApplicationRequest.builder().applicationId(appId)
 		    .application(new File(Main.storePath + path).toPath()).build();
 	    logger.info("App [{}] package [{}] start uploading", appId, path);
-	    retry(() -> cloudFoundryClient.applicationsV2().upload(request).block());
+	    retry(() -> cloudFoundryClient.applicationsV2().upload(request)
+		    .block(Duration.ofSeconds(opConfig.getUploadTimeout())));
 	    logger.info("App [{}] package [{}] uploaded.", appId, path);
 	} catch (Exception e) {
 	    throw new IllegalStateException(
@@ -211,13 +221,13 @@ public class CloudFoundryOperations {
 
     public void restageApp(String appId) {
 	RestageApplicationRequest request = RestageApplicationRequest.builder().applicationId(appId).build();
-	retry(() -> cloudFoundryClient.applicationsV2().restage(request).block());
+	retry(() -> cloudFoundryClient.applicationsV2().restage(request).block(timeout));
     }
 
     private String getDomainId(String domain) {
 	try {
 	    ListDomainsRequest request = ListDomainsRequest.builder().name(domain).build();
-	    ListDomainsResponse response = retry(() -> cloudFoundryClient.domains().list(request).block());
+	    ListDomainsResponse response = retry(() -> cloudFoundryClient.domains().list(request).block(timeout));
 	    if (response.getResources().size() == 0) {
 		return null;
 	    }
@@ -234,7 +244,7 @@ public class CloudFoundryOperations {
 	    return null;
 	}
 	GetDomainRequest request = GetDomainRequest.builder().domainId(domainId).build();
-	GetDomainResponse response = retry(() -> cloudFoundryClient.domains().get(request).block());
+	GetDomainResponse response = retry(() -> cloudFoundryClient.domains().get(request).block(timeout));
 	if (response.getEntity() == null) {
 	    return null;
 	} else {
@@ -267,7 +277,7 @@ public class CloudFoundryOperations {
     private String getRouteId(String hostname, String domainId) {
 	try {
 	    ListRoutesRequest request = ListRoutesRequest.builder().domainId(domainId).host(hostname).build();
-	    ListRoutesResponse response = retry(() -> cloudFoundryClient.routes().list(request).block());
+	    ListRoutesResponse response = retry(() -> cloudFoundryClient.routes().list(request).block(timeout));
 	    if (response.getResources().size() == 0) {
 		return null;
 	    }
@@ -285,7 +295,7 @@ public class CloudFoundryOperations {
 	try {
 	    CreateRouteRequest request = CreateRouteRequest.builder().domainId(domainId).spaceId(spaceId).host(hostname)
 		    .build();
-	    CreateRouteResponse response = retry(() -> cloudFoundryClient.routes().create(request).block());
+	    CreateRouteResponse response = retry(() -> cloudFoundryClient.routes().create(request).block(timeout));
 	    return response.getMetadata().getId();
 	} catch (Exception e) {
 	    throw new IllegalStateException(
@@ -297,7 +307,7 @@ public class CloudFoundryOperations {
 
     public String getRouteHost(String routeId) {
 	GetRouteRequest request = GetRouteRequest.builder().routeId(routeId).build();
-	GetRouteResponse response = retry(() -> cloudFoundryClient.routes().get(request).block());
+	GetRouteResponse response = retry(() -> cloudFoundryClient.routes().get(request).block(timeout));
 	if (response.getEntity() == null) {
 	    return null;
 	} else {
@@ -307,7 +317,7 @@ public class CloudFoundryOperations {
 
     public String getRouteDomainId(String routeId) {
 	GetRouteRequest request = GetRouteRequest.builder().routeId(routeId).build();
-	GetRouteResponse response = retry(() -> cloudFoundryClient.routes().get(request).block());
+	GetRouteResponse response = retry(() -> cloudFoundryClient.routes().get(request).block(timeout));
 	if (response.getEntity() == null) {
 	    return null;
 	} else {
@@ -317,7 +327,7 @@ public class CloudFoundryOperations {
 
     public Route getRoute(String routeId) {
 	GetRouteRequest request = GetRouteRequest.builder().routeId(routeId).build();
-	GetRouteResponse response = retry(() -> cloudFoundryClient.routes().get(request).block());
+	GetRouteResponse response = retry(() -> cloudFoundryClient.routes().get(request).block(timeout));
 	if (response.getEntity() == null) {
 	    return null;
 	} else {
@@ -331,7 +341,7 @@ public class CloudFoundryOperations {
 	try {
 	    ListApplicationRoutesRequest request = ListApplicationRoutesRequest.builder().applicationId(appId).build();
 	    ListApplicationRoutesResponse response = retry(
-		    () -> cloudFoundryClient.applicationsV2().listRoutes(request).block());
+		    () -> cloudFoundryClient.applicationsV2().listRoutes(request).block(timeout));
 	    return response.getResources().stream().map(resource -> resource.getMetadata().getId())
 		    .collect(Collectors.toSet());
 	} catch (Exception e) {
@@ -344,7 +354,7 @@ public class CloudFoundryOperations {
 	try {
 	    CreateRouteMappingRequest request = CreateRouteMappingRequest.builder().applicationId(appId)
 		    .routeId(routeId).build();
-	    retry(() -> cloudFoundryClient.routeMappings().create(request).block());
+	    retry(() -> cloudFoundryClient.routeMappings().create(request).block(timeout));
 	} catch (Exception e) {
 	    throw new IllegalStateException(
 		    String.format("Expcetion during creating route mapping between app [%s] and route [%s].", appId,
@@ -357,7 +367,8 @@ public class CloudFoundryOperations {
 	try {
 	    ListRouteMappingsRequest request = ListRouteMappingsRequest.builder().applicationId(appId).routeId(routeId)
 		    .build();
-	    ListRouteMappingsResponse response = retry(() -> cloudFoundryClient.routeMappings().list(request).block());
+	    ListRouteMappingsResponse response = retry(
+		    () -> cloudFoundryClient.routeMappings().list(request).block(timeout));
 	    if (response == null) {
 		return null;
 	    }
@@ -381,7 +392,7 @@ public class CloudFoundryOperations {
 	try {
 	    DeleteRouteMappingRequest request = DeleteRouteMappingRequest.builder().routeMappingId(routeMappingId)
 		    .build();
-	    retry(() -> cloudFoundryClient.routeMappings().delete(request).block());
+	    retry(() -> cloudFoundryClient.routeMappings().delete(request).block(timeout));
 	} catch (Exception e) {
 	    throw new IllegalStateException(
 		    String.format("Expcetion during deleting route mapping: [%s]", routeMappingId) + siteInfo, e);
@@ -402,7 +413,7 @@ public class CloudFoundryOperations {
 	try {
 	    UpdateApplicationRequest request = UpdateApplicationRequest.builder().applicationId(appId).name(name)
 		    .environmentJsons(env).instances(instances).state(state == null ? null : state.name()).build();
-	    retry(() -> cloudFoundryClient.applicationsV2().update(request).block());
+	    retry(() -> cloudFoundryClient.applicationsV2().update(request).block(timeout));
 	} catch (Exception e) {
 	    throw new IllegalStateException(String.format(
 		    "Exception during updating app [%s] with arg [name=%s, env=%s, instances=%s, state=%s]", appId,
@@ -414,7 +425,7 @@ public class CloudFoundryOperations {
     public void bindAppServices(String appId, String serviceName) {
 	CreateServiceBindingRequest bindRequest = CreateServiceBindingRequest.builder().applicationId(appId)
 		.serviceInstanceId(getServiceInstanceId(serviceName)).build();
-	retry(() -> cloudFoundryClient.serviceBindingsV2().create(bindRequest).block());
+	retry(() -> cloudFoundryClient.serviceBindingsV2().create(bindRequest).block(timeout));
     }
 
     public void unbindAppServices(String appId, String serviceName) {
@@ -426,14 +437,14 @@ public class CloudFoundryOperations {
 	}
 	DeleteServiceBindingRequest unBindRequest = DeleteServiceBindingRequest.builder()
 		.serviceBindingId(serviceBindId).build();
-	retry(() -> cloudFoundryClient.serviceBindingsV2().delete(unBindRequest).block());
+	retry(() -> cloudFoundryClient.serviceBindingsV2().delete(unBindRequest).block(timeout));
     }
 
     private String getServiceBindingId(String appId, String serviceId) {
 	ListServiceBindingsRequest request = ListServiceBindingsRequest.builder().applicationId(appId)
 		.serviceInstanceId(serviceId).build();
 	ListServiceBindingsResponse response = retry(
-		() -> cloudFoundryClient.serviceBindingsV2().list(request).block());
+		() -> cloudFoundryClient.serviceBindingsV2().list(request).block(timeout));
 	if (response.getResources().size() == 0) {
 	    return null;
 	}
@@ -445,7 +456,7 @@ public class CloudFoundryOperations {
 	ListSpaceServiceInstancesRequest serviceInstancesRequest = ListSpaceServiceInstancesRequest.builder()
 		.spaceId(spaceId).name(serviceName).returnUserProvidedServiceInstances(true).build();
 	ListSpaceServiceInstancesResponse serviceInstancesResponse = retry(
-		() -> cloudFoundryClient.spaces().listServiceInstances(serviceInstancesRequest).block());
+		() -> cloudFoundryClient.spaces().listServiceInstances(serviceInstancesRequest).block(timeout));
 	if (serviceInstancesResponse.getResources().size() == 0) {
 	    throw new IllegalStateException(String.format("Service instance [%s] not exists" + siteInfo, serviceName));
 	}

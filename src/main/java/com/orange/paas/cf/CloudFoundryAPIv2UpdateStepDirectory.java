@@ -8,9 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.orange.model.OperationConfig;
 import com.orange.model.state.OverviewApp;
 import com.orange.model.state.Route;
 import com.orange.model.state.cf.CFAppDesiredState;
@@ -20,6 +18,7 @@ import com.orange.model.workflow.SerialWorkflow;
 import com.orange.model.workflow.Step;
 import com.orange.model.workflow.Workflow;
 import com.orange.paas.UpdateStepDirectory;
+import com.orange.util.Wait;
 
 public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory {
     abstract class SiteStep extends Step {
@@ -34,11 +33,12 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	}
     }
 
-    private final Logger logger = LoggerFactory.getLogger(CloudFoundryAPIv2UpdateStepDirectory.class);
     private CloudFoundryOperations operations;
+    private OperationConfig opConfig;
 
     public CloudFoundryAPIv2UpdateStepDirectory(CloudFoundryOperations operations) {
 	this.operations = operations;
+	this.opConfig = operations.getOpConfig();
     }
 
     @Override
@@ -302,14 +302,8 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	return new SiteStep(String.format("wait until app [%s] staged", appId)) {
 	    @Override
 	    public void exec() {
-		while (!isAppStaged(appId)) {
-		    try {
-			Thread.sleep(1000);
-		    } catch (InterruptedException e) {
-			logger.error("InterruptedException", e);
-		    }
-		}
-		logger.info("App [{}] staged.", appId);
+		new Wait(opConfig.getPrepareTimeout()).waitUntil(id -> operations.appStaged(id),
+			String.format("wait until app [%s] staged", appId), appId);
 	    }
 	};
 
@@ -319,23 +313,9 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	return new SiteStep(String.format("wait until app [%s] running", appId)) {
 	    @Override
 	    public void exec() {
-		while (!isAppRunning(appId)) {
-		    try {
-			Thread.sleep(1000);
-		    } catch (InterruptedException e) {
-			logger.error("InterruptedException", e);
-		    }
-		}
-		logger.info("App [{}] running.", appId);
+		new Wait(opConfig.getStartTimeout()).waitUntil(id -> operations.appRunning(id),
+			String.format("wait until app [%s] running", appId), appId);
 	    }
 	};
-    }
-
-    private boolean isAppStaged(String appId) {
-	return operations.appStaged(appId);
-    }
-
-    private boolean isAppRunning(String appId) {
-	return operations.appRunning(appId);
     }
 }

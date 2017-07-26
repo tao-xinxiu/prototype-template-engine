@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 
 public class RetryFunction<T> {
     private static Logger logger = LoggerFactory.getLogger(RetryFunction.class);
-    private int retried;
     private int maxTries;
     private int backoffSec;
 
@@ -17,7 +16,7 @@ public class RetryFunction<T> {
     }
 
     public T run(Supplier<T> function) {
-	retried = 0;
+	int retried = 0;
 	while (++retried < maxTries) {
 	    try {
 		return function.get();
