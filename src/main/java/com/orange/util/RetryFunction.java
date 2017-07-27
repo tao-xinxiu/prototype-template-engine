@@ -22,7 +22,6 @@ public class RetryFunction<T> {
 		return function.get();
 	    } catch (Exception e) {
 		logger.error("Command failed on {} of {} tries.", retried, maxTries);
-		logger.error("Exception: ", e);
 		if (retried < maxTries) {
 		    try {
 			Thread.sleep(1000 * backoffSec);
