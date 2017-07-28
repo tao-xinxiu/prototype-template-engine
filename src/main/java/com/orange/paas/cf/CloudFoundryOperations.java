@@ -467,6 +467,6 @@ public class CloudFoundryOperations {
     }
 
     private <T> T retry(Supplier<T> function) {
-	return new RetryFunction<T>(opConfig.getGeneralRetry(), opConfig.getGeneralBackoff()).run(function);
+	return new RetryFunction<T>(opConfig.getGeneralRetry(), opConfig.getGeneralBackoff()).run(function, siteInfo);
     }
 }

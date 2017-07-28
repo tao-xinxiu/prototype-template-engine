@@ -15,13 +15,14 @@ public class RetryFunction<T> {
 	this.backoffSec = backoffSec;
     }
 
-    public T run(Supplier<T> function) {
+    public T run(Supplier<T> function, String text) {
 	int retried = 0;
 	while (++retried < maxTries) {
 	    try {
 		return function.get();
 	    } catch (Exception e) {
-		logger.error("Command failed on {} of {} tries.", retried, maxTries);
+		logger.error("{}. Command failed on {} of {} tries.", text, retried, maxTries);
+		logger.error("Exception: {}", e);
 		if (retried < maxTries) {
 		    try {
 			Thread.sleep(1000 * backoffSec);
