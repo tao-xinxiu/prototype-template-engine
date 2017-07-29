@@ -52,6 +52,7 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
 		Set<OverviewApp> currentApps = currentState.getOverviewSite(site).getOverviewApps();
+		//TODO fix instanceVersion doesn't need to be unique for all apps. 
 		Set<String> usedVersions = currentApps.stream().map(app -> app.getInstanceVersion())
 			.collect(Collectors.toSet());
 		StrategySiteConfig siteConfig = (StrategySiteConfig) (config.getSiteConfig(site));

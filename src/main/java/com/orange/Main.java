@@ -39,7 +39,7 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     // storePath and MidStateCalculator(strategy&config) are specific to user
     public static final String storePath = "./store/";
-    private MidStateCalculator midStateCalculator;
+    private static MidStateCalculator midStateCalculator;
     private static OperationConfig operationConfig = new OperationConfig();
     // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
     private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
@@ -119,8 +119,8 @@ public class Main {
     @RequestMapping(value = "/set_update_config", method = RequestMethod.PUT)
     public void setUpdateConfig(@RequestParam("strategy") String strategy, @RequestBody StrategyConfig config) {
 	strategy = "com.orange.midstate.strategy." + strategy;
-	this.midStateCalculator = new MidStateCalculator(strategy, config);
-	logger.info("Update config set! [{}]", config);
+	midStateCalculator = new MidStateCalculator(strategy, config);
+	logger.info("Strategy set： [{}]. Update config set： [{}]", strategy, config);
     }
 
     @RequestMapping(value = "/set_operation_config", method = RequestMethod.PUT)

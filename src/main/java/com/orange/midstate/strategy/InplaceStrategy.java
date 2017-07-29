@@ -1,7 +1,9 @@
 package com.orange.midstate.strategy;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,18 +12,26 @@ import com.orange.model.StrategyConfig;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
 import com.orange.util.SetUtil;
+import com.orange.util.VersionGenerator;
 
 public class InplaceStrategy extends Strategy {
-    private static final Logger logger = LoggerFactory.getLogger(BlueGreenStrategy.class);
+    private static final Logger logger = LoggerFactory.getLogger(InplaceStrategy.class);
 
     public InplaceStrategy(StrategyConfig config) {
 	super(config);
     }
 
+    /**
+     * If app name in currentState not unique, then return false. i.e. This
+     * strategy only deal with the case that only one microservice instance
+     * (i.e. OverviewApp) per microservice (identify by name).
+     */
     @Override
     public boolean valid(Overview currentState, Overview finalState) {
 	for (String site : finalState.listSitesName()) {
-	    //TODO if app name not unique -> return false
+	    if (!SetUtil.uniqueByName(finalState.getOverviewSite(site).getOverviewApps())) {
+		return false;
+	    }
 	}
 	return true;
     }
@@ -39,17 +49,21 @@ public class InplaceStrategy extends Strategy {
 
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
-	    logger.info("start getting next architecture by direct in-place update");
-	    Overview nextState = new Overview(currentState);
+	    logger.info("Start getting next architecture by direct in-place update");
+	    Overview nextState = new Overview(finalState);
 	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp desiredapp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    OverviewApp currentApp = SetUtil.searchByName(currentState.getOverviewSite(site).getOverviewApps(),
-			    desiredapp.getName());
+		Set<OverviewApp> currentApps = currentState.getOverviewSite(site).getOverviewApps();
+		for (OverviewApp nextApp : nextState.getOverviewSite(site).getOverviewApps()) {
+		    OverviewApp currentApp = SetUtil.getOneByName(currentApps, nextApp.getName());
 		    if (currentApp == null) {
-			nextState.getOverviewSite(site).addOverviewApp(desiredapp);
-			logger.info("Added a new microservice: {} ", desiredapp);
+			// Add non-exist microservice
+			nextApp.setGuid(null);
+			nextApp.setInstanceVersion(VersionGenerator.random(new HashSet<>()));
+			logger.info("{} detected as a new microservice.", nextApp);
 		    } else {
-
+			nextApp.setGuid(currentApp.getGuid());
+			nextApp.setInstanceVersion(currentApp.getInstanceVersion());
+			logger.info("{} detected as a updated microservice", nextApp);
 		    }
 		}
 	    }

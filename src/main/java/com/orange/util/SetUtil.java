@@ -1,5 +1,6 @@
 package com.orange.util;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -14,6 +15,10 @@ public class SetUtil {
 
     public static OverviewApp searchByName(Set<OverviewApp> apps, String appName) {
 	return searchApp(apps, app -> app.getName().equals(appName));
+    }
+
+    public static OverviewApp getOneByName(Set<OverviewApp> apps, String appName) {
+	return getOneApp(apps, app -> app.getName().equals(appName));
     }
 
     public static Set<OverviewApp> searchByState(Set<OverviewApp> apps, AppState appState) {
@@ -41,11 +46,31 @@ public class SetUtil {
 	}
     }
 
+    public static OverviewApp getOneApp(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
+	Set<OverviewApp> result = search(apps, predicate);
+	switch (result.size()) {
+	case 0:
+	    return null;
+	default:
+	    return result.iterator().next();
+	}
+    }
+
     public static Set<OverviewApp> exludedApps(Set<OverviewApp> apps, OverviewApp inclusion) {
 	return apps.stream().filter(app -> app != inclusion).collect(Collectors.toSet());
     }
 
     public static Set<OverviewApp> exludedApps(Set<OverviewApp> apps, Set<OverviewApp> inclusion) {
 	return apps.stream().filter(app -> !inclusion.contains(app)).collect(Collectors.toSet());
+    }
+
+    public static boolean uniqueByName(Set<OverviewApp> apps) {
+	Set<String> names = new HashSet<>();
+	for (OverviewApp app : apps) {
+	    if (!names.add(app.getName())) {
+		return false;
+	    }
+	}
+	return true;
     }
 }

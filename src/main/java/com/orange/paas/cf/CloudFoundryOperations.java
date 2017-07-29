@@ -88,8 +88,9 @@ public class CloudFoundryOperations {
 	try {
 	    DefaultConnectionContext.Builder connectionContext = DefaultConnectionContext.builder()
 		    .apiHost(site.getApi()).skipSslValidation(site.getSkipSslValidation())
-		    .connectTimeout(connectTimeout).sslHandshakeTimeout(connectTimeout);
+		    .connectTimeout(connectTimeout).sslHandshakeTimeout(connectTimeout).keepAlive(true);
 	    if (proxy_host != null && proxy_port != null) {
+		logger.info("Proxy setted: {}:{}", proxy_host, proxy_port);
 		ProxyConfiguration proxyConfiguration = ProxyConfiguration.builder().host(proxy_host)
 			.port(Integer.parseInt(proxy_port)).build();
 		connectionContext.proxyConfiguration(proxyConfiguration);
