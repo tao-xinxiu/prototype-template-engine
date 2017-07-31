@@ -9,6 +9,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.cloudfoundry.client.CloudFoundryClient;
+import org.cloudfoundry.client.v2.applications.ApplicationEnvironmentRequest;
+import org.cloudfoundry.client.v2.applications.ApplicationEnvironmentResponse;
 import org.cloudfoundry.client.v2.applications.ApplicationInstancesRequest;
 import org.cloudfoundry.client.v2.applications.ApplicationInstancesResponse;
 import org.cloudfoundry.client.v2.applications.CreateApplicationRequest;
@@ -159,6 +161,19 @@ public class CloudFoundryOperations {
 	} catch (Exception e) {
 	    throw new IllegalStateException(
 		    String.format("Expcetion during getting app [%s] summary." + siteInfo, appId), e);
+	}
+    }
+
+    public String getAppEnv(String appId, String envKey) {
+	try {
+	    ApplicationEnvironmentRequest request = ApplicationEnvironmentRequest.builder().applicationId(appId)
+		    .build();
+	    ApplicationEnvironmentResponse response = retry(
+		    () -> cloudFoundryClient.applicationsV2().environment(request).block(timeout));
+	    return (String) response.getEnvironmentJsons().get(envKey);
+	} catch (Exception e) {
+	    throw new IllegalStateException(
+		    String.format("Expcetion during getting app [%s] env [%s]." + siteInfo, appId, envKey), e);
 	}
     }
 

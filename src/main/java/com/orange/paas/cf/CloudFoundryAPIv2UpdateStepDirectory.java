@@ -149,7 +149,11 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	return new SiteStep(String.format("update app [%s] env to [%s]", appId, env)) {
 	    @Override
 	    public void exec() {
-		operations.updateApp(appId, null, env, null, null);
+		// should not change path value in env during update other env
+		Map<String, String> envWithPath = new HashMap<>(env);
+		String path = operations.getAppEnv(appId, CloudFoundryAPIv2.pathKeyInEnv);
+		envWithPath.put(CloudFoundryAPIv2.pathKeyInEnv, path);
+		operations.updateApp(appId, null, envWithPath, null, null);
 	    }
 	};
     }
