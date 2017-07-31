@@ -2,7 +2,6 @@ package com.orange.midstate.strategy;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,7 +30,7 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 
     @Override
     public List<TransitPoint> transitPoints() {
-	return Arrays.asList(newPkgTransit, updateExceptPkgTransit, removeUndesiredTransit);
+	return Arrays.asList(newPkgTransit, updateExceptPkgTransit, new StrategyLibrary(config, logger).removeUndesiredTransit);
     }
 
     protected TransitPoint newPkgTransit = new TransitPoint() {
@@ -113,40 +112,6 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 					nextApp.getInstanceVersion(), nextApp);
 			    }
 			}
-		    }
-		}
-	    }
-	    return nextState;
-	}
-    };
-
-    protected TransitPoint removeUndesiredTransit = new TransitPoint() {
-	@Override
-	public boolean condition(Overview currentState, Overview finalState) {
-	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp currentApp : currentState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.search(finalState.getOverviewSite(site).getOverviewApps(),
-			    desiredApp -> currentApp.isInstantiation(desiredApp)).isEmpty()) {
-			logger.info("removeUndesiredTransit detected");
-			return true;
-		    }
-		}
-	    }
-	    return false;
-	}
-
-	@Override
-	public Overview next(Overview currentState, Overview finalState) {
-	    logger.info("start getting next architecture by removing undesired microservice.");
-	    Overview nextState = new Overview(currentState);
-	    for (String site : finalState.listSitesName()) {
-		Iterator<OverviewApp> iterator = nextState.getOverviewSite(site).getOverviewApps().iterator();
-		while (iterator.hasNext()) {
-		    OverviewApp app = iterator.next();
-		    if (SetUtil.search(finalState.getOverviewSite(site).getOverviewApps(),
-			    desiredApp -> app.isInstantiation(desiredApp)).isEmpty()) {
-			iterator.remove();
-			logger.info("Removed microservice [{}]", app);
 		    }
 		}
 	    }

@@ -9,27 +9,34 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.model.StrategySiteConfig;
 import com.orange.model.StrategyConfig;
+import com.orange.model.StrategySiteConfig;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
 import com.orange.util.SetUtil;
 import com.orange.util.VersionGenerator;
 
-public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
-    private static final Logger logger = LoggerFactory.getLogger(BlueGreenStrategy.class);
+public class CanaryStrategy extends Strategy {
+    private static final Logger logger = LoggerFactory.getLogger(CanaryStrategy.class);
 
-    public BlueGreenStrategy(StrategyConfig config) {
+    public CanaryStrategy(StrategyConfig config) {
 	super(config);
     }
 
     @Override
+    public boolean valid(Overview currentState, Overview finalState) {
+	return true;
+    }
+
+    @Override
     public List<TransitPoint> transitPoints() {
-	return Arrays.asList(newPkgEnvTransit, updateExceptPkgEnvTransit,
+	return Arrays.asList(addCanaryTransit, updateExceptPkgEnvNbrTransit, rolloutTransit,
 		new StrategyLibrary(config, logger).removeUndesiredTransit);
     }
 
-    protected TransitPoint newPkgEnvTransit = new TransitPoint() {
+    protected TransitPoint addCanaryTransit = new TransitPoint() {
+	// TODO similar/duplicate to BlueGreenStrategy, add Strategy lib in next
+	// release
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
@@ -39,7 +46,7 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 				    && app.getPath().equals(desiredApp.getPath())
 				    && app.getEnv().equals(desiredApp.getEnv()))
 			    .isEmpty()) {
-			logger.info("newPkgEnvTransit detected for microservice {}", desiredApp);
+			logger.info("addCanaryTransit detected for microservice {}", desiredApp);
 			return true;
 		    }
 		}
@@ -49,7 +56,7 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
-	    logger.info("start getting next architecture by adding microservice with new pkg and env");
+	    logger.info("start getting next architecture by adding canary microservice with new pkg and env");
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
 		Set<OverviewApp> currentApps = currentState.getOverviewSite(site).getOverviewApps();
@@ -67,6 +74,7 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 			newApp.setGuid(null);
 			newApp.setRoutes(Collections.singleton(siteConfig.getTmpRoute(desiredApp.getName())));
 			newApp.setInstanceVersion(VersionGenerator.random(usedVersions));
+			newApp.setNbProcesses(config.getCanaryNbr());
 			usedVersions.add(newApp.getInstanceVersion());
 			nextState.getOverviewSite(site).addOverviewApp(newApp);
 			logger.info("Added a new microservice: {} ", newApp);
@@ -78,14 +86,20 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 	}
     };
 
-    protected TransitPoint updateExceptPkgEnvTransit = new TransitPoint() {
+    protected TransitPoint updateExceptPkgEnvNbrTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
 		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.isInstantiation(desiredApp)).isEmpty()) {
-			logger.info("updateExceptPkgEnvTransit detected");
+			    app -> app.getName().equals(desiredApp.getName())
+				    && app.getPath().equals(desiredApp.getPath())
+				    && app.getEnv().equals(desiredApp.getEnv())
+				    && app.getRoutes().equals(desiredApp.getRoutes())
+				    && app.getServices().equals(desiredApp.getServices())
+				    && app.getState().equals(desiredApp.getServices()))
+			    .isEmpty()) {
+			logger.info("updateExceptPkgEnvNbrTransit detected");
 			return true;
 		    }
 		}
@@ -96,7 +110,8 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 	// assume that it doesn't exist two apps with same pkg and name
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
-	    logger.info("start getting next architecture by updating desired microservice properties");
+	    logger.info(
+		    "start getting next architecture by updating desired microservice properties except nbrProcesses");
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
@@ -104,9 +119,10 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 			if (nextApp.getName().equals(desiredApp.getName())
 				&& nextApp.getPath().equals(desiredApp.getPath())
 				&& nextApp.getEnv().equals(desiredApp.getEnv())) {
+			    // TODO not accurate, leave it for the moment, wait
+			    // until Strategy Interface updated.
 			    if (!nextApp.isInstantiation(desiredApp)) {
 				nextApp.setRoutes(desiredApp.getRoutes());
-				nextApp.setNbProcesses(desiredApp.getNbProcesses());
 				nextApp.setServices(desiredApp.getServices());
 				nextApp.setState(desiredApp.getState());
 				logger.info("Updated microservice [{}_{}] to {} ", nextApp.getName(),
@@ -119,4 +135,49 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 	    return nextState;
 	}
     };
+
+    protected TransitPoint rolloutTransit = new TransitPoint() {
+	@Override
+	public boolean condition(Overview currentState, Overview finalState) {
+	    for (String site : finalState.listSitesName()) {
+		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
+		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
+			    app -> app.isInstantiation(desiredApp)).isEmpty()) {
+			logger.info("rolloutTransit detected");
+			return true;
+		    }
+		}
+	    }
+	    return false;
+	}
+
+	@Override
+	public Overview next(Overview currentState, Overview finalState) {
+	    logger.info("start getting next architecture by scale up desired microservice and rollout old ones");
+	    Overview nextState = new Overview(currentState);
+	    for (String site : finalState.listSitesName()) {
+		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
+		    for (OverviewApp nextApp : SetUtil.searchByName(nextState.getOverviewSite(site).getOverviewApps(),
+			    desiredApp.getName())) {
+			if (nextApp.getPath().equals(desiredApp.getPath())
+				&& nextApp.getEnv().equals(desiredApp.getEnv())) {
+			    int nextNbr = nextApp.getNbProcesses() + config.getCanaryIncrease();
+			    if (nextNbr > desiredApp.getNbProcesses()) {
+				nextNbr = desiredApp.getNbProcesses();
+			    }
+			    nextApp.setNbProcesses(nextNbr);
+			} else {
+			    int nextNbr = nextApp.getNbProcesses() - config.getCanaryIncrease();
+			    if (nextNbr < 1) {
+				nextNbr = 1;
+			    }
+			    nextApp.setNbProcesses(nextNbr);
+			}
+		    }
+		}
+	    }
+	    return nextState;
+	}
+    };
+
 }

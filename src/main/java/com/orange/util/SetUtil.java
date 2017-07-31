@@ -13,8 +13,8 @@ public class SetUtil {
 	return apps.stream().map(OverviewApp::new).collect(Collectors.toSet());
     }
 
-    public static OverviewApp searchByName(Set<OverviewApp> apps, String appName) {
-	return searchApp(apps, app -> app.getName().equals(appName));
+    public static Set<OverviewApp> searchByName(Set<OverviewApp> apps, String appName) {
+	return search(apps, app -> app.getName().equals(appName));
     }
 
     public static OverviewApp getOneByName(Set<OverviewApp> apps, String appName) {
@@ -33,7 +33,7 @@ public class SetUtil {
 	return apps.stream().noneMatch(predicate);
     }
 
-    public static OverviewApp searchApp(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
+    public static OverviewApp searchOneApp(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
 	Set<OverviewApp> result = search(apps, predicate);
 	switch (result.size()) {
 	case 0:
