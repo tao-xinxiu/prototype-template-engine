@@ -51,7 +51,7 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 	    logger.info("start getting next architecture by adding microservice with new pkg and env");
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
-		Set<OverviewApp> currentApps = currentState.getOverviewSite(site).getOverviewApps();
+		Set<OverviewApp> currentApps = nextState.getOverviewSite(site).getOverviewApps();
 		// TODO fix instanceVersion doesn't need to be unique for all
 		// apps.
 		Set<String> usedVersions = currentApps.stream().map(app -> app.getInstanceVersion())
@@ -61,7 +61,7 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 		    if (SetUtil.noneMatch(currentApps,
 			    app -> app.getName().equals(desiredApp.getName())
 				    && app.getPath().equals(desiredApp.getPath())
-				    && app.getEnv().equals(desiredApp.getPath()))) {
+				    && app.getEnv().equals(desiredApp.getEnv()))) {
 			OverviewApp newApp = new OverviewApp(desiredApp);
 			newApp.setGuid(null);
 			newApp.setRoutes(Collections.singleton(siteConfig.getTmpRoute(desiredApp.getName())));

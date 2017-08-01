@@ -67,7 +67,7 @@ public class CanaryStrategy extends Strategy {
 		    if (SetUtil.noneMatch(currentApps,
 			    app -> app.getName().equals(desiredApp.getName())
 				    && app.getPath().equals(desiredApp.getPath())
-				    && app.getEnv().equals(desiredApp.getPath()))) {
+				    && app.getEnv().equals(desiredApp.getEnv()))) {
 			OverviewApp newApp = new OverviewApp(desiredApp);
 			newApp.setGuid(null);
 			newApp.setRoutes(Collections.singleton(siteConfig.getTmpRoute(desiredApp.getName())));
