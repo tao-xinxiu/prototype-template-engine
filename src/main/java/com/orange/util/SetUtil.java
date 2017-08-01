@@ -32,8 +32,8 @@ public class SetUtil {
     public static boolean noneMatch(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
 	return apps.stream().noneMatch(predicate);
     }
-
-    public static OverviewApp searchOneApp(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
+    
+    public static OverviewApp searchUniqueApp(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
 	Set<OverviewApp> result = search(apps, predicate);
 	switch (result.size()) {
 	case 0:

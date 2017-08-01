@@ -34,11 +34,10 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
+		    if (SetUtil.noneMatch(currentState.getOverviewSite(site).getOverviewApps(),
 			    app -> app.getName().equals(desiredApp.getName())
 				    && app.getPath().equals(desiredApp.getPath())
-				    && app.getEnv().equals(desiredApp.getEnv()))
-			    .isEmpty()) {
+				    && app.getEnv().equals(desiredApp.getEnv()))) {
 			logger.info("newPkgEnvTransit detected for microservice {}", desiredApp);
 			return true;
 		    }
@@ -83,8 +82,8 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.isInstantiation(desiredApp)).isEmpty()) {
+		    if (SetUtil.noneMatch(currentState.getOverviewSite(site).getOverviewApps(),
+			    app -> app.isInstantiation(desiredApp))) {
 			logger.info("updateExceptPkgEnvTransit detected");
 			return true;
 		    }
@@ -100,19 +99,18 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    for (OverviewApp nextApp : nextState.getOverviewSite(site).getOverviewApps()) {
-			if (nextApp.getName().equals(desiredApp.getName())
-				&& nextApp.getPath().equals(desiredApp.getPath())
-				&& nextApp.getEnv().equals(desiredApp.getEnv())) {
-			    if (!nextApp.isInstantiation(desiredApp)) {
-				nextApp.setRoutes(desiredApp.getRoutes());
-				nextApp.setNbProcesses(desiredApp.getNbProcesses());
-				nextApp.setServices(desiredApp.getServices());
-				nextApp.setState(desiredApp.getState());
-				logger.info("Updated microservice [{}_{}] to {} ", nextApp.getName(),
-					nextApp.getInstanceVersion(), nextApp);
-			    }
-			}
+		    if (SetUtil.noneMatch(nextState.getOverviewSite(site).getOverviewApps(),
+			    app -> app.isInstantiation(desiredApp))) {
+			OverviewApp nextApp = SetUtil.getOneApp(nextState.getOverviewSite(site).getOverviewApps(),
+				app -> app.getName().equals(desiredApp.getName())
+					&& app.getPath().equals(desiredApp.getPath())
+					&& app.getEnv().equals(desiredApp.getEnv()));
+			nextApp.setRoutes(desiredApp.getRoutes());
+			nextApp.setNbProcesses(desiredApp.getNbProcesses());
+			nextApp.setServices(desiredApp.getServices());
+			nextApp.setState(desiredApp.getState());
+			logger.info("Updated microservice [{}_{}] to {} ", nextApp.getName(),
+				nextApp.getInstanceVersion(), nextApp);
 		    }
 		}
 	    }

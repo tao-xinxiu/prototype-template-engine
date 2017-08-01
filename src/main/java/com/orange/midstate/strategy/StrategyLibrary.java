@@ -23,8 +23,8 @@ public class StrategyLibrary {
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp currentApp : currentState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.search(finalState.getOverviewSite(site).getOverviewApps(),
-			    desiredApp -> currentApp.isInstantiation(desiredApp)).isEmpty()) {
+		    if (SetUtil.noneMatch(finalState.getOverviewSite(site).getOverviewApps(),
+			    desiredApp -> currentApp.isInstantiation(desiredApp))) {
 			logger.info("removeUndesiredTransit detected");
 			return true;
 		    }
@@ -41,8 +41,8 @@ public class StrategyLibrary {
 		Iterator<OverviewApp> iterator = nextState.getOverviewSite(site).getOverviewApps().iterator();
 		while (iterator.hasNext()) {
 		    OverviewApp app = iterator.next();
-		    if (SetUtil.search(finalState.getOverviewSite(site).getOverviewApps(),
-			    desiredApp -> app.isInstantiation(desiredApp)).isEmpty()) {
+		    if (SetUtil.noneMatch(finalState.getOverviewSite(site).getOverviewApps(),
+			    desiredApp -> app.isInstantiation(desiredApp))) {
 			iterator.remove();
 			logger.info("Removed microservice [{}]", app);
 		    }
