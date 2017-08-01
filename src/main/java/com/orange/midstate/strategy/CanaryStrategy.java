@@ -35,8 +35,7 @@ public class CanaryStrategy extends Strategy {
     }
 
     protected TransitPoint addCanaryTransit = new TransitPoint() {
-	// TODO similar/duplicate to BlueGreenStrategy, add Strategy lib in next
-	// release
+	// TODO similar/duplicate to BlueGreenStrategy, add into Strategy lib
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
@@ -91,15 +90,14 @@ public class CanaryStrategy extends Strategy {
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
+		    if (SetUtil.noneMatch(currentState.getOverviewSite(site).getOverviewApps(),
 			    app -> app.getName().equals(desiredApp.getName())
 				    && app.getPath().equals(desiredApp.getPath())
 				    && app.getEnv().equals(desiredApp.getEnv())
 				    && app.getRoutes().equals(desiredApp.getRoutes())
 				    && app.getServices().equals(desiredApp.getServices())
-				    && app.getState().equals(desiredApp.getServices()))
-			    .isEmpty()) {
-			logger.info("updateExceptPkgEnvNbrTransit detected");
+				    && app.getState().equals(desiredApp.getState()))) {
+			logger.info("updateExceptPkgEnvNbrTransit detected for microservice {}", desiredApp);
 			return true;
 		    }
 		}
@@ -119,9 +117,9 @@ public class CanaryStrategy extends Strategy {
 			if (nextApp.getName().equals(desiredApp.getName())
 				&& nextApp.getPath().equals(desiredApp.getPath())
 				&& nextApp.getEnv().equals(desiredApp.getEnv())) {
-			    // TODO not accurate, leave it for the moment, wait
-			    // until Strategy Interface updated.
-			    if (!nextApp.isInstantiation(desiredApp)) {
+			    if (!nextApp.getRoutes().equals(desiredApp.getRoutes())
+				    || !nextApp.getServices().equals(desiredApp.getServices())
+				    || !nextApp.getState().equals(desiredApp.getState())) {
 				nextApp.setRoutes(desiredApp.getRoutes());
 				nextApp.setServices(desiredApp.getServices());
 				nextApp.setState(desiredApp.getState());
