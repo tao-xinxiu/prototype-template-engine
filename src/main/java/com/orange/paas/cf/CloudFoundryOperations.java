@@ -179,7 +179,11 @@ public class CloudFoundryOperations {
 
     public boolean appRunning(String appId) {
 	try {
-	    if (!CFAppDesiredState.STARTED.toString().equals(getAppSummary(appId).getState())) {
+	    SummaryApplicationResponse appSummary = getAppSummary(appId);
+	    if (!CFAppDesiredState.STARTED.toString().equals(appSummary.getState())) {
+		return false;
+	    }
+	    if (!appStaged(appSummary)) {
 		return false;
 	    }
 	    ApplicationInstancesRequest request = ApplicationInstancesRequest.builder().applicationId(appId).build();
@@ -191,6 +195,10 @@ public class CloudFoundryOperations {
 	    throw new IllegalStateException(
 		    String.format("Expcetion during getting whether app [%s] running." + siteInfo, appId), e);
 	}
+    }
+
+    public boolean appStaged(SummaryApplicationResponse appSummary) {
+	return stagedState.equals(appSummary.getPackageState());
     }
 
     public boolean appStaged(String appId) {
