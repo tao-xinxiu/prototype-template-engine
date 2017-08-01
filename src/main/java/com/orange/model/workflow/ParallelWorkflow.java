@@ -43,10 +43,8 @@ public class ParallelWorkflow extends Workflow {
 		future.get();
 	    }
 	    executor.shutdown();
-	} catch (InterruptedException e) {
-	    logger.error("InterruptedException", e);
-	} catch (ExecutionException e) {
+	} catch (Exception e) {
 	    throw new IllegalStateException(e);
-	}
+	} 
     }
 }

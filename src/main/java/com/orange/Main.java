@@ -135,6 +135,11 @@ public class Main {
 	return currentState.isInstantiation(desiredState);
     }
 
+    @RequestMapping(value = "health", method = RequestMethod.GET)
+    public String health() {
+	return "UP";
+    }
+
     public static CloudFoundryOperations getCloudFoundryOperations(PaaSSite site, OperationConfig config) {
 	CloudFoundryOperations ops = connectedSites.get(site.getName());
 	if (ops == null) {

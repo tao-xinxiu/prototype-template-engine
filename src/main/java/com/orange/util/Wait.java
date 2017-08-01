@@ -20,7 +20,7 @@ public class Wait {
 	    try {
 		Thread.sleep(1000 * backoffSec);
 	    } catch (InterruptedException e) {
-		logger.error("InterruptedException", e);
+		throw new IllegalStateException(e);
 	    }
 	    waitedSec += backoffSec;
 	    if (waitedSec >= timeoutSec) {

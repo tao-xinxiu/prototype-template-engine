@@ -27,7 +27,7 @@ public class RetryFunction<T> {
 		    try {
 			Thread.sleep(1000 * backoffSec);
 		    } catch (InterruptedException ex) {
-			logger.error("InterruptedException", ex);
+			throw new IllegalStateException(ex);
 		    }
 		}
 	    }
