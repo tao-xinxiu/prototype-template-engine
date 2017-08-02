@@ -9,11 +9,11 @@ import com.orange.model.state.Overview;
 
 public class MidStateCalculator {
     private String strategyClass;
-    private StrategyConfig deploymentConfig;
+    private StrategyConfig strategyConfig;
 
-    public MidStateCalculator(String strategyClass, StrategyConfig deploymentConfig) {
+    public MidStateCalculator(String strategyClass, StrategyConfig strategyConfig) {
 	this.strategyClass = strategyClass;
-	this.deploymentConfig = deploymentConfig;
+	this.strategyConfig = strategyConfig;
     }
 
     /**
@@ -31,7 +31,7 @@ public class MidStateCalculator {
 	}
 	try {
 	    Strategy strategy = (Strategy) Class.forName(strategyClass).getConstructor(StrategyConfig.class)
-		    .newInstance(deploymentConfig);
+		    .newInstance(strategyConfig);
 	    if (!strategy.valid(currentState, finalState)) {
 		throw new IllegalStateException("Strategy disallowed situation");
 	    }
