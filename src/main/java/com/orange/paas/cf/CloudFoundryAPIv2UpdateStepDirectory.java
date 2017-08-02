@@ -260,6 +260,10 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	    case CREATED:
 		serial.addStep(updateAppPath(appId, desiredApp.getPath(), currentApp.getEnv()));
 		break;
+	    case FAILED:
+		serial.addStep(restageApp(appId));
+		serial.addStep(stopApp(appId));
+		break;
 	    default:
 		throw new IllegalStateException(String.format("Unsupported app [%s] to update state from [%s] to [%s]",
 			appId, currentApp.getState(), desiredApp.getState()));
