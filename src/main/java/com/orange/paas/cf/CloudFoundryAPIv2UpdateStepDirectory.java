@@ -136,11 +136,11 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	    public void exec() {
 		// app should be STOPPED before upload, so that it could be
 		// staged later by operation of starting
-		operations.updateApp(appId, null, null, null, CFAppDesiredState.STOPPED);
+		operations.stopApp(appId);
 		operations.uploadApp(appId, desiredPath);
 		Map<String, String> envWithUpdatedPath = new HashMap<>(currentEnv);
 		envWithUpdatedPath.put(CloudFoundryAPIv2.pathKeyInEnv, desiredPath);
-		operations.updateApp(appId, null, envWithUpdatedPath, null, null);
+		operations.updateAppEnv(appId, envWithUpdatedPath);
 	    }
 	};
     }
@@ -153,7 +153,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 		Map<String, String> envWithPath = new HashMap<>(env);
 		String path = operations.getAppEnv(appId, CloudFoundryAPIv2.pathKeyInEnv);
 		envWithPath.put(CloudFoundryAPIv2.pathKeyInEnv, path);
-		operations.updateApp(appId, null, envWithPath, null, null);
+		operations.updateAppEnv(appId, envWithPath);
 	    }
 	};
     }
@@ -162,7 +162,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	return new SiteStep(String.format("update app [%s] nbProcesses to [%d]", appId, nbProcesses)) {
 	    @Override
 	    public void exec() {
-		operations.updateApp(appId, null, null, nbProcesses, null);
+		operations.scaleApp(appId, nbProcesses);
 	    }
 	};
     }
@@ -171,7 +171,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	return new SiteStep(String.format("update app [%s] name to [%s]", appId, name)) {
 	    @Override
 	    public void exec() {
-		operations.updateApp(appId, name, null, null, null);
+		operations.updateAppName(appId, name);
 	    }
 	};
     }
@@ -247,8 +247,8 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 		break;
 	    case FAILED:
 		serial.addStep(restageApp(appId));
-		serial.addStep(waitStaged(appId));
 		serial.addStep(stopApp(appId));
+		serial.addStep(waitStaged(appId));
 		break;
 	    default:
 		throw new IllegalStateException(String.format("Unsupported app [%s] to update state from [%s] to [%s]",
@@ -279,11 +279,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	return new SiteStep(String.format("start app [%s]", appId)) {
 	    @Override
 	    public void exec() {
-		// as in CF, app desired state may currently be "STARTED", so we
-		// need to change it to "STOPPED" first to assure that app will
-		// be started.
-		operations.updateApp(appId, null, null, null, CFAppDesiredState.STOPPED);
-		operations.updateApp(appId, null, null, null, CFAppDesiredState.STARTED);
+		operations.startApp(appId);
 	    }
 	};
     }
@@ -292,7 +288,7 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
 	return new SiteStep(String.format("stop app [%s]", appId)) {
 	    @Override
 	    public void exec() {
-		operations.updateApp(appId, null, null, null, CFAppDesiredState.STOPPED);
+		operations.stopApp(appId);
 	    }
 	};
     }

@@ -434,7 +434,7 @@ public class CloudFoundryOperations {
      * @param instances
      * @param state
      */
-    public void updateApp(String appId, String name, Map<String, String> env, Integer instances,
+    private void updateApp(String appId, String name, Map<String, String> env, Integer instances,
 	    CFAppDesiredState state) {
 	try {
 	    UpdateApplicationRequest request = UpdateApplicationRequest.builder().applicationId(appId).name(name)
@@ -446,6 +446,31 @@ public class CloudFoundryOperations {
 		    name, env, instances, state) + siteInfo, e);
 	}
 
+    }
+
+    public void startApp(String appId) {
+	updateApp(appId, null, null, null, CFAppDesiredState.STARTED);
+	logger.info("app {} desired state updated to STARTED.", appId);
+    }
+
+    public void stopApp(String appId) {
+	updateApp(appId, null, null, null, CFAppDesiredState.STOPPED);
+	logger.info("app {} desired state updated to STOPPED.", appId);
+    }
+
+    public void updateAppName(String appId, String name) {
+	updateApp(appId, name, null, null, null);
+	logger.info("app {} name updated to {}.", appId, name);
+    }
+
+    public void updateAppEnv(String appId, Map<String, String> env) {
+	updateApp(appId, null, env, null, null);
+	logger.info("app {} env updated to {}.", appId, env);
+    }
+
+    public void scaleApp(String appId, Integer instances) {
+	updateApp(appId, null, null, instances, null);
+	logger.info("app {} instances updated to {}.", appId, instances);
     }
 
     public void bindAppServices(String appId, String serviceName) {

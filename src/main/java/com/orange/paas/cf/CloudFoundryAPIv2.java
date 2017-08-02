@@ -102,7 +102,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	// an stable state.
 	if (CFAppDesiredState.STARTED.toString().equals(appInfo.getState())) {
 	    logger.info("app {} state will be stabilized.", appInfo);
-	    operations.updateApp(appId, null, null, null, CFAppDesiredState.STOPPED);
+	    operations.stopApp(appId);
 	}
 	switch (appInfo.getPackageState()) {
 	case "FAILED":
