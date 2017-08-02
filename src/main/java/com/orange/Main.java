@@ -100,7 +100,7 @@ public class Main {
 
     @RequestMapping(value = "/apply", method = RequestMethod.POST)
     public @ResponseBody Overview apply(@RequestBody Overview desiredState) {
-	Overview currentState = getCurrentState(desiredState.listPaaSSites());
+	Overview currentState = getCurrentStableState(desiredState.listPaaSSites());
 	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState, operationConfig)
 		.getUpdateWorkflow();
 	updateWorkflow.exec();
@@ -113,7 +113,7 @@ public class Main {
 	if (midStateCalculator == null) {
 	    throw new IllegalStateException("Update config not yet set.");
 	}
-	Overview currentState = getCurrentState(finalState.listPaaSSites());
+	Overview currentState = getCurrentStableState(finalState.listPaaSSites());
 	return midStateCalculator.calcMidStates(currentState, finalState);
     }
 
@@ -148,6 +148,16 @@ public class Main {
 	    connectedSites.put(site.getName(), ops);
 	}
 	return ops;
+    }
+    
+    private Overview getCurrentStableState(Collection<PaaSSite> managingSites) {
+	Map<String, PaaSSite> sites = managingSites.stream()
+		.collect(Collectors.toMap(site -> site.getName(), site -> site));
+	Map<String, OverviewSite> overviewSites = managingSites.parallelStream().collect(Collectors
+		.toMap(site -> site.getName(), site -> new CloudFoundryAPIv2(site, operationConfig).stabilizeOverviewSite()));
+	Overview currentState = new Overview(sites, overviewSites);
+	logger.info("Got and stabilized current state! {} ", currentState);
+	return currentState;
     }
 
     public static void main(String[] args) {

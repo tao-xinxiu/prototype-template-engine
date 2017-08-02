@@ -16,6 +16,7 @@ import com.orange.model.state.AppState;
 import com.orange.model.state.OverviewApp;
 import com.orange.model.state.OverviewSite;
 import com.orange.model.state.Route;
+import com.orange.model.state.cf.CFAppDesiredState;
 import com.orange.paas.PaaSAPI;
 
 public class CloudFoundryAPIv2 extends PaaSAPI {
@@ -35,6 +36,15 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	return new OverviewSite(operations.listSpaceApps().parallelStream()
 		.map(appInfo -> new OverviewApp(appInfo.getId(), parseName(appInfo.getName()),
 			parseInstVersion(appInfo.getName()), parsePath(appInfo), parseState(appInfo),
+			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo), parseServices(appInfo)))
+		.collect(Collectors.toSet()));
+    }
+
+    public OverviewSite stabilizeOverviewSite() {
+	logger.info("Start getting the current state and make it stable ...");
+	return new OverviewSite(operations.listSpaceApps().parallelStream()
+		.map(appInfo -> new OverviewApp(appInfo.getId(), parseName(appInfo.getName()),
+			parseInstVersion(appInfo.getName()), parsePath(appInfo), stabilizeState(appInfo),
 			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo), parseServices(appInfo)))
 		.collect(Collectors.toSet()));
     }
@@ -68,6 +78,30 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     private AppState parseState(SpaceApplicationSummary appInfo) {
 	if (operations.appRunning(appInfo.getId())) {
 	    return AppState.RUNNING;
+	}
+	switch (appInfo.getPackageState()) {
+	case "FAILED":
+	    return AppState.FAILED;
+	case "STAGED":
+	    return AppState.STAGED;
+	default:
+	    if (appInfo.getPackageUpdatedAt() == null) {
+		return AppState.CREATED;
+	    } else {
+		return AppState.UPLOADED;
+	    }
+	}
+    }
+
+    private AppState stabilizeState(SpaceApplicationSummary appInfo) {
+	String appId = appInfo.getId();
+	if (operations.appRunning(appId)) {
+	    return AppState.RUNNING;
+	}
+	// If app is not running, change its desired state to STOPPED to attain
+	// an stable state.
+	if (CFAppDesiredState.STARTED.toString().equals(appInfo.getState())) {
+	    operations.updateApp(appId, null, null, null, CFAppDesiredState.STOPPED);
 	}
 	switch (appInfo.getPackageState()) {
 	case "FAILED":
