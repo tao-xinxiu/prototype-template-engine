@@ -30,7 +30,7 @@ public class CanaryStrategy extends Strategy {
 
     @Override
     public List<TransitPoint> transitPoints() {
-	return Arrays.asList(addCanaryTransit, updateExceptPkgEnvNbrTransit, rolloutTransit,
+	return Arrays.asList(addCanaryTransit, updateServiceStateTransit, updateRouteTransit, rolloutTransit,
 		new StrategyLibrary(config, logger).removeUndesiredTransit);
     }
 
@@ -58,8 +58,6 @@ public class CanaryStrategy extends Strategy {
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
 		Set<OverviewApp> currentApps = currentState.getOverviewSite(site).getOverviewApps();
-		// TODO fix instanceVersion doesn't need to be unique for all
-		// apps.
 		Set<String> usedVersions = currentApps.stream().map(app -> app.getInstanceVersion())
 			.collect(Collectors.toSet());
 		StrategySiteConfig siteConfig = (StrategySiteConfig) (config.getSiteConfig(site));
@@ -84,7 +82,7 @@ public class CanaryStrategy extends Strategy {
 	}
     };
 
-    protected TransitPoint updateExceptPkgEnvNbrTransit = new TransitPoint() {
+    protected TransitPoint updateServiceStateTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
@@ -93,7 +91,6 @@ public class CanaryStrategy extends Strategy {
 			    app -> app.getName().equals(desiredApp.getName())
 				    && app.getPath().equals(desiredApp.getPath())
 				    && app.getEnv().equals(desiredApp.getEnv())
-				    && app.getRoutes().equals(desiredApp.getRoutes())
 				    && app.getServices().equals(desiredApp.getServices())
 				    && app.getState().equals(desiredApp.getState()))) {
 			logger.info("updateExceptPkgEnvNbrTransit detected for microservice {}", desiredApp);
@@ -116,18 +113,64 @@ public class CanaryStrategy extends Strategy {
 			    app -> app.getName().equals(desiredApp.getName())
 				    && app.getPath().equals(desiredApp.getPath())
 				    && app.getEnv().equals(desiredApp.getEnv())
-				    && app.getRoutes().equals(desiredApp.getRoutes())
 				    && app.getServices().equals(desiredApp.getServices())
 				    && app.getState().equals(desiredApp.getState()))) {
 			OverviewApp nextApp = SetUtil.getOneApp(nextState.getOverviewSite(site).getOverviewApps(),
 				app -> app.getName().equals(desiredApp.getName())
 					&& app.getPath().equals(desiredApp.getPath())
 					&& app.getEnv().equals(desiredApp.getEnv()));
-			nextApp.setRoutes(desiredApp.getRoutes());
 			nextApp.setServices(desiredApp.getServices());
 			nextApp.setState(desiredApp.getState());
 			logger.info("Updated microservice [{}_{}] to {} ", nextApp.getName(),
 				nextApp.getInstanceVersion(), nextApp);
+		    }
+		}
+	    }
+	    return nextState;
+	}
+    };
+
+    protected TransitPoint updateRouteTransit = new TransitPoint() {
+	@Override
+	public boolean condition(Overview currentState, Overview finalState) {
+	    for (String site : finalState.listSitesName()) {
+		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
+		    if (SetUtil.noneMatch(currentState.getOverviewSite(site).getOverviewApps(),
+			    app -> app.getName().equals(desiredApp.getName())
+				    && app.getPath().equals(desiredApp.getPath())
+				    && app.getEnv().equals(desiredApp.getEnv())
+				    && app.getServices().equals(desiredApp.getServices())
+				    && app.getState().equals(desiredApp.getState())
+				    && app.getRoutes().equals(desiredApp.getRoutes()))) {
+			logger.info("updateRouteTransit detected for microservice {}", desiredApp);
+			return true;
+		    }
+		}
+	    }
+	    return false;
+	}
+
+	// assume that it doesn't exist two apps with same pkg and name
+	@Override
+	public Overview next(Overview currentState, Overview finalState) {
+	    logger.info("start getting next architecture by updating desired microservice route");
+	    Overview nextState = new Overview(currentState);
+	    for (String site : finalState.listSitesName()) {
+		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
+		    if (SetUtil.noneMatch(nextState.getOverviewSite(site).getOverviewApps(),
+			    app -> app.getName().equals(desiredApp.getName())
+				    && app.getPath().equals(desiredApp.getPath())
+				    && app.getEnv().equals(desiredApp.getEnv())
+				    && app.getServices().equals(desiredApp.getServices())
+				    && app.getState().equals(desiredApp.getState())
+				    && app.getRoutes().equals(desiredApp.getRoutes()))) {
+			OverviewApp nextApp = SetUtil.getOneApp(nextState.getOverviewSite(site).getOverviewApps(),
+				app -> app.getName().equals(desiredApp.getName())
+					&& app.getPath().equals(desiredApp.getPath())
+					&& app.getEnv().equals(desiredApp.getEnv()));
+			nextApp.setRoutes(desiredApp.getRoutes());
+			logger.info("Updated microservice [{}_{}] route to {} ", nextApp.getName(),
+				nextApp.getInstanceVersion(), nextApp.getRoutes());
 		    }
 		}
 	    }

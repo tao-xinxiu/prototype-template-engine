@@ -101,6 +101,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	// If app is not running, change its desired state to STOPPED to attain
 	// an stable state.
 	if (CFAppDesiredState.STARTED.toString().equals(appInfo.getState())) {
+	    logger.info("app {} state will be stabilized.", appInfo);
 	    operations.updateApp(appId, null, null, null, CFAppDesiredState.STOPPED);
 	}
 	switch (appInfo.getPackageState()) {
