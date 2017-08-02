@@ -52,15 +52,22 @@ public class InplaceStrategy extends Strategy {
 	    logger.info("Start getting next architecture by direct in-place update");
 	    Overview nextState = new Overview(finalState);
 	    for (String site : finalState.listSitesName()) {
-		Set<OverviewApp> currentApps = currentState.getOverviewSite(site).getOverviewApps();
 		for (OverviewApp nextApp : nextState.getOverviewSite(site).getOverviewApps()) {
-		    OverviewApp currentApp = SetUtil.getOneByName(currentApps, nextApp.getName());
-		    if (currentApp == null) {
+		    Set<OverviewApp> currentApps = SetUtil
+			    .searchByName(currentState.getOverviewSite(site).getOverviewApps(), nextApp.getName());
+		    if (currentApps.size() == 0) {
 			// Add non-exist microservice
 			nextApp.setGuid(null);
 			nextApp.setInstanceVersion(VersionGenerator.random(new HashSet<>()));
 			logger.info("{} detected as a new microservice.", nextApp);
 		    } else {
+			// prefer path and env equals app if exist
+			OverviewApp currentApp = SetUtil.getOneApp(currentApps,
+				app -> app.getPath().equals(nextApp.getPath())
+					&& app.getEnv().equals(nextApp.getEnv()));
+			if (currentApp == null) {
+			    currentApp = currentApps.iterator().next();
+			}
 			nextApp.setGuid(currentApp.getGuid());
 			nextApp.setInstanceVersion(currentApp.getInstanceVersion());
 			logger.info("{} detected as a updated microservice", nextApp);

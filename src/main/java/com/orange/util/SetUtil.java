@@ -17,10 +17,6 @@ public class SetUtil {
 	return search(apps, app -> app.getName().equals(appName));
     }
 
-    public static OverviewApp getOneByName(Set<OverviewApp> apps, String appName) {
-	return getOneApp(apps, app -> app.getName().equals(appName));
-    }
-
     public static Set<OverviewApp> searchByState(Set<OverviewApp> apps, AppState appState) {
 	return search(apps, app -> app.getState() == appState);
     }
