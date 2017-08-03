@@ -114,7 +114,7 @@ public class Main {
 	    throw new IllegalStateException("Update config not yet set.");
 	}
 	Overview currentState = getCurrentStableState(finalState.listPaaSSites());
-	return midStateCalculator.calcMidStates(currentState, finalState);
+	return midStateCalculator.calcNextStates(currentState, finalState);
     }
 
     @RequestMapping(value = "/set_update_config", method = RequestMethod.PUT)

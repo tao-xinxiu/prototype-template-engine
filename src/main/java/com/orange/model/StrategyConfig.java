@@ -1,10 +1,14 @@
 package com.orange.model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class StrategyConfig {
+    private boolean parallelAllSites = true;
+    private List<Set<String>> sitesOrder = new ArrayList<>();
     private int canaryNbr = 1;
     private int canaryIncrease = 1;
     private Map<String, StrategySiteConfig> siteConfigs = new HashMap<>();
@@ -50,7 +54,23 @@ public class StrategyConfig {
 
     @Override
     public String toString() {
-	return "StrategyConfig [canaryNbr=" + canaryNbr + ", canaryIncrease=" + canaryIncrease + ", siteConfigs="
-		+ siteConfigs + "]";
+	return "StrategyConfig [parallelAllSites=" + parallelAllSites + ", sitesOrder=" + sitesOrder + ", canaryNbr="
+		+ canaryNbr + ", canaryIncrease=" + canaryIncrease + ", siteConfigs=" + siteConfigs + "]";
+    }
+
+    public boolean isParallelAllSites() {
+	return parallelAllSites;
+    }
+
+    public void setParallelAllSites(boolean parallelAllSites) {
+	this.parallelAllSites = parallelAllSites;
+    }
+
+    public List<Set<String>> getSitesOrder() {
+	return sitesOrder;
+    }
+
+    public void setSitesOrder(List<Set<String>> sitesOrder) {
+	this.sitesOrder = sitesOrder;
     }
 }

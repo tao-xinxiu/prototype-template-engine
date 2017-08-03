@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import com.orange.model.OperationConfig;
 import com.orange.model.state.OverviewApp;
 import com.orange.model.state.Route;
-import com.orange.model.state.cf.CFAppDesiredState;
 import com.orange.model.state.cf.CFAppState;
 import com.orange.model.state.cf.CFOverviewApp;
 import com.orange.model.workflow.SerialWorkflow;

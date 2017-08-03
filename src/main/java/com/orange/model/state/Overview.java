@@ -55,13 +55,17 @@ public class Overview {
     public OverviewSite getOverviewSite(String siteName) {
 	return overviewSites.get(siteName);
     }
-    
+
     public Overview getSubOverview(Set<String> siteNames) {
 	Overview subOverview = new Overview();
 	for (String siteName : siteNames) {
 	    subOverview.addPaaSSite(sites.get(siteName), overviewSites.get(siteName));
 	}
 	return subOverview;
+    }
+
+    public void mergeOverview(Overview subOverview) {
+	overviewSites.putAll(subOverview.overviewSites);
     }
 
     public Set<String> listSitesName() {
