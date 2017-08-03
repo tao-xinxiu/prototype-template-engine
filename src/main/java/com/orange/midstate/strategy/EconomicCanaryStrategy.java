@@ -103,7 +103,7 @@ public class EconomicCanaryStrategy extends CanaryStrategy {
     protected TransitPoint scaleupTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
-	    return rolloutTransit.condition(currentState, finalState);
+	    return library.desiredAppInstantiationExistCondition(currentState, finalState);
 	}
 
 	@Override

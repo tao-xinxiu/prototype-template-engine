@@ -89,4 +89,17 @@ public class StrategyLibrary {
 	    return nextState;
 	}
     };
+
+    public boolean desiredAppInstantiationExistCondition(Overview currentState, Overview finalState) {
+	for (String site : finalState.listSitesName()) {
+	    for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
+		if (SetUtil.noneMatch(currentState.getOverviewSite(site).getOverviewApps(),
+			app -> app.isInstantiation(desiredApp))) {
+		    logger.info("rolloutTransit detected");
+		    return true;
+		}
+	    }
+	}
+	return false;
+    }
 }

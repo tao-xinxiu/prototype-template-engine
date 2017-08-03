@@ -179,16 +179,7 @@ public class CanaryStrategy extends Strategy {
     protected TransitPoint rolloutTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
-	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.noneMatch(currentState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.isInstantiation(desiredApp))) {
-			logger.info("rolloutTransit detected");
-			return true;
-		    }
-		}
-	    }
-	    return false;
+	    return library.desiredAppInstantiationExistCondition(currentState, finalState);
 	}
 
 	@Override
