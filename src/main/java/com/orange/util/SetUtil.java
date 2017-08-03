@@ -1,6 +1,7 @@
 package com.orange.util;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -28,8 +29,8 @@ public class SetUtil {
     public static boolean noneMatch(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
 	return apps.stream().noneMatch(predicate);
     }
-    
-    public static OverviewApp searchUniqueApp(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
+
+    public static OverviewApp getUniqueApp(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
 	Set<OverviewApp> result = search(apps, predicate);
 	switch (result.size()) {
 	case 0:
@@ -68,5 +69,57 @@ public class SetUtil {
 	    }
 	}
 	return true;
+    }
+
+    // verify whether apps have unique path and env
+    public static boolean uniqueByPathEnv(Set<OverviewApp> apps) {
+	Set<PathEnv> appeared = new HashSet<>();
+	for (OverviewApp app : apps) {
+	    if (!appeared.add(new PathEnv(app.getPath(), app.getEnv()))) {
+		return false;
+	    }
+	}
+	return true;
+    }
+
+    static class PathEnv {
+	String path;
+	Map<String, String> env;
+
+	public PathEnv(String path, Map<String, String> env) {
+	    this.path = path;
+	    this.env = env;
+	}
+
+	@Override
+	public int hashCode() {
+	    final int prime = 31;
+	    int result = 1;
+	    result = prime * result + ((env == null) ? 0 : env.hashCode());
+	    result = prime * result + ((path == null) ? 0 : path.hashCode());
+	    return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+	    if (this == obj)
+		return true;
+	    if (obj == null)
+		return false;
+	    if (getClass() != obj.getClass())
+		return false;
+	    PathEnv other = (PathEnv) obj;
+	    if (env == null) {
+		if (other.env != null)
+		    return false;
+	    } else if (!env.equals(other.env))
+		return false;
+	    if (path == null) {
+		if (other.path != null)
+		    return false;
+	    } else if (!path.equals(other.path))
+		return false;
+	    return true;
+	}
     }
 }

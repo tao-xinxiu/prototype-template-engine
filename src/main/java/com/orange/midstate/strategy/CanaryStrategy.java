@@ -31,11 +31,10 @@ public class CanaryStrategy extends Strategy {
     @Override
     public List<TransitPoint> transitPoints() {
 	return Arrays.asList(addCanaryTransit, updateServiceStateTransit, updateRouteTransit, rolloutTransit,
-		new StrategyLibrary(config, logger).removeUndesiredTransit);
+		library.removeUndesiredTransit);
     }
 
     protected TransitPoint addCanaryTransit = new TransitPoint() {
-	// TODO similar/duplicate to BlueGreenStrategy, add into Strategy lib
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
 	    for (String site : finalState.listSitesName()) {
@@ -68,10 +67,10 @@ public class CanaryStrategy extends Strategy {
 				    && app.getEnv().equals(desiredApp.getEnv()))) {
 			OverviewApp newApp = new OverviewApp(desiredApp);
 			newApp.setGuid(null);
-			newApp.setRoutes(Collections.singleton(siteConfig.getTmpRoute(desiredApp.getName())));
 			newApp.setInstanceVersion(VersionGenerator.random(usedVersions));
-			newApp.setNbProcesses(config.getCanaryNbr());
 			usedVersions.add(newApp.getInstanceVersion());
+			newApp.setRoutes(Collections.singleton(siteConfig.getTmpRoute(desiredApp.getName())));
+			newApp.setNbProcesses(config.getCanaryNbr());
 			nextState.getOverviewSite(site).addOverviewApp(newApp);
 			logger.info("Added a new microservice: {} ", newApp);
 			continue;
@@ -81,7 +80,6 @@ public class CanaryStrategy extends Strategy {
 	    return nextState;
 	}
     };
-
     protected TransitPoint updateServiceStateTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
@@ -115,7 +113,7 @@ public class CanaryStrategy extends Strategy {
 				    && app.getEnv().equals(desiredApp.getEnv())
 				    && app.getServices().equals(desiredApp.getServices())
 				    && app.getState().equals(desiredApp.getState()))) {
-			OverviewApp nextApp = SetUtil.getOneApp(nextState.getOverviewSite(site).getOverviewApps(),
+			OverviewApp nextApp = SetUtil.getUniqueApp(nextState.getOverviewSite(site).getOverviewApps(),
 				app -> app.getName().equals(desiredApp.getName())
 					&& app.getPath().equals(desiredApp.getPath())
 					&& app.getEnv().equals(desiredApp.getEnv()));
@@ -164,7 +162,7 @@ public class CanaryStrategy extends Strategy {
 				    && app.getServices().equals(desiredApp.getServices())
 				    && app.getState().equals(desiredApp.getState())
 				    && app.getRoutes().equals(desiredApp.getRoutes()))) {
-			OverviewApp nextApp = SetUtil.getOneApp(nextState.getOverviewSite(site).getOverviewApps(),
+			OverviewApp nextApp = SetUtil.getUniqueApp(nextState.getOverviewSite(site).getOverviewApps(),
 				app -> app.getName().equals(desiredApp.getName())
 					&& app.getPath().equals(desiredApp.getPath())
 					&& app.getEnv().equals(desiredApp.getEnv()));

@@ -22,7 +22,7 @@ public class SiteComparator {
 	Set<String> desiredAppIds = new HashSet<>();
 	for (OverviewApp desiredApp : desiredState.getOverviewApps()) {
 	    if (desiredApp.getGuid() == null) {
-		OverviewApp currentApp = SetUtil.searchUniqueApp(currentState.getOverviewApps(),
+		OverviewApp currentApp = SetUtil.getUniqueApp(currentState.getOverviewApps(),
 			app -> app.getName().equals(desiredApp.getName())
 				&& app.getInstanceVersion().equals(desiredApp.getInstanceVersion()));
 		if (currentApp == null) {
@@ -41,7 +41,7 @@ public class SiteComparator {
 		}
 	    } else {
 		desiredAppIds.add(desiredApp.getGuid());
-		OverviewApp currentApp = SetUtil.searchUniqueApp(currentState.getOverviewApps(),
+		OverviewApp currentApp = SetUtil.getUniqueApp(currentState.getOverviewApps(),
 			app -> app.getGuid().equals(desiredApp.getGuid()));
 		if (currentApp == null) {
 		    throw new IllegalStateException(String.format(

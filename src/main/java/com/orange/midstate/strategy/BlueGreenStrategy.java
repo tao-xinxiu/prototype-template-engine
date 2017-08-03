@@ -26,7 +26,7 @@ public class BlueGreenStrategy extends BlueGreenPkgUpdateStrategy {
     @Override
     public List<TransitPoint> transitPoints() {
 	return Arrays.asList(newPkgEnvTransit, updateExceptPkgEnvRouteTransit, updateRouteTransit,
-		new StrategyLibrary(config, logger).removeUndesiredTransit);
+		library.removeUndesiredTransit);
     }
 
     protected TransitPoint newPkgEnvTransit = new TransitPoint() {
