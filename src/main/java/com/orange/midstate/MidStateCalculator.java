@@ -93,7 +93,7 @@ public class MidStateCalculator {
 	    throw new IllegalStateException(
 		    "Number of sites in strategyConfig.sitesOrder is not equal to the number of sites specified in the finalState.");
 	}
-	if (completeSites.equals(new HashSet<>(sitesInOrder))) {
+	if (!completeSites.equals(new HashSet<>(sitesInOrder))) {
 	    throw new IllegalStateException(
 		    "sites in strategyConfig.sitesOrder is not equal to the sites specified in the finalState");
 	}

@@ -179,7 +179,7 @@ public class CanaryStrategy extends Strategy {
     protected TransitPoint rolloutTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
-	    return library.desiredAppInstantiationExistCondition(currentState, finalState);
+	    return library.desiredAppInstantiationNotExistCondition(currentState, finalState);
 	}
 
 	@Override

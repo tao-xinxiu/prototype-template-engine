@@ -15,7 +15,7 @@ import com.orange.util.SetUtil;
 
 // Strategy assume route not updated between Ainit and Af
 public class EconomicCanaryStrategy extends CanaryStrategy {
-    private static final Logger logger = LoggerFactory.getLogger(CanaryStrategy.class);
+    private static final Logger logger = LoggerFactory.getLogger(EconomicCanaryStrategy.class);
 
     public EconomicCanaryStrategy(StrategyConfig config) {
 	super(config);
@@ -57,13 +57,8 @@ public class EconomicCanaryStrategy extends CanaryStrategy {
 				    && app.getRoutes().equals(desiredApp.getRoutes()));
 		    if (currentApps.stream().mapToInt(app -> app.getNbProcesses()).sum() == desiredApp
 			    .getNbProcesses()) {
-			OverviewApp nextApp = SetUtil.getUniqueApp(currentApps,
-				app -> !app.getPath().equals(desiredApp.getPath())
-					|| !app.getEnv().equals(desiredApp.getEnv()));
-			if (nextApp.getNbProcesses() > 1) {
-			    logger.info("rolloutTransit detected for microservice {}", desiredApp);
+			    logger.info("rolloutTransit detected for microservices {}", currentApps);
 			    return true;
-			}
 		    }
 		}
 	    }
@@ -75,23 +70,26 @@ public class EconomicCanaryStrategy extends CanaryStrategy {
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    Set<OverviewApp> nextApps = SetUtil.search(nextState.getOverviewSite(site).getOverviewApps(),
+			Set<OverviewApp> nextApps = nextState.getOverviewSite(site).getOverviewApps();
+		    Set<OverviewApp> relatedApps = SetUtil.search(nextApps,
 			    app -> app.getName().equals(desiredApp.getName())
 				    && app.getState().equals(desiredApp.getState())
 				    && app.getRoutes().equals(desiredApp.getRoutes()));
-		    if (nextApps.stream().mapToInt(app -> app.getNbProcesses()).sum() == desiredApp.getNbProcesses()) {
-			OverviewApp nextApp = SetUtil.getUniqueApp(nextApps,
-				app -> !app.getPath().equals(desiredApp.getPath())
-					|| !app.getEnv().equals(desiredApp.getEnv()));
-			boolean canaryNotCreated = SetUtil.noneMatch(nextApps,
+		    if (relatedApps.stream().mapToInt(app -> app.getNbProcesses()).sum() == desiredApp.getNbProcesses()) {
+			OverviewApp nextApp = SetUtil.getUniqueApp(relatedApps,
+				app -> (!app.getPath().equals(desiredApp.getPath()))
+					|| (!app.getEnv().equals(desiredApp.getEnv())));
+			boolean canaryNotCreated = SetUtil.noneMatch(relatedApps,
 				app -> app.getPath().equals(desiredApp.getPath())
 					&& app.getEnv().equals(desiredApp.getEnv()));
 			int scaleDownNb = canaryNotCreated ? config.getCanaryNbr() : config.getCanaryIncrease();
 			int nextNbr = nextApp.getNbProcesses() - scaleDownNb;
 			if (nextNbr >= 1) {
 			    nextApp.setNbProcesses(nextNbr);
+			    logger.info("rolled out microservice {}", nextApp);
 			} else {
 			    nextApps.remove(nextApp);
+			    logger.info("removed microservice {}", nextApp);
 			}
 		    }
 		}
@@ -103,12 +101,12 @@ public class EconomicCanaryStrategy extends CanaryStrategy {
     protected TransitPoint scaleupTransit = new TransitPoint() {
 	@Override
 	public boolean condition(Overview currentState, Overview finalState) {
-	    return library.desiredAppInstantiationExistCondition(currentState, finalState);
+	    return library.desiredAppInstantiationNotExistCondition(currentState, finalState);
 	}
 
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
-	    logger.info("start getting next architecture by scale up desired microservice and rollout old ones");
+	    logger.info("start getting next architecture by scale up desired microservice.");
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
