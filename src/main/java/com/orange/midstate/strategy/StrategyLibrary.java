@@ -25,7 +25,7 @@ public class StrategyLibrary {
     }
 
     /**
-     * getting next architecture by removing microservice not in finalState
+     * next architecture: remove micro-services not in finalState
      */
     protected Transit removeUndesiredTransit = new Transit() {
 	@Override
@@ -42,6 +42,31 @@ public class StrategyLibrary {
 			logger.info("Removed microservice [{}]", app);
 		    } else if (app.getVersion().equals(config.getUpdatingVersion())) {
 			app.setVersion(VersionGenerator.random(SetUtil.collectVersions(nextApps)));
+		    }
+		}
+	    }
+	    return nextState;
+	}
+    };
+
+    /**
+     * next architecture: adding new micro-services (in finalState, not in
+     * currentState)
+     */
+    protected Transit addNewTransit = new Transit() {
+	@Override
+	public Overview next(Overview currentState, Overview finalState) {
+	    Overview nextState = new Overview(currentState);
+	    for (String site : finalState.listSitesName()) {
+		Set<OverviewApp> currentApps = nextState.getOverviewSite(site).getOverviewApps();
+		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
+		    if (SetUtil.noneMatch(currentApps, app -> app.getName().equals(desiredApp.getName()))) {
+			OverviewApp newApp = new OverviewApp(desiredApp);
+			newApp.setGuid(null);
+			newApp.setVersion(VersionGenerator.random(new HashSet<>()));
+			nextState.getOverviewSite(site).addOverviewApp(newApp);
+			logger.info("Added a new microservice: {} ", newApp);
+			continue;
 		    }
 		}
 	    }
@@ -123,6 +148,29 @@ public class StrategyLibrary {
 			logger.info("Updated microservice [{}_{}] route to {} ", nextApp.getName(),
 				nextApp.getVersion(), nextApp.getRoutes());
 		    }
+		}
+	    }
+	    return nextState;
+	}
+    };
+
+    protected Transit cleanAllTransit = new Transit() {
+	@Override
+	public Overview next(Overview currentState, Overview finalState) {
+	    Overview nextState = new Overview(currentState);
+	    nextState.getOverviewSites().values().stream().forEach(s -> s.getOverviewApps().clear());
+	    return nextState;
+	}
+    };
+
+    protected Transit deployAllTransit = new Transit() {
+	@Override
+	public Overview next(Overview currentState, Overview finalState) {
+	    Overview nextState = new Overview(currentState);
+	    for (String site : finalState.listSitesName()) {
+		Set<OverviewApp> nextApps = nextState.getOverviewSite(site).getOverviewApps();
+		if (nextApps.isEmpty()) {
+		    nextApps.addAll(finalState.getOverviewSite(site).getOverviewApps());
 		}
 	    }
 	    return nextState;

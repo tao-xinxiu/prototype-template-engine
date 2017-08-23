@@ -11,7 +11,6 @@ import com.orange.model.StrategyConfig;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
 import com.orange.util.SetUtil;
-import com.orange.util.VersionGenerator;
 
 public class BlueGreenStrategy extends Strategy {
     private static final Logger logger = LoggerFactory.getLogger(BlueGreenStrategy.class);
@@ -34,8 +33,8 @@ public class BlueGreenStrategy extends Strategy {
     }
 
     /**
-     * getting next architecture by adding microservice with new pkg and env.
-     * Tagging updating microservice with version "updating"
+     * next architecture: add microservice with new pkg and env. Tagging
+     * updating microservice with version "updating"
      */
     protected Transit newPkgEnvTransit = new Transit() {
 	@Override

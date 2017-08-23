@@ -11,7 +11,6 @@ import com.orange.model.StrategyConfig;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
 import com.orange.util.SetUtil;
-import com.orange.util.VersionGenerator;
 
 public class BlueGreenPkgUpdateStrategy extends Strategy {
     private static final Logger logger = LoggerFactory.getLogger(BlueGreenPkgUpdateStrategy.class);
