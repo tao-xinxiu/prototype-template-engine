@@ -29,30 +29,16 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
     }
 
     @Override
-    public List<TransitPoint> transitPoints() {
+    public List<Transit> transits() {
 	return Arrays.asList(newPkgTransit, updateExceptPkgTransit, library.removeUndesiredTransit);
     }
 
-    protected TransitPoint newPkgTransit = new TransitPoint() {
-	@Override
-	public boolean condition(Overview currentState, Overview finalState) {
-	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.getName().equals(desiredApp.getName())
-				    && app.getPath().equals(desiredApp.getPath()))
-			    .isEmpty()) {
-			logger.info("newPkgTransit detected");
-			return true;
-		    }
-		}
-	    }
-	    return false;
-	}
-
+    /**
+     * getting next architecture by adding microservice with new pkg
+     */
+    protected Transit newPkgTransit = new Transit() {
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
-	    logger.info("start getting next architecture by adding microservice with new pkg");
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
 		Set<String> usedVersions = currentState.getOverviewSite(site).getOverviewApps().stream()
@@ -77,41 +63,28 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 	}
     };
 
-    protected TransitPoint updateExceptPkgTransit = new TransitPoint() {
-	@Override
-	public boolean condition(Overview currentState, Overview finalState) {
-	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.isInstantiation(desiredApp)).isEmpty()) {
-			logger.info("updateExceptPkgTransit detected");
-			return true;
-		    }
-		}
-	    }
-	    return false;
-	}
-
+    /**
+     * getting next architecture by updating desired microservice properties
+     */
+    protected Transit updateExceptPkgTransit = new Transit() {
 	// assume that it doesn't exist two apps with same pkg and name
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
-	    logger.info("start getting next architecture by updating desired microservice properties");
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    for (OverviewApp nextApp : nextState.getOverviewSite(site).getOverviewApps()) {
-			if (nextApp.getName().equals(desiredApp.getName())
-				&& nextApp.getPath().equals(desiredApp.getPath())) {
-			    if (!nextApp.isInstantiation(desiredApp)) {
-				nextApp.setRoutes(desiredApp.getRoutes());
-				nextApp.setEnv(desiredApp.getEnv());
-				nextApp.setNbProcesses(desiredApp.getNbProcesses());
-				nextApp.setServices(desiredApp.getServices());
-				nextApp.setState(desiredApp.getState());
-				logger.info("Updated microservice [{}_{}] to {} ", nextApp.getName(),
-					nextApp.getInstanceVersion(), nextApp);
-			    }
-			}
+		    if (SetUtil.noneMatch(nextState.getOverviewSite(site).getOverviewApps(),
+			    app -> app.isInstantiation(desiredApp))) {
+			OverviewApp nextApp = SetUtil.getOneApp(nextState.getOverviewSite(site).getOverviewApps(),
+				app -> app.getName().equals(desiredApp.getName())
+					&& app.getPath().equals(desiredApp.getPath()));
+			nextApp.setRoutes(desiredApp.getRoutes());
+			nextApp.setEnv(desiredApp.getEnv());
+			nextApp.setNbProcesses(desiredApp.getNbProcesses());
+			nextApp.setServices(desiredApp.getServices());
+			nextApp.setState(desiredApp.getState());
+			logger.info("Updated microservice [{}_{}] to {} ", nextApp.getName(),
+				nextApp.getInstanceVersion(), nextApp);
 		    }
 		}
 	    }

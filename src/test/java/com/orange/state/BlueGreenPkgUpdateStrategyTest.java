@@ -54,8 +54,8 @@ public class BlueGreenPkgUpdateStrategyTest {
 	Strategy bgStrategy = new BlueGreenPkgUpdateStrategy(config);
 	Assert.assertFalse(initState.isInstantiation(finalState));
 	Assert.assertTrue(bgStrategy.valid(initState, finalState));
-	Assert.assertTrue(bgStrategy.transitPoints().get(0).condition(initState, finalState));
-	Assert.assertTrue(bgStrategy.transitPoints().get(0).next(initState, finalState).isInstantiation(midState1()));
+//	Assert.assertTrue(bgStrategy.transits().get(0).condition(initState, finalState));
+	Assert.assertTrue(bgStrategy.transits().get(0).next(initState, finalState).isInstantiation(midState1()));
     }
 
     @Test
@@ -64,9 +64,9 @@ public class BlueGreenPkgUpdateStrategyTest {
 	Overview currentState = midState1Instantiated();
 	Assert.assertFalse(currentState.isInstantiation(finalState));
 	Assert.assertTrue(bgStrategy.valid(currentState, finalState));
-	Assert.assertFalse(bgStrategy.transitPoints().get(0).condition(currentState, finalState));
-	Assert.assertTrue(bgStrategy.transitPoints().get(1).condition(currentState, finalState));
-	Assert.assertEquals(midState2(), bgStrategy.transitPoints().get(1).next(currentState, finalState));
+//	Assert.assertFalse(bgStrategy.transits().get(0).condition(currentState, finalState));
+//	Assert.assertTrue(bgStrategy.transits().get(1).condition(currentState, finalState));
+	Assert.assertEquals(midState2(), bgStrategy.transits().get(1).next(currentState, finalState));
     }
 
     @Test
@@ -75,10 +75,10 @@ public class BlueGreenPkgUpdateStrategyTest {
 	Overview currentState = midState2();
 	Assert.assertFalse(currentState.isInstantiation(finalState));
 	Assert.assertTrue(bgStrategy.valid(currentState, finalState));
-	Assert.assertFalse(bgStrategy.transitPoints().get(0).condition(currentState, finalState));
-	Assert.assertFalse(bgStrategy.transitPoints().get(1).condition(currentState, finalState));
-	Assert.assertTrue(bgStrategy.transitPoints().get(2).condition(currentState, finalState));
-	Overview midState3 = bgStrategy.transitPoints().get(2).next(currentState, finalState);
+//	Assert.assertFalse(bgStrategy.transits().get(0).condition(currentState, finalState));
+//	Assert.assertFalse(bgStrategy.transits().get(1).condition(currentState, finalState));
+//	Assert.assertTrue(bgStrategy.transits().get(2).condition(currentState, finalState));
+	Overview midState3 = bgStrategy.transits().get(2).next(currentState, finalState);
 	Assert.assertEquals(midState3(), midState3);
 	Assert.assertTrue(midState3.isInstantiation(finalState));
     }

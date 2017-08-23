@@ -21,24 +21,12 @@ public class StrategyLibrary {
 	this.config = config;
     }
 
-    protected TransitPoint removeUndesiredTransit = new TransitPoint() {
-	@Override
-	public boolean condition(Overview currentState, Overview finalState) {
-	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp currentApp : currentState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.noneMatch(finalState.getOverviewSite(site).getOverviewApps(),
-			    desiredApp -> currentApp.isInstantiation(desiredApp))) {
-			logger.info("removeUndesiredTransit detected");
-			return true;
-		    }
-		}
-	    }
-	    return false;
-	}
-
+    /**
+     * getting next architecture by removing microservice not in finalState
+     */
+    protected Transit removeUndesiredTransit = new Transit() {
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
-	    logger.info("start getting next architecture by removing undesired microservice.");
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
 		Iterator<OverviewApp> iterator = nextState.getOverviewSite(site).getOverviewApps().iterator();
@@ -55,24 +43,10 @@ public class StrategyLibrary {
 	}
     };
 
-    protected TransitPoint cleanNotUpdatableAppTransit = new TransitPoint() {
+    protected Transit cleanNotUpdatableAppTransit = new Transit() {
 	// TODO for other PaaS (not CF), it's possible that createApp and setEnv
 	// is not a single atomic operation. In this case, strategy need to
 	// identify and cleanUp env not set apps.
-	@Override
-	public boolean condition(Overview currentState, Overview finalState) {
-	    for (String site : finalState.listSitesName()) {
-		// based on path = "" if null, during getCurrentState
-		Set<OverviewApp> nonUpdatableApp = SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
-			app -> "".equals(app.getPath()) || app.getState().equals(AppState.CREATED));
-		if (!nonUpdatableApp.isEmpty()) {
-		    logger.info("cleanNotUpdatableAppTransit detected for microservices: {}", nonUpdatableApp);
-		    return true;
-		}
-	    }
-	    return false;
-	}
-
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
 	    Overview nextState = new Overview(currentState);
@@ -89,17 +63,4 @@ public class StrategyLibrary {
 	    return nextState;
 	}
     };
-
-    public boolean desiredAppInstantiationNotExistCondition(Overview currentState, Overview finalState) {
-	for (String site : finalState.listSitesName()) {
-	    for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		if (SetUtil.noneMatch(currentState.getOverviewSite(site).getOverviewApps(),
-			app -> app.isInstantiation(desiredApp))) {
-		    logger.info("desiredAppInstantiationNotExist detected");
-		    return true;
-		}
-	    }
-	}
-	return false;
-    }
 }

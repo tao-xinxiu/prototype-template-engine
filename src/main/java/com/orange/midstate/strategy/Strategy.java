@@ -16,6 +16,6 @@ public abstract class Strategy {
 
     public abstract boolean valid(Overview currentState, Overview finalState);
 
-    public abstract List<TransitPoint> transitPoints();
+    public abstract List<Transit> transits();
 
 }

@@ -37,16 +37,11 @@ public class InplaceStrategy extends Strategy {
     }
 
     @Override
-    public List<TransitPoint> transitPoints() {
+    public List<Transit> transits() {
 	return Arrays.asList(directTransit);
     }
 
-    protected TransitPoint directTransit = new TransitPoint() {
-	@Override
-	public boolean condition(Overview currentState, Overview finalState) {
-	    return true;
-	}
-
+    protected Transit directTransit = new Transit() {
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
 	    logger.info("Start getting next architecture by direct in-place update");

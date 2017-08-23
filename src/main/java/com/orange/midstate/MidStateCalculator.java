@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.midstate.strategy.Strategy;
-import com.orange.midstate.strategy.TransitPoint;
+import com.orange.midstate.strategy.Transit;
 import com.orange.model.StrategyConfig;
 import com.orange.model.state.Overview;
 
@@ -69,9 +69,10 @@ public class MidStateCalculator {
 	    if (!strategy.valid(currentState, finalState)) {
 		throw new IllegalStateException("Strategy disallowed situation");
 	    }
-	    for (TransitPoint transitPoint : strategy.transitPoints()) {
-		if (transitPoint.condition(currentState, finalState)) {
-		    return transitPoint.next(currentState, finalState);
+	    for (Transit transit : strategy.transits()) {
+		Overview next = transit.next(currentState, finalState);
+		if (!next.equals(currentState)) {
+		    return next;
 		}
 	    }
 	    return finalState;
