@@ -40,8 +40,8 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 
     @Override
     public List<Transit> transits() {
-	return Arrays.asList(library.cleanNotUpdatableAppTransit, rolloutTransit, addCanaryTransit,
-		updateServiceStateTransit, updateRouteTransit, scaleupTransit, library.removeUndesiredTransit);
+	return Arrays.asList(rolloutTransit, addCanaryTransit, updateExceptInstancesRoutesTransit, updateRouteTransit,
+		scaleupTransit, library.removeUndesiredTransit);
     }
 
     /**
@@ -62,11 +62,9 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 		    if (relatedApps.stream().mapToInt(app -> app.getNbProcesses()).sum() == desiredApp
 			    .getNbProcesses()) {
 			OverviewApp nextApp = SetUtil.getUniqueApp(relatedApps,
-				app -> (!app.getPath().equals(desiredApp.getPath()))
-					|| (!app.getEnv().equals(desiredApp.getEnv())));
+				app -> !app.getVersion().equals(library.desiredVersion(desiredApp)));
 			boolean canaryNotCreated = SetUtil.noneMatch(relatedApps,
-				app -> app.getPath().equals(desiredApp.getPath())
-					&& app.getEnv().equals(desiredApp.getEnv()));
+				app -> app.getVersion().equals(library.desiredVersion(desiredApp)));
 			int scaleDownNb = canaryNotCreated ? config.getCanaryNbr() : config.getCanaryIncrease();
 			int nextNbr = nextApp.getNbProcesses() - scaleDownNb;
 			if (nextNbr >= 1) {
@@ -96,8 +94,7 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 		    if (SetUtil.noneMatch(nextApps, app -> app.isInstantiation(desiredApp))) {
 			OverviewApp nextApp = SetUtil.getUniqueApp(nextApps,
 				app -> app.getName().equals(desiredApp.getName())
-					&& app.getPath().equals(desiredApp.getPath())
-					&& app.getEnv().equals(desiredApp.getEnv()));
+					&& app.getVersion().equals(library.desiredVersion(desiredApp)));
 			int nextNbr = nextApp.getNbProcesses() + config.getCanaryIncrease();
 			if (nextNbr > desiredApp.getNbProcesses()) {
 			    nextNbr = desiredApp.getNbProcesses();

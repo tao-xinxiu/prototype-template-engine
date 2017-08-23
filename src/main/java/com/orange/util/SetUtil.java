@@ -53,6 +53,10 @@ public class SetUtil {
 	}
     }
 
+    public static Set<String> collectVersions(Set<OverviewApp> apps) {
+	return apps.stream().map(app -> app.getVersion()).collect(Collectors.toSet());
+    }
+    
     public static Set<OverviewApp> exludedApps(Set<OverviewApp> apps, OverviewApp inclusion) {
 	return apps.stream().filter(app -> app != inclusion).collect(Collectors.toSet());
     }

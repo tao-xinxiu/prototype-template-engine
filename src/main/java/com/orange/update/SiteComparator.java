@@ -24,12 +24,12 @@ public class SiteComparator {
 	    if (desiredApp.getGuid() == null) {
 		OverviewApp currentApp = SetUtil.getUniqueApp(currentState.getOverviewApps(),
 			app -> app.getName().equals(desiredApp.getName())
-				&& app.getInstanceVersion().equals(desiredApp.getInstanceVersion()));
+				&& app.getVersion().equals(desiredApp.getVersion()));
 		if (currentApp == null) {
 		    if (desiredApp.getPath() == null) {
 			throw new IllegalStateException(
 				String.format("The path of the new app [%s, %s] is not specified.",
-					desiredApp.getName(), desiredApp.getInstanceVersion()));
+					desiredApp.getName(), desiredApp.getVersion()));
 		    }
 		    addedApp.add(desiredApp);
 		} else {

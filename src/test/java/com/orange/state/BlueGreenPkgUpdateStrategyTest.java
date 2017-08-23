@@ -24,8 +24,8 @@ public class BlueGreenPkgUpdateStrategyTest {
     private static final String site1name = "site1";
     private static final String site2name = "site2";
     private static final String appName = "appName";
-    private static final String oldAppInstVersion = "v1.0.0";
-    private static final String newAppInstVersion = "v1.1.0";
+    private static final String oldAppVersion = "v1.0.0";
+    private static final String newAppVersion = "v1.1.0";
     private static final int appNbProcesses = 3;
     private static final String appDomain = "orange.com";
     private static final Map<String, String> appEnv = new HashMap<>(Collections.singletonMap("foo", "bar"));
@@ -36,8 +36,8 @@ public class BlueGreenPkgUpdateStrategyTest {
     private static final String oldAppSite2Id = "oldApp-guid-site2";
     private static final String newAppSite1Id = "newApp-guid-site1";
     private static final String newAppSite2Id = "newApp-guid-site2";
-    private static final String oldAppPath = String.format("/app/path/app_%s.zip", oldAppInstVersion);
-    private static final String newAppPath = String.format("/app/path/app_%s.zip", newAppInstVersion);
+    private static final String oldAppPath = String.format("/app/path/app_%s.zip", oldAppVersion);
+    private static final String newAppPath = String.format("/app/path/app_%s.zip", newAppVersion);
     private static final Set<String> appServices = new HashSet<>();
 
     private final static StrategyConfig config = config();
@@ -93,9 +93,9 @@ public class BlueGreenPkgUpdateStrategyTest {
     private final static Overview initState() {
 	Overview initState = new Overview();
 	initState.addPaaSSite(site1, new OverviewSite(Collections.singleton(new OverviewApp(oldAppSite1Id, appName,
-		oldAppInstVersion, oldAppPath, AppState.RUNNING, appNbProcesses, appEnv, appRoutes, appServices))));
+		oldAppVersion, oldAppPath, AppState.RUNNING, appNbProcesses, appEnv, appRoutes, appServices))));
 	initState.addPaaSSite(site2, new OverviewSite(Collections.singleton(new OverviewApp(oldAppSite2Id, appName,
-		oldAppInstVersion, oldAppPath, AppState.RUNNING, appNbProcesses, appEnv, appRoutes, appServices))));
+		oldAppVersion, oldAppPath, AppState.RUNNING, appNbProcesses, appEnv, appRoutes, appServices))));
 	return initState;
     }
 
@@ -127,14 +127,14 @@ public class BlueGreenPkgUpdateStrategyTest {
 
     private final static Overview midState1Instantiated() {
 	Set<OverviewApp> site1Apps = new HashSet<>();
-	site1Apps.add(new OverviewApp(oldAppSite1Id, appName, oldAppInstVersion, oldAppPath, AppState.RUNNING,
+	site1Apps.add(new OverviewApp(oldAppSite1Id, appName, oldAppVersion, oldAppPath, AppState.RUNNING,
 		appNbProcesses, appEnv, appRoutes, appServices));
-	site1Apps.add(new OverviewApp(newAppSite1Id, appName, newAppInstVersion, newAppPath, AppState.RUNNING,
+	site1Apps.add(new OverviewApp(newAppSite1Id, appName, newAppVersion, newAppPath, AppState.RUNNING,
 		appNbProcesses, appEnv, appTmpRoutes, appServices));
 	Set<OverviewApp> site2Apps = new HashSet<>();
-	site2Apps.add(new OverviewApp(oldAppSite2Id, appName, oldAppInstVersion, oldAppPath, AppState.RUNNING,
+	site2Apps.add(new OverviewApp(oldAppSite2Id, appName, oldAppVersion, oldAppPath, AppState.RUNNING,
 		appNbProcesses, appEnv, appRoutes, appServices));
-	site2Apps.add(new OverviewApp(newAppSite2Id, appName, newAppInstVersion, newAppPath, AppState.RUNNING,
+	site2Apps.add(new OverviewApp(newAppSite2Id, appName, newAppVersion, newAppPath, AppState.RUNNING,
 		appNbProcesses, appEnv, appTmpRoutes, appServices));
 	Overview midState1 = new Overview();
 	midState1.addPaaSSite(site1, new OverviewSite(site1Apps));
@@ -144,14 +144,14 @@ public class BlueGreenPkgUpdateStrategyTest {
 
     private final static Overview midState2() {
 	Set<OverviewApp> site1Apps = new HashSet<>();
-	site1Apps.add(new OverviewApp(oldAppSite1Id, appName, oldAppInstVersion, oldAppPath, AppState.RUNNING,
+	site1Apps.add(new OverviewApp(oldAppSite1Id, appName, oldAppVersion, oldAppPath, AppState.RUNNING,
 		appNbProcesses, appEnv, appRoutes, appServices));
-	site1Apps.add(new OverviewApp(newAppSite1Id, appName, newAppInstVersion, newAppPath, AppState.RUNNING,
+	site1Apps.add(new OverviewApp(newAppSite1Id, appName, newAppVersion, newAppPath, AppState.RUNNING,
 		appNbProcesses, appEnv, appRoutes, appServices));
 	Set<OverviewApp> site2Apps = new HashSet<>();
-	site2Apps.add(new OverviewApp(oldAppSite2Id, appName, oldAppInstVersion, oldAppPath, AppState.RUNNING,
+	site2Apps.add(new OverviewApp(oldAppSite2Id, appName, oldAppVersion, oldAppPath, AppState.RUNNING,
 		appNbProcesses, appEnv, appRoutes, appServices));
-	site2Apps.add(new OverviewApp(newAppSite2Id, appName, newAppInstVersion, newAppPath, AppState.RUNNING,
+	site2Apps.add(new OverviewApp(newAppSite2Id, appName, newAppVersion, newAppPath, AppState.RUNNING,
 		appNbProcesses, appEnv, appRoutes, appServices));
 	Overview midState2 = new Overview();
 	midState2.addPaaSSite(site1, new OverviewSite(site1Apps));
@@ -162,9 +162,9 @@ public class BlueGreenPkgUpdateStrategyTest {
     private final static Overview midState3() {
 	Overview midState3 = new Overview();
 	midState3.addPaaSSite(site1, new OverviewSite(Collections.singleton(new OverviewApp(newAppSite1Id, appName,
-		newAppInstVersion, newAppPath, AppState.RUNNING, appNbProcesses, appEnv, appRoutes, appServices))));
+		newAppVersion, newAppPath, AppState.RUNNING, appNbProcesses, appEnv, appRoutes, appServices))));
 	midState3.addPaaSSite(site2, new OverviewSite(Collections.singleton(new OverviewApp(newAppSite2Id, appName,
-		newAppInstVersion, newAppPath, AppState.RUNNING, appNbProcesses, appEnv, appRoutes, appServices))));
+		newAppVersion, newAppPath, AppState.RUNNING, appNbProcesses, appEnv, appRoutes, appServices))));
 	return midState3;
     }
 

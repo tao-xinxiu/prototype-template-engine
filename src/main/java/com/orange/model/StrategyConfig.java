@@ -12,6 +12,7 @@ public class StrategyConfig {
     private int canaryNbr = 1;
     private int canaryIncrease = 1;
     private Map<String, StrategySiteConfig> siteConfigs = new HashMap<>();
+    private String updatingVersion = "UPDATING";
 
     public StrategyConfig() {
     }
@@ -52,12 +53,6 @@ public class StrategyConfig {
 	this.canaryIncrease = canaryIncrease;
     }
 
-    @Override
-    public String toString() {
-	return "StrategyConfig [parallelAllSites=" + parallelAllSites + ", sitesOrder=" + sitesOrder + ", canaryNbr="
-		+ canaryNbr + ", canaryIncrease=" + canaryIncrease + ", siteConfigs=" + siteConfigs + "]";
-    }
-
     public boolean isParallelAllSites() {
 	return parallelAllSites;
     }
@@ -72,5 +67,20 @@ public class StrategyConfig {
 
     public void setSitesOrder(List<Set<String>> sitesOrder) {
 	this.sitesOrder = sitesOrder;
+    }
+
+    public String getUpdatingVersion() {
+	return updatingVersion;
+    }
+
+    public void setUpdatingVersion(String updatingVersion) {
+	this.updatingVersion = updatingVersion;
+    }
+
+    @Override
+    public String toString() {
+	return "StrategyConfig [parallelAllSites=" + parallelAllSites + ", sitesOrder=" + sitesOrder + ", canaryNbr="
+		+ canaryNbr + ", canaryIncrease=" + canaryIncrease + ", siteConfigs=" + siteConfigs
+		+ ", updatingVersion=" + updatingVersion + "]";
     }
 }

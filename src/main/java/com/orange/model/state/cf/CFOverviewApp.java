@@ -33,7 +33,7 @@ public class CFOverviewApp {
 
     public CFOverviewApp(OverviewApp app) {
 	this.guid = app.getGuid();
-	this.name = app.getName() + "_" + app.getInstanceVersion();
+	this.name = app.getName() + "_" + app.getVersion();
 	this.path = app.getPath();
 	this.state = app.getState().asCFState();
 	this.nbProcesses = app.getNbProcesses();

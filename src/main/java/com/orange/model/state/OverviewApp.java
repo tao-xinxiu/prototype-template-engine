@@ -9,11 +9,9 @@ import java.util.stream.Collectors;
 public class OverviewApp {
     private String guid;
     private String name;
-    /**
-     * disallow "_" in instanceVersion, as it's used as delimiter between name
-     * and instanceVersion in PaaS mapping as site unique micro-service name.
-     */
-    private String instanceVersion;
+    // disallow "_" in version, delimiter between name and version in PaaS
+    // mapping as site unique micro-service name.
+    private String version;
     private String path;
     private AppState state;
     private int nbProcesses;
@@ -24,11 +22,11 @@ public class OverviewApp {
     public OverviewApp() {
     }
 
-    public OverviewApp(String guid, String name, String instanceVersion, String path, AppState state, int nbProcesses,
+    public OverviewApp(String guid, String name, String version, String path, AppState state, int nbProcesses,
 	    Map<String, String> env, Set<Route> routes, Set<String> services) {
 	this.guid = guid;
 	this.name = name;
-	this.instanceVersion = instanceVersion;
+	this.version = version;
 	this.path = path;
 	this.state = state;
 	this.nbProcesses = nbProcesses;
@@ -40,7 +38,7 @@ public class OverviewApp {
     public OverviewApp(OverviewApp other) {
 	guid = other.guid;
 	name = other.name;
-	instanceVersion = other.instanceVersion;
+	version = other.version;
 	path = other.path;
 	state = other.state;
 	nbProcesses = other.nbProcesses;
@@ -65,12 +63,12 @@ public class OverviewApp {
 	this.name = name;
     }
 
-    public String getInstanceVersion() {
-	return instanceVersion;
+    public String getVersion() {
+	return version;
     }
 
-    public void setInstanceVersion(String instanceVersion) {
-	this.instanceVersion = instanceVersion;
+    public void setVersion(String version) {
+	this.version = version;
     }
 
     public Set<String> getRoutes() {
@@ -117,11 +115,19 @@ public class OverviewApp {
 	this.env = env;
     }
 
+    public Set<String> getServices() {
+	return services;
+    }
+
+    public void setServices(Set<String> services) {
+	this.services = services;
+    }
+
     @Override
     public String toString() {
-	return "OverviewApp [guid=" + guid + ", name=" + name + ", instanceVersion=" + instanceVersion + ", path="
-		+ path + ", state=" + state + ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes
-		+ ", services=" + services + "]";
+	return "OverviewApp [guid=" + guid + ", name=" + name + ", version=" + version + ", path=" + path + ", state="
+		+ state + ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes + ", services="
+		+ services + "]";
     }
 
     @Override
@@ -130,7 +136,7 @@ public class OverviewApp {
 	int result = 1;
 	result = prime * result + ((env == null) ? 0 : env.hashCode());
 	result = prime * result + ((guid == null) ? 0 : guid.hashCode());
-	result = prime * result + ((instanceVersion == null) ? 0 : instanceVersion.hashCode());
+	result = prime * result + ((version == null) ? 0 : version.hashCode());
 	result = prime * result + ((name == null) ? 0 : name.hashCode());
 	result = prime * result + nbProcesses;
 	result = prime * result + ((path == null) ? 0 : path.hashCode());
@@ -159,10 +165,10 @@ public class OverviewApp {
 		return false;
 	} else if (!guid.equals(other.guid))
 	    return false;
-	if (instanceVersion == null) {
-	    if (other.instanceVersion != null)
+	if (version == null) {
+	    if (other.version != null)
 		return false;
-	} else if (!instanceVersion.equals(other.instanceVersion))
+	} else if (!version.equals(other.version))
 	    return false;
 	if (name == null) {
 	    if (other.name != null)
@@ -204,7 +210,7 @@ public class OverviewApp {
 	if (desiredApp.guid != null && !desiredApp.guid.equals(this.guid)) {
 	    return false;
 	}
-	if (desiredApp.instanceVersion != null && !desiredApp.instanceVersion.equals(this.instanceVersion)) {
+	if (desiredApp.version != null && !desiredApp.version.equals(this.version)) {
 	    return false;
 	}
 	if (!this.name.equals(desiredApp.name) || !this.path.equals(desiredApp.path)
@@ -213,13 +219,5 @@ public class OverviewApp {
 	    return false;
 	}
 	return true;
-    }
-
-    public Set<String> getServices() {
-        return services;
-    }
-
-    public void setServices(Set<String> services) {
-        this.services = services;
     }
 }

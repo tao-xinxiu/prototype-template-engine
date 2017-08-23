@@ -35,7 +35,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	logger.info("Start getting the current state ...");
 	return new OverviewSite(operations.listSpaceApps().parallelStream()
 		.map(appInfo -> new OverviewApp(appInfo.getId(), parseName(appInfo.getName()),
-			parseInstVersion(appInfo.getName()), parsePath(appInfo), parseState(appInfo),
+			parseVersion(appInfo.getName()), parsePath(appInfo), parseState(appInfo),
 			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo), parseServices(appInfo)))
 		.collect(Collectors.toSet()));
     }
@@ -44,7 +44,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	logger.info("Start getting the current state and make it stable ...");
 	return new OverviewSite(operations.listSpaceApps().parallelStream()
 		.map(appInfo -> new OverviewApp(appInfo.getId(), parseName(appInfo.getName()),
-			parseInstVersion(appInfo.getName()), parsePath(appInfo), stabilizeState(appInfo),
+			parseVersion(appInfo.getName()), parsePath(appInfo), stabilizeState(appInfo),
 			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo), parseServices(appInfo)))
 		.collect(Collectors.toSet()));
     }
@@ -54,7 +54,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
      * 
      * @param appName
      *            CF stored microservice instance unique name, mapped as "name"
-     *            + "_" + "instanceVersion" to microservice model (OverviewApp)
+     *            + "_" + "version" to microservice model (OverviewApp)
      * @return
      */
     private String parseName(String appName) {
@@ -66,7 +66,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	}
     }
 
-    private String parseInstVersion(String appName) {
+    private String parseVersion(String appName) {
 	int delimiterPosition = appName.lastIndexOf("_");
 	if (delimiterPosition == -1) {
 	    return "";
