@@ -20,13 +20,12 @@ public class OverviewApp {
     private Set<String> services = new HashSet<>();
     private String memory;
     private String disk;
-    private Map<String, String> attributes = new HashMap<>();
 
     public OverviewApp() {
     }
 
     public OverviewApp(String guid, String name, String version, String path, AppState state, int nbProcesses,
-	    Map<String, String> env, Set<Route> routes, Set<String> services, Map<String, String> attributes) {
+	    Map<String, String> env, Set<Route> routes, Set<String> services, String memory, String disk) {
 	this.guid = guid;
 	this.name = name;
 	this.version = version;
@@ -36,7 +35,8 @@ public class OverviewApp {
 	this.env = env;
 	this.routes = routes;
 	this.services = services;
-	this.attributes = attributes;
+	this.memory = memory;
+	this.disk = disk;
     }
 
     public OverviewApp(OverviewApp other) {
@@ -49,7 +49,8 @@ public class OverviewApp {
 	env = new HashMap<>(other.env);
 	routes = new HashSet<>(other.routes);
 	services = new HashSet<>(other.services);
-	attributes = new HashMap<>(other.attributes);
+	memory = other.memory;
+	disk = other.disk;
     }
 
     public String getGuid() {
@@ -144,26 +145,17 @@ public class OverviewApp {
 	this.disk = disk;
     }
 
-    public Map<String, String> getAttributes() {
-	return attributes;
-    }
-
-    public void setAttributes(Map<String, String> attributes) {
-	this.attributes = attributes;
-    }
-
     @Override
     public String toString() {
 	return "OverviewApp [guid=" + guid + ", name=" + name + ", version=" + version + ", path=" + path + ", state="
 		+ state + ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes + ", services="
-		+ services + ", memory=" + memory + ", disk=" + disk + ", attributes=" + attributes + "]";
+		+ services + ", memory=" + memory + ", disk=" + disk + "]";
     }
 
     @Override
     public int hashCode() {
 	final int prime = 31;
 	int result = 1;
-	result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
 	result = prime * result + ((disk == null) ? 0 : disk.hashCode());
 	result = prime * result + ((env == null) ? 0 : env.hashCode());
 	result = prime * result + ((guid == null) ? 0 : guid.hashCode());
@@ -187,11 +179,6 @@ public class OverviewApp {
 	if (getClass() != obj.getClass())
 	    return false;
 	OverviewApp other = (OverviewApp) obj;
-	if (attributes == null) {
-	    if (other.attributes != null)
-		return false;
-	} else if (!attributes.equals(other.attributes))
-	    return false;
 	if (disk == null) {
 	    if (other.disk != null)
 		return false;
@@ -263,8 +250,7 @@ public class OverviewApp {
 	if (!this.name.equals(desiredApp.name) || !this.path.equals(desiredApp.path)
 		|| !this.state.equals(desiredApp.state) || this.nbProcesses != desiredApp.nbProcesses
 		|| !this.env.equals(desiredApp.env) || !this.routes.equals(desiredApp.routes)
-		|| !this.memory.equals(desiredApp.memory) || !this.disk.equals(desiredApp.disk)
-		|| !this.attributes.equals(desiredApp.attributes)) {
+		|| !this.memory.equals(desiredApp.memory) || !this.disk.equals(desiredApp.disk)) {
 	    return false;
 	}
 	return true;

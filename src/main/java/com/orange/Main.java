@@ -22,13 +22,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.orange.midstate.MidStateCalculator;
 import com.orange.model.StrategyConfig;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewSite;
 import com.orange.model.workflow.Workflow;
+import com.orange.nextstate.NextStateCalculator;
 import com.orange.paas.cf.CloudFoundryAPIv2;
 import com.orange.paas.cf.CloudFoundryOperations;
 import com.orange.update.WorkflowCalculator;
@@ -37,14 +37,15 @@ import com.orange.update.WorkflowCalculator;
 @RestController
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-    // storePath and MidStateCalculator(strategy&config) are specific to user
+    // storePath and nextStateCalculator(strategy&config) are specific to user
     public static final String storePath = "./store/";
-    private static MidStateCalculator midStateCalculator;
+    private static final String strategyPackage = "com.orange.nextstate.strategy.";
+    private static NextStateCalculator nextStateCalculator;
     private static OperationConfig operationConfig = new OperationConfig();
     // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
     private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
 
-    @RequestMapping(value = "/current_state", method = RequestMethod.POST)
+    @RequestMapping(value = "/pull", method = RequestMethod.POST)
     public @ResponseBody Overview getCurrentState(@RequestBody Collection<PaaSSite> managingSites) {
 	Map<String, PaaSSite> sites = managingSites.stream()
 		.collect(Collectors.toMap(site -> site.getName(), site -> site));
@@ -98,8 +99,8 @@ public class Main {
 	}
     }
 
-    @RequestMapping(value = "/apply", method = RequestMethod.POST)
-    public @ResponseBody Overview apply(@RequestBody Overview desiredState) {
+    @RequestMapping(value = "/push", method = RequestMethod.POST)
+    public @ResponseBody Overview pushState(@RequestBody Overview desiredState) {
 	Overview currentState = getCurrentStableState(desiredState.listPaaSSites());
 	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState, operationConfig)
 		.getUpdateWorkflow();
@@ -108,20 +109,20 @@ public class Main {
 	return getCurrentState(desiredState.listPaaSSites());
     }
 
-    @RequestMapping(value = "/mid_states", method = RequestMethod.POST)
-    public @ResponseBody Overview calcMidStates(@RequestBody Overview finalState) {
-	if (midStateCalculator == null) {
+    @RequestMapping(value = "/next", method = RequestMethod.POST)
+    public @ResponseBody Overview calcNextState(@RequestBody Overview finalState) {
+	if (nextStateCalculator == null) {
 	    throw new IllegalStateException("Update config not yet set.");
 	}
 	Overview currentState = getCurrentStableState(finalState.listPaaSSites());
-	return midStateCalculator.calcNextStates(currentState, finalState);
+	return nextStateCalculator.calcNextStates(currentState, finalState);
     }
 
-    @RequestMapping(value = "/set_update_config", method = RequestMethod.PUT)
-    public void setUpdateConfig(@RequestParam("strategy") String strategy, @RequestBody StrategyConfig config) {
-	strategy = "com.orange.midstate.strategy." + strategy;
-	midStateCalculator = new MidStateCalculator(strategy, config);
-	logger.info("Strategy set： [{}]. Update config set： [{}]", strategy, config);
+    @RequestMapping(value = "/set_strategy_config", method = RequestMethod.PUT)
+    public void setStrategyConfig(@RequestParam("strategy") String strategy, @RequestBody StrategyConfig config) {
+	strategy = strategyPackage + strategy;
+	nextStateCalculator = new NextStateCalculator(strategy, config);
+	logger.info("Strategy set: [{}]. Update config set: [{}]", strategy, config);
     }
 
     @RequestMapping(value = "/set_operation_config", method = RequestMethod.PUT)

@@ -1,4 +1,4 @@
-package com.orange.midstate;
+package com.orange.nextstate;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
@@ -9,18 +9,18 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.midstate.strategy.Strategy;
-import com.orange.midstate.strategy.Transit;
 import com.orange.model.StrategyConfig;
 import com.orange.model.state.Overview;
+import com.orange.nextstate.strategy.Strategy;
+import com.orange.nextstate.strategy.Transit;
 
-public class MidStateCalculator {
-    private static final Logger logger = LoggerFactory.getLogger(MidStateCalculator.class);
+public class NextStateCalculator {
+    private static final Logger logger = LoggerFactory.getLogger(NextStateCalculator.class);
 
     private String strategyClass;
     private StrategyConfig strategyConfig;
 
-    public MidStateCalculator(String strategyClass, StrategyConfig strategyConfig) {
+    public NextStateCalculator(String strategyClass, StrategyConfig strategyConfig) {
 	this.strategyClass = strategyClass;
 	this.strategyConfig = strategyConfig;
     }

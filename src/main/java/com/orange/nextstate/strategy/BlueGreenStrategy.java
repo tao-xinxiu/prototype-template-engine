@@ -1,4 +1,4 @@
-package com.orange.midstate.strategy;
+package com.orange.nextstate.strategy;
 
 import java.util.Arrays;
 import java.util.List;
@@ -12,36 +12,39 @@ import com.orange.model.state.Overview;
 import com.orange.model.state.OverviewApp;
 import com.orange.util.SetUtil;
 
-public class BlueGreenPkgUpdateStrategy extends Strategy {
-    private static final Logger logger = LoggerFactory.getLogger(BlueGreenPkgUpdateStrategy.class);
+public class BlueGreenStrategy extends Strategy {
+    private static final Logger logger = LoggerFactory.getLogger(BlueGreenStrategy.class);
 
-    public BlueGreenPkgUpdateStrategy(StrategyConfig config) {
+    public BlueGreenStrategy(StrategyConfig config) {
 	super(config);
     }
 
     @Override
     public boolean valid(Overview currentState, Overview finalState) {
+	// TODO in the case of multi new versions, version should be specified
+	// in finalState
 	return true;
     }
 
     @Override
     public List<Transit> transits() {
-	return Arrays.asList(newPkgTransit, updateExceptPkgTransit, library.removeUndesiredTransit);
+	return Arrays.asList(newPkgEnvTransit, updateExceptRouteTransit, library.updateRouteTransit,
+		library.removeUndesiredTransit);
     }
 
     /**
-     * getting next architecture by adding microservice with new pkg
+     * next architecture: add microservice with new pkg and env. Tagging
+     * updating microservice with version "updating"
      */
-    protected Transit newPkgTransit = new Transit() {
+    protected Transit newPkgEnvTransit = new Transit() {
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
 	    Overview nextState = new Overview(currentState);
 	    for (String site : finalState.listSitesName()) {
+		Set<OverviewApp> currentApps = nextState.getOverviewSite(site).getOverviewApps();
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.getName().equals(desiredApp.getName())
-				    && app.getPath().equals(desiredApp.getPath()))
-			    .isEmpty()) {
+		    if (SetUtil.noneMatch(currentApps, app -> app.getName().equals(desiredApp.getName())
+			    && app.getVersion().equals(library.desiredVersion(desiredApp)))) {
 			OverviewApp newApp = new OverviewApp(desiredApp);
 			newApp.setGuid(null);
 			newApp.setRoutes(library.tmpRoute(site, desiredApp));
@@ -50,6 +53,7 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 			}
 			nextState.getOverviewSite(site).addOverviewApp(newApp);
 			logger.info("Added a new microservice: {} ", newApp);
+			continue;
 		    }
 		}
 	    }
@@ -59,8 +63,9 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 
     /**
      * getting next architecture by updating desired microservice properties
+     * (except route)
      */
-    protected Transit updateExceptPkgTransit = new Transit() {
+    protected Transit updateExceptRouteTransit = new Transit() {
 	// assume that it doesn't exist two apps with same pkg and name
 	@Override
 	public Overview next(Overview currentState, Overview finalState) {
@@ -68,12 +73,17 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 	    for (String site : finalState.listSitesName()) {
 		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
 		    if (SetUtil.noneMatch(nextState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.isInstantiation(desiredApp))) {
-			Set<OverviewApp> nextApps = nextState.getOverviewSite(site).getOverviewApps();
-			OverviewApp nextApp = SetUtil.getOneApp(nextApps,
+			    app -> app.getName().equals(desiredApp.getName())
+				    && app.getVersion().equals(library.desiredVersion(desiredApp))
+				    && app.getPath().equals(desiredApp.getPath())
+				    && app.getEnv().equals(desiredApp.getEnv())
+				    && app.getNbProcesses() == desiredApp.getNbProcesses()
+				    && app.getServices().equals(desiredApp.getServices())
+				    && app.getState().equals(desiredApp.getState()))) {
+			OverviewApp nextApp = SetUtil.getOneApp(nextState.getOverviewSite(site).getOverviewApps(),
 				app -> app.getName().equals(desiredApp.getName())
-					&& app.getPath().equals(desiredApp.getPath()));
-			nextApp.setRoutes(desiredApp.getRoutes());
+					&& app.getVersion().equals(library.desiredVersion(desiredApp)));
+			nextApp.setPath(desiredApp.getPath());
 			nextApp.setEnv(desiredApp.getEnv());
 			nextApp.setNbProcesses(desiredApp.getNbProcesses());
 			nextApp.setServices(desiredApp.getServices());

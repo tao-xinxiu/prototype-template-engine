@@ -1,4 +1,4 @@
-package com.orange.midstate.strategy;
+package com.orange.nextstate.strategy;
 
 import com.orange.model.state.Overview;
 
