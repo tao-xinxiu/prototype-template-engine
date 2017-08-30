@@ -15,16 +15,13 @@ The client could setup a pipeline (with tools as [Jenkins](https://jenkins.io/) 
 
 ## API
 ### pull current architecture
-request: POST /pull
-
+request: POST /pull  
 body: Collection<[PaaSSite](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/PaaSSite.java)> managingSites 
 
 ### push a desired architecture
-POST /push
-
+request: POST /push  
 body: [Overview](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/state/Overview.java) desiredArchitecture
 
 ### calculate next desired architecture
-POST /next
-
-body [Overview](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/state/Overview.java) finalArchitecture
+request: POST /next  
+body: [Overview](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/state/Overview.java) finalArchitecture
