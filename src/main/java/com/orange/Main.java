@@ -55,6 +55,49 @@ public class Main {
 	logger.info("Got current state! {} ", currentState);
 	return currentState;
     }
+    
+    @RequestMapping(value = "/push", method = RequestMethod.POST)
+    public @ResponseBody Overview pushState(@RequestBody Overview desiredState) {
+	Overview currentState = getCurrentStableState(desiredState.listPaaSSites());
+	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState, operationConfig)
+		.getUpdateWorkflow();
+	updateWorkflow.exec();
+	logger.info("Workflow {} finished!", updateWorkflow);
+	return getCurrentState(desiredState.listPaaSSites());
+    }
+
+    @RequestMapping(value = "/next", method = RequestMethod.POST)
+    public @ResponseBody Overview calcNextState(@RequestBody Overview finalState) {
+	if (nextStateCalculator == null) {
+	    throw new IllegalStateException("Update config not yet set.");
+	}
+	Overview currentState = getCurrentStableState(finalState.listPaaSSites());
+	return nextStateCalculator.calcNextStates(currentState, finalState);
+    }
+
+    @RequestMapping(value = "/set_strategy_config", method = RequestMethod.PUT)
+    public void setStrategyConfig(@RequestParam("strategy") String strategy, @RequestBody StrategyConfig config) {
+	strategy = strategyPackage + strategy;
+	nextStateCalculator = new NextStateCalculator(strategy, config);
+	logger.info("Strategy set: [{}]. Update config set: [{}]", strategy, config);
+    }
+
+    @RequestMapping(value = "/set_operation_config", method = RequestMethod.PUT)
+    public void setOperationConfig(@RequestBody OperationConfig config) {
+	operationConfig = config;
+	logger.info("Operation config set! [{}]", config);
+    }
+
+    @RequestMapping(value = "/is_instantiation", method = RequestMethod.POST)
+    public boolean isInstantiation(@RequestBody Overview desiredState) {
+	Overview currentState = getCurrentState(desiredState.listPaaSSites());
+	return currentState.isInstantiation(desiredState);
+    }
+
+    @RequestMapping(value = "health", method = RequestMethod.GET)
+    public String health() {
+	return "UP";
+    }
 
     /**
      * Upload the app binary or source file which is supposed to be uploaded to
@@ -97,49 +140,6 @@ public class Main {
 	} else {
 	    return "File delete failed.";
 	}
-    }
-
-    @RequestMapping(value = "/push", method = RequestMethod.POST)
-    public @ResponseBody Overview pushState(@RequestBody Overview desiredState) {
-	Overview currentState = getCurrentStableState(desiredState.listPaaSSites());
-	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState, operationConfig)
-		.getUpdateWorkflow();
-	updateWorkflow.exec();
-	logger.info("Workflow {} finished!", updateWorkflow);
-	return getCurrentState(desiredState.listPaaSSites());
-    }
-
-    @RequestMapping(value = "/next", method = RequestMethod.POST)
-    public @ResponseBody Overview calcNextState(@RequestBody Overview finalState) {
-	if (nextStateCalculator == null) {
-	    throw new IllegalStateException("Update config not yet set.");
-	}
-	Overview currentState = getCurrentStableState(finalState.listPaaSSites());
-	return nextStateCalculator.calcNextStates(currentState, finalState);
-    }
-
-    @RequestMapping(value = "/set_strategy_config", method = RequestMethod.PUT)
-    public void setStrategyConfig(@RequestParam("strategy") String strategy, @RequestBody StrategyConfig config) {
-	strategy = strategyPackage + strategy;
-	nextStateCalculator = new NextStateCalculator(strategy, config);
-	logger.info("Strategy set: [{}]. Update config set: [{}]", strategy, config);
-    }
-
-    @RequestMapping(value = "/set_operation_config", method = RequestMethod.PUT)
-    public void setOperationConfig(@RequestBody OperationConfig config) {
-	operationConfig = config;
-	logger.info("Operation config set! [{}]", config);
-    }
-
-    @RequestMapping(value = "/is_instantiation", method = RequestMethod.POST)
-    public boolean isInstantiation(@RequestBody Overview desiredState) {
-	Overview currentState = getCurrentState(desiredState.listPaaSSites());
-	return currentState.isInstantiation(desiredState);
-    }
-
-    @RequestMapping(value = "health", method = RequestMethod.GET)
-    public String health() {
-	return "UP";
     }
 
     public static CloudFoundryOperations getCloudFoundryOperations(PaaSSite site, OperationConfig config) {
