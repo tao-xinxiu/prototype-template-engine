@@ -177,6 +177,70 @@ public class StrategyLibrary {
 	}
     };
 
+    protected Transit scaleHorizontalTransit = new Transit() {
+	@Override
+	public Overview next(Overview currentState, Overview finalState) {
+	    Overview nextState = new Overview(currentState);
+	    for (String site : finalState.listSitesName()) {
+		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
+		    OverviewApp nextApp = SetUtil.getUniqueApp(nextState.getOverviewSite(site).getOverviewApps(),
+			    desiredApp.getName(), desiredVersion(desiredApp));
+		    if (nextApp.getNbProcesses() != desiredApp.getNbProcesses()) {
+			nextApp.setNbProcesses(desiredApp.getNbProcesses());
+			logger.info("Updated microservice [{}_{}] nbProcesses to {} ", nextApp.getName(),
+				nextApp.getVersion(), nextApp.getNbProcesses());
+		    }
+		}
+	    }
+	    return nextState;
+	}
+    };
+
+    protected Transit scaleIncrementalTransit = new Transit() {
+	@Override
+	public Overview next(Overview currentState, Overview finalState) {
+	    Overview nextState = new Overview(currentState);
+	    for (String site : finalState.listSitesName()) {
+		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
+		    OverviewApp nextApp = SetUtil.getUniqueApp(nextState.getOverviewSite(site).getOverviewApps(),
+			    desiredApp.getName(), desiredVersion(desiredApp));
+		    if (nextApp.getNbProcesses() <= desiredApp.getNbProcesses()) {
+			int nextNbr = nextApp.getNbProcesses() + config.getCanaryIncrease();
+			nextNbr = nextNbr > desiredApp.getNbProcesses() ? desiredApp.getNbProcesses() : nextNbr;
+			nextApp.setNbProcesses(nextNbr);
+			logger.info("Updated microservice [{}_{}] nbProcesses to {} ", nextApp.getName(),
+				nextApp.getVersion(), nextNbr);
+		    }
+		}
+	    }
+	    return nextState;
+	}
+    };
+
+    protected Transit scaleVerticalTransit = new Transit() {
+	@Override
+	public Overview next(Overview currentState, Overview finalState) {
+	    Overview nextState = new Overview(currentState);
+	    for (String site : finalState.listSitesName()) {
+		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
+		    OverviewApp nextApp = SetUtil.getUniqueApp(nextState.getOverviewSite(site).getOverviewApps(),
+			    desiredApp.getName(), desiredVersion(desiredApp));
+		    if (nextApp.getMemory().equals(desiredApp.getMemory())) {
+			nextApp.setMemory(desiredApp.getMemory());
+			logger.info("Updated microservice [{}_{}] memory to {} ", nextApp.getName(),
+				nextApp.getVersion(), nextApp.getMemory());
+		    }
+		    if (nextApp.getDisk().equals(desiredApp.getDisk())) {
+			nextApp.setDisk(desiredApp.getDisk());
+			logger.info("Updated microservice [{}_{}] disk to {} ", nextApp.getName(), nextApp.getVersion(),
+				nextApp.getDisk());
+		    }
+		}
+	    }
+	    return nextState;
+	}
+    };
+
     protected Transit cleanNotUpdatableAppTransit = new Transit() {
 	// TODO for other PaaS (not CF), it's possible that createApp and setEnv
 	// is not a single atomic operation. In this case, strategy need to

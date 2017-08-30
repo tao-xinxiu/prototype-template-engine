@@ -18,12 +18,15 @@ public class OverviewApp {
     private Map<String, String> env = new HashMap<>();
     private Set<Route> routes = new HashSet<>();
     private Set<String> services = new HashSet<>();
+    private String memory;
+    private String disk;
+    private Map<String, String> attributes = new HashMap<>();
 
     public OverviewApp() {
     }
 
     public OverviewApp(String guid, String name, String version, String path, AppState state, int nbProcesses,
-	    Map<String, String> env, Set<Route> routes, Set<String> services) {
+	    Map<String, String> env, Set<Route> routes, Set<String> services, Map<String, String> attributes) {
 	this.guid = guid;
 	this.name = name;
 	this.version = version;
@@ -33,6 +36,7 @@ public class OverviewApp {
 	this.env = env;
 	this.routes = routes;
 	this.services = services;
+	this.attributes = attributes;
     }
 
     public OverviewApp(OverviewApp other) {
@@ -45,6 +49,7 @@ public class OverviewApp {
 	env = new HashMap<>(other.env);
 	routes = new HashSet<>(other.routes);
 	services = new HashSet<>(other.services);
+	attributes = new HashMap<>(other.attributes);
     }
 
     public String getGuid() {
@@ -123,26 +128,53 @@ public class OverviewApp {
 	this.services = services;
     }
 
+    public String getMemory() {
+	return memory;
+    }
+
+    public void setMemory(String memory) {
+	this.memory = memory;
+    }
+
+    public String getDisk() {
+	return disk;
+    }
+
+    public void setDisk(String disk) {
+	this.disk = disk;
+    }
+
+    public Map<String, String> getAttributes() {
+	return attributes;
+    }
+
+    public void setAttributes(Map<String, String> attributes) {
+	this.attributes = attributes;
+    }
+
     @Override
     public String toString() {
 	return "OverviewApp [guid=" + guid + ", name=" + name + ", version=" + version + ", path=" + path + ", state="
 		+ state + ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes + ", services="
-		+ services + "]";
+		+ services + ", memory=" + memory + ", disk=" + disk + ", attributes=" + attributes + "]";
     }
 
     @Override
     public int hashCode() {
 	final int prime = 31;
 	int result = 1;
+	result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+	result = prime * result + ((disk == null) ? 0 : disk.hashCode());
 	result = prime * result + ((env == null) ? 0 : env.hashCode());
 	result = prime * result + ((guid == null) ? 0 : guid.hashCode());
-	result = prime * result + ((version == null) ? 0 : version.hashCode());
+	result = prime * result + ((memory == null) ? 0 : memory.hashCode());
 	result = prime * result + ((name == null) ? 0 : name.hashCode());
 	result = prime * result + nbProcesses;
 	result = prime * result + ((path == null) ? 0 : path.hashCode());
 	result = prime * result + ((routes == null) ? 0 : routes.hashCode());
 	result = prime * result + ((services == null) ? 0 : services.hashCode());
 	result = prime * result + ((state == null) ? 0 : state.hashCode());
+	result = prime * result + ((version == null) ? 0 : version.hashCode());
 	return result;
     }
 
@@ -155,6 +187,16 @@ public class OverviewApp {
 	if (getClass() != obj.getClass())
 	    return false;
 	OverviewApp other = (OverviewApp) obj;
+	if (attributes == null) {
+	    if (other.attributes != null)
+		return false;
+	} else if (!attributes.equals(other.attributes))
+	    return false;
+	if (disk == null) {
+	    if (other.disk != null)
+		return false;
+	} else if (!disk.equals(other.disk))
+	    return false;
 	if (env == null) {
 	    if (other.env != null)
 		return false;
@@ -165,10 +207,10 @@ public class OverviewApp {
 		return false;
 	} else if (!guid.equals(other.guid))
 	    return false;
-	if (version == null) {
-	    if (other.version != null)
+	if (memory == null) {
+	    if (other.memory != null)
 		return false;
-	} else if (!version.equals(other.version))
+	} else if (!memory.equals(other.memory))
 	    return false;
 	if (name == null) {
 	    if (other.name != null)
@@ -194,6 +236,11 @@ public class OverviewApp {
 	    return false;
 	if (state != other.state)
 	    return false;
+	if (version == null) {
+	    if (other.version != null)
+		return false;
+	} else if (!version.equals(other.version))
+	    return false;
 	return true;
     }
 
@@ -215,7 +262,9 @@ public class OverviewApp {
 	}
 	if (!this.name.equals(desiredApp.name) || !this.path.equals(desiredApp.path)
 		|| !this.state.equals(desiredApp.state) || this.nbProcesses != desiredApp.nbProcesses
-		|| !this.env.equals(desiredApp.env) || !this.routes.equals(desiredApp.routes)) {
+		|| !this.env.equals(desiredApp.env) || !this.routes.equals(desiredApp.routes)
+		|| !this.memory.equals(desiredApp.memory) || !this.disk.equals(desiredApp.disk)
+		|| !this.attributes.equals(desiredApp.attributes)) {
 	    return false;
 	}
 	return true;

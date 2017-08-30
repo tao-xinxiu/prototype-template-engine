@@ -36,7 +36,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	return new OverviewSite(operations.listSpaceApps().parallelStream()
 		.map(appInfo -> new OverviewApp(appInfo.getId(), parseName(appInfo.getName()),
 			parseVersion(appInfo.getName()), parsePath(appInfo), parseState(appInfo),
-			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo), parseServices(appInfo)))
+			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo), parseServices(appInfo), null))
 		.collect(Collectors.toSet()));
     }
 
@@ -45,7 +45,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	return new OverviewSite(operations.listSpaceApps().parallelStream()
 		.map(appInfo -> new OverviewApp(appInfo.getId(), parseName(appInfo.getName()),
 			parseVersion(appInfo.getName()), parsePath(appInfo), stabilizeState(appInfo),
-			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo), parseServices(appInfo)))
+			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo), parseServices(appInfo), null))
 		.collect(Collectors.toSet()));
     }
 

@@ -43,6 +43,10 @@ public class SetUtil {
 	}
     }
 
+    public static OverviewApp getUniqueApp(Set<OverviewApp> apps, String name, String version) {
+	return getUniqueApp(apps, app -> app.getName().equals(name) && app.getVersion().equals(version));
+    }
+
     public static OverviewApp getOneApp(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
 	Set<OverviewApp> result = search(apps, predicate);
 	switch (result.size()) {
@@ -56,7 +60,7 @@ public class SetUtil {
     public static Set<String> collectVersions(Set<OverviewApp> apps) {
 	return apps.stream().map(app -> app.getVersion()).collect(Collectors.toSet());
     }
-    
+
     public static Set<OverviewApp> exludedApps(Set<OverviewApp> apps, OverviewApp inclusion) {
 	return apps.stream().filter(app -> app != inclusion).collect(Collectors.toSet());
     }
