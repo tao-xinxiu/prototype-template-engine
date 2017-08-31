@@ -45,7 +45,7 @@ public class Main {
     // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
     private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
 
-    @RequestMapping(value = "/pull", method = RequestMethod.POST)
+    @RequestMapping(value = "/pull", method = RequestMethod.PUT)
     public @ResponseBody Architecture getCurrentState(@RequestBody Collection<PaaSSite> managingSites) {
 	Map<String, PaaSSite> sites = managingSites.stream()
 		.collect(Collectors.toMap(site -> site.getName(), site -> site));

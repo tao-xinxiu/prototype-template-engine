@@ -2,7 +2,6 @@ package com.orange.reconfig;
 
 import java.util.Map.Entry;
 
-import com.orange.Main;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.state.Architecture;
@@ -10,8 +9,8 @@ import com.orange.model.state.ArchitectureMicroservice;
 import com.orange.model.workflow.ParallelWorkflow;
 import com.orange.model.workflow.SerialWorkflow;
 import com.orange.model.workflow.Workflow;
-import com.orange.paas.UpdateStepDirectory;
-import com.orange.paas.cf.CloudFoundryAPIv2UpdateStepDirectory;
+import com.orange.paas.PaaSAPI;
+import com.orange.paas.cf.CloudFoundryAPIv2;
 
 public class WorkflowCalculator {
     private Architecture currentState;
@@ -32,8 +31,7 @@ public class WorkflowCalculator {
 		    : new SerialWorkflow(String.format("serial update site %s entities", site.getName()));
 	    SiteComparator comparator = new SiteComparator(currentState.getArchitectureSite(site.getName()),
 		    desiredState.getArchitectureSite(site.getName()));
-	    UpdateStepDirectory directory = new CloudFoundryAPIv2UpdateStepDirectory(
-		    Main.getCloudFoundryOperations(site, config));
+	    PaaSAPI directory = new CloudFoundryAPIv2(site, config);
 	    for (ArchitectureMicroservice microservice : comparator.getAddedMicroservice()) {
 		updateSite.addStep(directory.add(microservice));
 	    }
