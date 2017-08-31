@@ -9,10 +9,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.orange.model.OperationConfig;
-import com.orange.model.state.OverviewApp;
+import com.orange.model.state.ArchitectureMicroservice;
 import com.orange.model.state.Route;
-import com.orange.model.state.cf.CFAppState;
-import com.orange.model.state.cf.CFOverviewApp;
+import com.orange.model.state.cf.CFMicroserviceState;
+import com.orange.model.state.cf.CFMicroserviceArchitecture;
 import com.orange.model.workflow.SerialWorkflow;
 import com.orange.model.workflow.Step;
 import com.orange.model.workflow.Workflow;
@@ -41,283 +41,293 @@ public class CloudFoundryAPIv2UpdateStepDirectory implements UpdateStepDirectory
     }
 
     @Override
-    public Step addApp(OverviewApp app) {
-	CFOverviewApp desiredApp = new CFOverviewApp(app);
-	return new Step(String.format("addApp %s", desiredApp)) {
+    public Step add(ArchitectureMicroservice microservice) {
+	CFMicroserviceArchitecture desiredMicroservice = new CFMicroserviceArchitecture(microservice);
+	return new Step(String.format("add microservice %s", desiredMicroservice)) {
 	    @Override
 	    public void exec() {
-		String appId = operations.createApp(desiredApp.getName(), desiredApp.getNbProcesses(),
-			desiredApp.getEnv());
-		CFOverviewApp currentApp = new CFOverviewApp(appId, desiredApp.getName(), null, CFAppState.CREATED,
-			desiredApp.getNbProcesses(), desiredApp.getEnv(), Collections.emptySet(), new HashSet<>());
-		updateAppRoutes(appId, currentApp.getRoutes(), desiredApp.getRoutes()).exec();
-		updateAppServices(appId, currentApp.getServices(), desiredApp.getServices()).exec();
-		if (currentApp.getState() != desiredApp.getState()) {
-		    updateAppState(currentApp, desiredApp).exec();
+		String msId = operations.createApp(desiredMicroservice.getName(), desiredMicroservice.getNbProcesses(),
+			desiredMicroservice.getEnv());
+		CFMicroserviceArchitecture currentMicroservice = new CFMicroserviceArchitecture(msId,
+			desiredMicroservice.getName(), null, CFMicroserviceState.CREATED,
+			desiredMicroservice.getNbProcesses(), desiredMicroservice.getEnv(), Collections.emptySet(),
+			new HashSet<>());
+		updateRoutes(msId, currentMicroservice.getRoutes(), desiredMicroservice.getRoutes()).exec();
+		updateServices(msId, currentMicroservice.getServices(), desiredMicroservice.getServices()).exec();
+		if (currentMicroservice.getState() != desiredMicroservice.getState()) {
+		    updateState(currentMicroservice, desiredMicroservice).exec();
 		}
 	    }
 	};
     }
 
     @Override
-    public Step removeApp(OverviewApp app) {
-	return new SiteStep(String.format("removeApp [%s]", app.getGuid())) {
+    public Step remove(ArchitectureMicroservice microservice) {
+	return new SiteStep(String.format("remove microservice [%s]", microservice.getGuid())) {
 	    @Override
 	    public void exec() {
-		updateAppServices(app.getGuid(), app.getServices(), new HashSet<>()).exec();
-		operations.deleteApp(app.getGuid());
+		updateServices(microservice.getGuid(), microservice.getServices(), new HashSet<>()).exec();
+		operations.deleteApp(microservice.getGuid());
 	    }
 	};
     }
 
     @Override
-    public Step updateApp(OverviewApp currentApp, OverviewApp desiredApp) {
-	CFOverviewApp currentCFApp = new CFOverviewApp(currentApp);
-	CFOverviewApp desiredCFApp = new CFOverviewApp(desiredApp);
+    public Step update(ArchitectureMicroservice currentMicroservice, ArchitectureMicroservice desiredMicroservice) {
+	CFMicroserviceArchitecture currentCFMicroservice = new CFMicroserviceArchitecture(currentMicroservice);
+	CFMicroserviceArchitecture desiredCFMicroservice = new CFMicroserviceArchitecture(desiredMicroservice);
 
-	Workflow serial = new SiteSerialWorkflow(
-		String.format("serial update app properties from %s to %s", currentCFApp, desiredCFApp));
-	String appId = currentCFApp.getGuid();
-	if (!currentCFApp.getRoutes().equals(desiredCFApp.getRoutes())) {
-	    serial.addStep(updateAppRoutes(appId, currentCFApp.getRoutes(), desiredCFApp.getRoutes()));
-	    currentCFApp.setRoutes(desiredCFApp.getRoutes());
+	Workflow serial = new SiteSerialWorkflow(String.format("serial update microservice from %s to %s",
+		currentCFMicroservice, desiredCFMicroservice));
+	String msId = currentCFMicroservice.getGuid();
+	if (!currentCFMicroservice.getRoutes().equals(desiredCFMicroservice.getRoutes())) {
+	    serial.addStep(updateRoutes(msId, currentCFMicroservice.getRoutes(), desiredCFMicroservice.getRoutes()));
+	    currentCFMicroservice.setRoutes(desiredCFMicroservice.getRoutes());
 	}
-	if (!currentCFApp.getName().equals(desiredCFApp.getName())) {
-	    serial.addStep(updateAppName(appId, desiredCFApp.getName()));
+	if (!currentCFMicroservice.getName().equals(desiredCFMicroservice.getName())) {
+	    serial.addStep(updateName(msId, desiredCFMicroservice.getName()));
 	}
 
-	if (desiredCFApp.getState() != CFAppState.CREATED && desiredCFApp.getPath() != null
-		&& !desiredCFApp.getPath().equals(currentCFApp.getPath())) {
-	    serial.addStep(updateAppPath(appId, desiredCFApp.getPath(), currentCFApp.getEnv()));
-	    currentCFApp.setPath(desiredCFApp.getPath());
-	    currentCFApp.setState(CFAppState.UPLOADED);
+	if (desiredCFMicroservice.getState() != CFMicroserviceState.CREATED && desiredCFMicroservice.getPath() != null
+		&& !desiredCFMicroservice.getPath().equals(currentCFMicroservice.getPath())) {
+	    serial.addStep(updatePath(msId, desiredCFMicroservice.getPath(), currentCFMicroservice.getEnv()));
+	    currentCFMicroservice.setPath(desiredCFMicroservice.getPath());
+	    currentCFMicroservice.setState(CFMicroserviceState.UPLOADED);
 	}
-	if (!currentCFApp.getServices().equals(desiredApp.getServices())) {
-	    serial.addStep(updateAppServices(appId, currentCFApp.getServices(), desiredCFApp.getServices()));
-	    currentCFApp.setServices(desiredCFApp.getServices());
-	    restageIfNeeded(currentCFApp, serial);
+	if (!currentCFMicroservice.getServices().equals(desiredMicroservice.getServices())) {
+	    serial.addStep(
+		    updateServices(msId, currentCFMicroservice.getServices(), desiredCFMicroservice.getServices()));
+	    currentCFMicroservice.setServices(desiredCFMicroservice.getServices());
+	    restageIfNeeded(currentCFMicroservice, serial);
 	}
-	if (!currentCFApp.getEnv().equals(desiredCFApp.getEnv())) {
-	    serial.addStep(updateAppEnv(appId, desiredCFApp.getEnv()));
-	    currentCFApp.setEnv(desiredCFApp.getEnv());
-	    restageIfNeeded(currentCFApp, serial);
+	if (!currentCFMicroservice.getEnv().equals(desiredCFMicroservice.getEnv())) {
+	    serial.addStep(updateEnv(msId, desiredCFMicroservice.getEnv()));
+	    currentCFMicroservice.setEnv(desiredCFMicroservice.getEnv());
+	    restageIfNeeded(currentCFMicroservice, serial);
 	}
-	if (currentCFApp.getNbProcesses() != desiredCFApp.getNbProcesses()) {
-	    serial.addStep(updateAppNbProcesses(appId, desiredCFApp.getNbProcesses()));
-	    currentCFApp.setNbProcesses(desiredCFApp.getNbProcesses());
+	if (currentCFMicroservice.getNbProcesses() != desiredCFMicroservice.getNbProcesses()) {
+	    serial.addStep(updateNbProcesses(msId, desiredCFMicroservice.getNbProcesses()));
+	    currentCFMicroservice.setNbProcesses(desiredCFMicroservice.getNbProcesses());
 	}
-	if (currentCFApp.getState() != desiredCFApp.getState()) {
-	    serial.addStep(updateAppState(currentCFApp, desiredCFApp));
-	    currentCFApp.setState(desiredCFApp.getState());
+	if (currentCFMicroservice.getState() != desiredCFMicroservice.getState()) {
+	    serial.addStep(updateState(currentCFMicroservice, desiredCFMicroservice));
+	    currentCFMicroservice.setState(desiredCFMicroservice.getState());
 	}
 	return serial;
     }
 
     /**
-     * add step restage currentCFApp into the workflow if needed
+     * add step restage currentCFMicroservice into the workflow if needed
      * 
-     * @param currentCFApp
-     *            The current microservice overview, its state might be updated
+     * @param currentCFMicroservice
+     *            The current microservice architecture, its state might be
+     *            updated
      * @param workflow
      *            The workflow within which to add restage step if needed
      */
-    private void restageIfNeeded(CFOverviewApp currentCFApp, Workflow workflow) {
-	Set<CFAppState> upstagedStates = new HashSet<>(Arrays.asList(CFAppState.CREATED, CFAppState.UPLOADED));
-	if (!upstagedStates.contains(currentCFApp.getState())) {
-	    workflow.addStep(restageApp(currentCFApp.getGuid()));
-	    currentCFApp.setState(CFAppState.staging);
+    private void restageIfNeeded(CFMicroserviceArchitecture currentCFMicroservice, Workflow workflow) {
+	Set<CFMicroserviceState> upstagedStates = new HashSet<>(
+		Arrays.asList(CFMicroserviceState.CREATED, CFMicroserviceState.UPLOADED));
+	if (!upstagedStates.contains(currentCFMicroservice.getState())) {
+	    workflow.addStep(restage(currentCFMicroservice.getGuid()));
+	    currentCFMicroservice.setState(CFMicroserviceState.staging);
 	}
     }
 
-    private Step updateAppPath(String appId, String desiredPath, Map<String, String> currentEnv) {
-	return new SiteStep(String.format("upload app [%s] with path [%s]", appId, desiredPath)) {
+    private Step updatePath(String msId, String desiredPath, Map<String, String> currentEnv) {
+	return new SiteStep(String.format("upload microservice [%s] with path [%s]", msId, desiredPath)) {
 	    @Override
 	    public void exec() {
-		// app should be STOPPED before upload, so that it could be
-		// staged later by operation of starting
-		operations.stopApp(appId);
-		operations.uploadApp(appId, desiredPath);
+		// microservice should be STOPPED before upload, so that it
+		// could be staged later by operation of starting
+		operations.stopApp(msId);
+		operations.uploadApp(msId, desiredPath);
 		Map<String, String> envWithUpdatedPath = new HashMap<>(currentEnv);
 		envWithUpdatedPath.put(CloudFoundryAPIv2.pathKeyInEnv, desiredPath);
-		operations.updateAppEnv(appId, envWithUpdatedPath);
+		operations.updateAppEnv(msId, envWithUpdatedPath);
 	    }
 	};
     }
 
-    private Step updateAppEnv(String appId, Map<String, String> env) {
-	return new SiteStep(String.format("update app [%s] env to [%s]", appId, env)) {
+    private Step updateEnv(String msId, Map<String, String> env) {
+	return new SiteStep(String.format("update microservice [%s] env to [%s]", msId, env)) {
 	    @Override
 	    public void exec() {
 		// should not change path value in env during update other env
 		Map<String, String> envWithPath = new HashMap<>(env);
-		String path = operations.getAppEnv(appId, CloudFoundryAPIv2.pathKeyInEnv);
+		String path = operations.getAppEnv(msId, CloudFoundryAPIv2.pathKeyInEnv);
 		envWithPath.put(CloudFoundryAPIv2.pathKeyInEnv, path);
-		operations.updateAppEnv(appId, envWithPath);
+		operations.updateAppEnv(msId, envWithPath);
 	    }
 	};
     }
 
-    private Step updateAppNbProcesses(String appId, int nbProcesses) {
-	return new SiteStep(String.format("update app [%s] nbProcesses to [%d]", appId, nbProcesses)) {
+    private Step updateNbProcesses(String msId, int nbProcesses) {
+	return new SiteStep(String.format("update microservice [%s] nbProcesses to [%d]", msId, nbProcesses)) {
 	    @Override
 	    public void exec() {
-		operations.scaleApp(appId, nbProcesses);
+		operations.scaleApp(msId, nbProcesses);
 	    }
 	};
     }
 
-    private Step updateAppName(String appId, String name) {
-	return new SiteStep(String.format("update app [%s] name to [%s]", appId, name)) {
+    private Step updateName(String msId, String name) {
+	return new SiteStep(String.format("update microservice [%s] name to [%s]", msId, name)) {
 	    @Override
 	    public void exec() {
-		operations.updateAppName(appId, name);
+		operations.updateAppName(msId, name);
 	    }
 	};
     }
 
-    private Step updateAppRoutes(String appId, Set<Route> currentRoutes, Set<Route> desiredRoutes) {
-	return new SiteStep(
-		String.format("update app [%s] routes from [%s] to [%s]", appId, currentRoutes, desiredRoutes)) {
+    private Step updateRoutes(String msId, Set<Route> currentRoutes, Set<Route> desiredRoutes) {
+	return new SiteStep(String.format("update microservice [%s] routes from [%s] to [%s]", msId, currentRoutes,
+		desiredRoutes)) {
 	    @Override
 	    public void exec() {
 		Set<Route> addedRoutes = desiredRoutes.stream().filter(route -> !currentRoutes.contains(route))
 			.collect(Collectors.toSet());
 		Set<Route> removedRoutes = currentRoutes.stream().filter(route -> !desiredRoutes.contains(route))
 			.collect(Collectors.toSet());
-		addedRoutes.stream().forEach(route -> operations.createAndMapAppRoute(appId, route));
-		removedRoutes.stream().forEach(route -> operations.unmapAppRoute(appId, route));
+		addedRoutes.stream().forEach(route -> operations.createAndMapAppRoute(msId, route));
+		removedRoutes.stream().forEach(route -> operations.unmapAppRoute(msId, route));
 	    }
 	};
     }
 
-    private Step updateAppServices(String appId, Set<String> currentServices, Set<String> desiredServices) {
-	return new SiteStep(String.format("update app [%s] bound services from [%s] to [%s]", appId, currentServices,
-		desiredServices)) {
+    private Step updateServices(String msId, Set<String> currentServices, Set<String> desiredServices) {
+	return new SiteStep(String.format("update microservice [%s] bound services from [%s] to [%s]", msId,
+		currentServices, desiredServices)) {
 	    @Override
 	    public void exec() {
 		Set<String> bindServices = desiredServices.stream()
 			.filter(service -> !currentServices.contains(service)).collect(Collectors.toSet());
 		Set<String> unbindServiecs = currentServices.stream()
 			.filter(service -> !desiredServices.contains(service)).collect(Collectors.toSet());
-		bindServices.stream().forEach(service -> operations.bindAppServices(appId, service));
-		unbindServiecs.stream().forEach(service -> operations.unbindAppServices(appId, service));
+		bindServices.stream().forEach(service -> operations.bindAppServices(msId, service));
+		unbindServiecs.stream().forEach(service -> operations.unbindAppServices(msId, service));
 	    }
 	};
     }
 
-    private Step updateAppState(CFOverviewApp currentApp, CFOverviewApp desiredApp) {
-	String appId = currentApp.getGuid();
-	Workflow serial = new SiteSerialWorkflow(String.format("update app [%s] state from [%s] to [%s]", appId,
-		currentApp.getState(), desiredApp.getState()));
-	switch (desiredApp.getState()) {
+    private Step updateState(CFMicroserviceArchitecture currentMicroservice,
+	    CFMicroserviceArchitecture desiredMicroservice) {
+	String msId = currentMicroservice.getGuid();
+	Workflow serial = new SiteSerialWorkflow(String.format("update microservice [%s] state from [%s] to [%s]", msId,
+		currentMicroservice.getState(), desiredMicroservice.getState()));
+	switch (desiredMicroservice.getState()) {
 	case RUNNING:
-	    switch (currentApp.getState()) {
+	    switch (currentMicroservice.getState()) {
 	    case CREATED:
-		serial.addStep(updateAppPath(appId, desiredApp.getPath(), currentApp.getEnv()));
+		serial.addStep(updatePath(msId, desiredMicroservice.getPath(), currentMicroservice.getEnv()));
 	    case UPLOADED:
 	    case STAGED:
-		serial.addStep(startApp(appId));
+		serial.addStep(start(msId));
 	    case staging:
-		serial.addStep(waitStaged(appId));
+		serial.addStep(waitStaged(msId));
 	    case starting:
-		serial.addStep(waitRunning(appId));
+		serial.addStep(waitRunning(msId));
 		break;
 	    case FAILED:
-		serial.addStep(restageApp(appId));
-		serial.addStep(waitStaged(appId));
-		serial.addStep(waitRunning(appId));
+		serial.addStep(restage(msId));
+		serial.addStep(waitStaged(msId));
+		serial.addStep(waitRunning(msId));
 		break;
 	    default:
-		throw new IllegalStateException(String.format("Unsupported app [%s] to update state from [%s] to [%s]",
-			appId, currentApp.getState(), desiredApp.getState()));
+		throw new IllegalStateException(
+			String.format("Unsupported microservice [%s] to update state from [%s] to [%s]", msId,
+				currentMicroservice.getState(), desiredMicroservice.getState()));
 	    }
 	    break;
 	case STAGED:
-	    switch (currentApp.getState()) {
+	    switch (currentMicroservice.getState()) {
 	    case CREATED:
-		serial.addStep(updateAppPath(appId, desiredApp.getPath(), currentApp.getEnv()));
+		serial.addStep(updatePath(msId, desiredMicroservice.getPath(), currentMicroservice.getEnv()));
 	    case UPLOADED:
-		serial.addStep(startApp(appId));
+		serial.addStep(start(msId));
 	    case staging:
-		serial.addStep(waitStaged(appId));
+		serial.addStep(waitStaged(msId));
 	    case starting:
 	    case RUNNING:
-		serial.addStep(stopApp(appId));
+		serial.addStep(stop(msId));
 		break;
 	    case FAILED:
-		serial.addStep(restageApp(appId));
-		serial.addStep(stopApp(appId));
-		serial.addStep(waitStaged(appId));
+		serial.addStep(restage(msId));
+		serial.addStep(stop(msId));
+		serial.addStep(waitStaged(msId));
 		break;
 	    default:
-		throw new IllegalStateException(String.format("Unsupported app [%s] to update state from [%s] to [%s]",
-			appId, currentApp.getState(), desiredApp.getState()));
+		throw new IllegalStateException(
+			String.format("Unsupported microservice [%s] to update state from [%s] to [%s]", msId,
+				currentMicroservice.getState(), desiredMicroservice.getState()));
 	    }
 	    break;
 	case UPLOADED:
-	    switch (currentApp.getState()) {
+	    switch (currentMicroservice.getState()) {
 	    case CREATED:
-		serial.addStep(updateAppPath(appId, desiredApp.getPath(), currentApp.getEnv()));
+		serial.addStep(updatePath(msId, desiredMicroservice.getPath(), currentMicroservice.getEnv()));
 		break;
 	    case FAILED:
-		serial.addStep(restageApp(appId));
-		serial.addStep(stopApp(appId));
+		serial.addStep(restage(msId));
+		serial.addStep(stop(msId));
 		break;
 	    default:
-		throw new IllegalStateException(String.format("Unsupported app [%s] to update state from [%s] to [%s]",
-			appId, currentApp.getState(), desiredApp.getState()));
+		throw new IllegalStateException(
+			String.format("Unsupported microservice [%s] to update state from [%s] to [%s]", msId,
+				currentMicroservice.getState(), desiredMicroservice.getState()));
 	    }
 	    break;
 	default:
-	    throw new IllegalStateException(String.format("Unsupported desired state [%s]", desiredApp.getState()));
+	    throw new IllegalStateException(
+		    String.format("Unsupported desired state [%s]", desiredMicroservice.getState()));
 	}
 	return serial;
     }
 
-    private Step startApp(String appId) {
-	return new SiteStep(String.format("start app [%s]", appId)) {
+    private Step start(String msId) {
+	return new SiteStep(String.format("start microservice [%s]", msId)) {
 	    @Override
 	    public void exec() {
-		operations.startApp(appId);
+		operations.startApp(msId);
 	    }
 	};
     }
 
-    private Step stopApp(String appId) {
-	return new SiteStep(String.format("stop app [%s]", appId)) {
+    private Step stop(String msId) {
+	return new SiteStep(String.format("stop microservice [%s]", msId)) {
 	    @Override
 	    public void exec() {
-		operations.stopApp(appId);
+		operations.stopApp(msId);
 	    }
 	};
     }
 
-    private Step restageApp(String appId) {
-	return new SiteStep(String.format("restage app [%s]", appId)) {
+    private Step restage(String msId) {
+	return new SiteStep(String.format("restage microservice [%s]", msId)) {
 	    @Override
 	    public void exec() {
-		operations.restageApp(appId);
+		operations.restageApp(msId);
 	    }
 	};
     }
 
-    private Step waitStaged(String appId) {
-	return new SiteStep(String.format("wait until app [%s] staged", appId)) {
+    private Step waitStaged(String msId) {
+	return new SiteStep(String.format("wait until microservice [%s] staged", msId)) {
 	    @Override
 	    public void exec() {
 		new Wait(opConfig.getPrepareTimeout()).waitUntil(id -> operations.appStaged(id),
-			String.format("wait until app [%s] staged", appId), appId);
+			String.format("wait until microservice [%s] staged", msId), msId);
 	    }
 	};
 
     }
 
-    private Step waitRunning(String appId) {
-	return new SiteStep(String.format("wait until app [%s] running", appId)) {
+    private Step waitRunning(String msId) {
+	return new SiteStep(String.format("wait until microservice [%s] running", msId)) {
 	    @Override
 	    public void exec() {
 		new Wait(opConfig.getStartTimeout()).waitUntil(id -> operations.appRunning(id),
-			String.format("wait until app [%s] running", appId), appId);
+			String.format("wait until microservice [%s] running", msId), msId);
 	    }
 	};
     }

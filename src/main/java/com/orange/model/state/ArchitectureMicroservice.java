@@ -6,14 +6,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class OverviewApp {
+public class ArchitectureMicroservice {
     private String guid;
     private String name;
     // disallow "_" in version, delimiter between name and version in PaaS
     // mapping as site unique micro-service name.
     private String version;
     private String path;
-    private AppState state;
+    private MicroserviceState state;
     private int nbProcesses;
     private Map<String, String> env = new HashMap<>();
     private Set<Route> routes = new HashSet<>();
@@ -21,11 +21,12 @@ public class OverviewApp {
     private String memory;
     private String disk;
 
-    public OverviewApp() {
+    public ArchitectureMicroservice() {
     }
 
-    public OverviewApp(String guid, String name, String version, String path, AppState state, int nbProcesses,
-	    Map<String, String> env, Set<Route> routes, Set<String> services, String memory, String disk) {
+    public ArchitectureMicroservice(String guid, String name, String version, String path, MicroserviceState state,
+	    int nbProcesses, Map<String, String> env, Set<Route> routes, Set<String> services, String memory,
+	    String disk) {
 	this.guid = guid;
 	this.name = name;
 	this.version = version;
@@ -39,7 +40,7 @@ public class OverviewApp {
 	this.disk = disk;
     }
 
-    public OverviewApp(OverviewApp other) {
+    public ArchitectureMicroservice(ArchitectureMicroservice other) {
 	guid = other.guid;
 	name = other.name;
 	version = other.version;
@@ -97,11 +98,11 @@ public class OverviewApp {
 	this.path = path;
     }
 
-    public AppState getState() {
+    public MicroserviceState getState() {
 	return state;
     }
 
-    public void setState(AppState state) {
+    public void setState(MicroserviceState state) {
 	this.state = state;
     }
 
@@ -147,9 +148,9 @@ public class OverviewApp {
 
     @Override
     public String toString() {
-	return "OverviewApp [guid=" + guid + ", name=" + name + ", version=" + version + ", path=" + path + ", state="
-		+ state + ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes + ", services="
-		+ services + ", memory=" + memory + ", disk=" + disk + "]";
+	return "ArchitectureMicroservice [guid=" + guid + ", name=" + name + ", version=" + version + ", path=" + path
+		+ ", state=" + state + ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes
+		+ ", services=" + services + ", memory=" + memory + ", disk=" + disk + "]";
     }
 
     @Override
@@ -178,7 +179,7 @@ public class OverviewApp {
 	    return false;
 	if (getClass() != obj.getClass())
 	    return false;
-	OverviewApp other = (OverviewApp) obj;
+	ArchitectureMicroservice other = (ArchitectureMicroservice) obj;
 	if (disk == null) {
 	    if (other.disk != null)
 		return false;
@@ -232,25 +233,26 @@ public class OverviewApp {
     }
 
     /**
-     * return whether "this" is an instantiated app of "desiredApp".
+     * return whether "this" is an instantiated microservice of
+     * "desiredMicroservice".
      * 
-     * @param desiredApp
+     * @param desiredMicroservice
      * @return
      */
-    public boolean isInstantiation(OverviewApp desiredApp) {
-	if (desiredApp == null) {
+    public boolean isInstantiation(ArchitectureMicroservice desiredMicroservice) {
+	if (desiredMicroservice == null) {
 	    return false;
 	}
-	if (desiredApp.guid != null && !desiredApp.guid.equals(this.guid)) {
+	if (desiredMicroservice.guid != null && !desiredMicroservice.guid.equals(this.guid)) {
 	    return false;
 	}
-	if (desiredApp.version != null && !desiredApp.version.equals(this.version)) {
+	if (desiredMicroservice.version != null && !desiredMicroservice.version.equals(this.version)) {
 	    return false;
 	}
-	if (!this.name.equals(desiredApp.name) || !this.path.equals(desiredApp.path)
-		|| !this.state.equals(desiredApp.state) || this.nbProcesses != desiredApp.nbProcesses
-		|| !this.env.equals(desiredApp.env) || !this.routes.equals(desiredApp.routes)
-		|| !this.memory.equals(desiredApp.memory) || !this.disk.equals(desiredApp.disk)) {
+	if (!this.name.equals(desiredMicroservice.name) || !this.path.equals(desiredMicroservice.path)
+		|| !this.state.equals(desiredMicroservice.state) || this.nbProcesses != desiredMicroservice.nbProcesses
+		|| !this.env.equals(desiredMicroservice.env) || !this.routes.equals(desiredMicroservice.routes)
+		|| !this.memory.equals(desiredMicroservice.memory) || !this.disk.equals(desiredMicroservice.disk)) {
 	    return false;
 	}
 	return true;

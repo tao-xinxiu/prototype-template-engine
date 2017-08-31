@@ -1,7 +1,7 @@
 package com.orange.paas;
 
 import com.orange.model.*;
-import com.orange.model.state.OverviewSite;
+import com.orange.model.state.ArchitectureSite;
 
 public abstract class PaaSAPI {
     protected PaaSSite site;
@@ -12,5 +12,5 @@ public abstract class PaaSAPI {
 	this.operationConfig = operationConfig;
     }
 
-    public abstract OverviewSite getOverviewSite();
+    public abstract ArchitectureSite getSiteArchitecture();
 }

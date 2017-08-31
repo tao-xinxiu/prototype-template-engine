@@ -8,8 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.Overview;
-import com.orange.model.state.OverviewApp;
+import com.orange.model.state.Architecture;
+import com.orange.model.state.ArchitectureMicroservice;
 import com.orange.util.SetUtil;
 
 public class BlueGreenStrategy extends Strategy {
@@ -20,7 +20,7 @@ public class BlueGreenStrategy extends Strategy {
     }
 
     @Override
-    public boolean valid(Overview currentState, Overview finalState) {
+    public boolean valid(Architecture currentState, Architecture finalState) {
 	// TODO in the case of multi new versions, version should be specified
 	// in finalState
 	return true;
@@ -38,21 +38,23 @@ public class BlueGreenStrategy extends Strategy {
      */
     protected Transit newPkgEnvTransit = new Transit() {
 	@Override
-	public Overview next(Overview currentState, Overview finalState) {
-	    Overview nextState = new Overview(currentState);
+	public Architecture next(Architecture currentState, Architecture finalState) {
+	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		Set<OverviewApp> currentApps = nextState.getOverviewSite(site).getOverviewApps();
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.noneMatch(currentApps, app -> app.getName().equals(desiredApp.getName())
-			    && app.getVersion().equals(library.desiredVersion(desiredApp)))) {
-			OverviewApp newApp = new OverviewApp(desiredApp);
-			newApp.setGuid(null);
-			newApp.setRoutes(library.tmpRoute(site, desiredApp));
-			if (newApp.getVersion() == null) {
-			    newApp.setVersion(config.getUpdatingVersion());
+		Set<ArchitectureMicroservice> currentMicroservices = nextState.getArchitectureSite(site)
+			.getArchitectureMicroservices();
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
+			.getArchitectureMicroservices()) {
+		    if (SetUtil.noneMatch(currentMicroservices, ms -> ms.getName().equals(desiredMicroservice.getName())
+			    && ms.getVersion().equals(library.desiredVersion(desiredMicroservice)))) {
+			ArchitectureMicroservice newMicroservice = new ArchitectureMicroservice(desiredMicroservice);
+			newMicroservice.setGuid(null);
+			newMicroservice.setRoutes(library.tmpRoute(site, desiredMicroservice));
+			if (newMicroservice.getVersion() == null) {
+			    newMicroservice.setVersion(config.getUpdatingVersion());
 			}
-			nextState.getOverviewSite(site).addOverviewApp(newApp);
-			logger.info("Added a new microservice: {} ", newApp);
+			nextState.getArchitectureSite(site).addArchitectureMicroservice(newMicroservice);
+			logger.info("Added a new microservice: {} ", newMicroservice);
 			continue;
 		    }
 		}
@@ -66,30 +68,32 @@ public class BlueGreenStrategy extends Strategy {
      * (except route)
      */
     protected Transit updateExceptRouteTransit = new Transit() {
-	// assume that it doesn't exist two apps with same pkg and name
+	// assume that it doesn't exist two microservices with same pkg and name
 	@Override
-	public Overview next(Overview currentState, Overview finalState) {
-	    Overview nextState = new Overview(currentState);
+	public Architecture next(Architecture currentState, Architecture finalState) {
+	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.noneMatch(nextState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.getName().equals(desiredApp.getName())
-				    && app.getVersion().equals(library.desiredVersion(desiredApp))
-				    && app.getPath().equals(desiredApp.getPath())
-				    && app.getEnv().equals(desiredApp.getEnv())
-				    && app.getNbProcesses() == desiredApp.getNbProcesses()
-				    && app.getServices().equals(desiredApp.getServices())
-				    && app.getState().equals(desiredApp.getState()))) {
-			OverviewApp nextApp = SetUtil.getOneApp(nextState.getOverviewSite(site).getOverviewApps(),
-				app -> app.getName().equals(desiredApp.getName())
-					&& app.getVersion().equals(library.desiredVersion(desiredApp)));
-			nextApp.setPath(desiredApp.getPath());
-			nextApp.setEnv(desiredApp.getEnv());
-			nextApp.setNbProcesses(desiredApp.getNbProcesses());
-			nextApp.setServices(desiredApp.getServices());
-			nextApp.setState(desiredApp.getState());
-			logger.info("Updated microservice [{}_{}] to {} ", nextApp.getName(), nextApp.getVersion(),
-				nextApp);
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
+			.getArchitectureMicroservices()) {
+		    if (SetUtil.noneMatch(nextState.getArchitectureSite(site).getArchitectureMicroservices(),
+			    ms -> ms.getName().equals(desiredMicroservice.getName())
+				    && ms.getVersion().equals(library.desiredVersion(desiredMicroservice))
+				    && ms.getPath().equals(desiredMicroservice.getPath())
+				    && ms.getEnv().equals(desiredMicroservice.getEnv())
+				    && ms.getNbProcesses() == desiredMicroservice.getNbProcesses()
+				    && ms.getServices().equals(desiredMicroservice.getServices())
+				    && ms.getState().equals(desiredMicroservice.getState()))) {
+			ArchitectureMicroservice nextMicroservice = SetUtil.getOneMicroservice(
+				nextState.getArchitectureSite(site).getArchitectureMicroservices(),
+				ms -> ms.getName().equals(desiredMicroservice.getName())
+					&& ms.getVersion().equals(library.desiredVersion(desiredMicroservice)));
+			nextMicroservice.setPath(desiredMicroservice.getPath());
+			nextMicroservice.setEnv(desiredMicroservice.getEnv());
+			nextMicroservice.setNbProcesses(desiredMicroservice.getNbProcesses());
+			nextMicroservice.setServices(desiredMicroservice.getServices());
+			nextMicroservice.setState(desiredMicroservice.getState());
+			logger.info("Updated microservice [{}_{}] to {} ", nextMicroservice.getName(),
+				nextMicroservice.getVersion(), nextMicroservice);
 		    }
 		}
 	    }

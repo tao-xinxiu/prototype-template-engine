@@ -1,7 +1,7 @@
 package com.orange.nextstate.strategy;
 
-import com.orange.model.state.Overview;
+import com.orange.model.state.Architecture;
 
 public interface Transit {
-    public abstract Overview next(Overview currentState, Overview finalState);
+    public abstract Architecture next(Architecture currentState, Architecture finalState);
 }

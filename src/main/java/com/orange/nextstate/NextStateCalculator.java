@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.Overview;
+import com.orange.model.state.Architecture;
 import com.orange.nextstate.strategy.Strategy;
 import com.orange.nextstate.strategy.Transit;
 
@@ -33,24 +33,24 @@ public class NextStateCalculator {
      * @param finalState
      * @return
      */
-    public Overview calcNextStates(final Overview currentState, final Overview finalState) {
+    public Architecture calcNextStates(final Architecture currentState, final Architecture finalState) {
 	// return null when arrived final state
 	if (currentState.isInstantiation(finalState)) {
 	    return null;
 	}
 	if (!strategyConfig.isParallelAllSites()) {
 	    validSitesOrder(finalState.listSitesName());
-	    Overview nextStates = new Overview(currentState);
+	    Architecture nextStates = new Architecture(currentState);
 	    for (Set<String> sites : strategyConfig.getSitesOrder()) {
-		Overview currentSubOverview = currentState.getSubOverview(sites);
-		Overview finalSubOverview = finalState.getSubOverview(sites);
-		if (currentSubOverview.isInstantiation(finalSubOverview)) {
+		Architecture currentSubArchitecture = currentState.getSubArchitecture(sites);
+		Architecture finalSubArchitecture = finalState.getSubArchitecture(sites);
+		if (currentSubArchitecture.isInstantiation(finalSubArchitecture)) {
 		    logger.info("Sites {} are already the instantiation of the final state.", sites);
 		    continue;
 		} else {
-		    Overview updatedSitesOverview = strategyNextStates(currentSubOverview, finalSubOverview);
-		    logger.info("Get next state {} for the sites {}.", updatedSitesOverview, sites);
-		    nextStates.mergeOverview(updatedSitesOverview);
+		    Architecture updatedSitesArchitecture = strategyNextStates(currentSubArchitecture, finalSubArchitecture);
+		    logger.info("Get next state {} for the sites {}.", updatedSitesArchitecture, sites);
+		    nextStates.mergeArchitecture(updatedSitesArchitecture);
 		    return nextStates;
 		}
 	    }
@@ -62,7 +62,7 @@ public class NextStateCalculator {
 	}
     }
 
-    private Overview strategyNextStates(final Overview currentState, final Overview finalState) {
+    private Architecture strategyNextStates(final Architecture currentState, final Architecture finalState) {
 	try {
 	    Strategy strategy = (Strategy) Class.forName(strategyClass).getConstructor(StrategyConfig.class)
 		    .newInstance(strategyConfig);
@@ -70,7 +70,7 @@ public class NextStateCalculator {
 		throw new IllegalStateException("Strategy disallowed situation");
 	    }
 	    for (Transit transit : strategy.transits()) {
-		Overview next = transit.next(currentState, finalState);
+		Architecture next = transit.next(currentState, finalState);
 		if (!next.equals(currentState)) {
 		    return next;
 		}

@@ -8,9 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.AppState;
-import com.orange.model.state.Overview;
-import com.orange.model.state.OverviewApp;
+import com.orange.model.state.MicroserviceState;
+import com.orange.model.state.Architecture;
+import com.orange.model.state.ArchitectureMicroservice;
 import com.orange.util.SetUtil;
 
 // Strategy assume route not updated between Ainit and Af
@@ -22,15 +22,17 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
     }
 
     @Override
-    public boolean valid(Overview currentState, Overview finalState) {
+    public boolean valid(Architecture currentState, Architecture finalState) {
 	for (String site : finalState.listSitesName()) {
-	    for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		if (desiredApp.getState() != AppState.RUNNING) {
+	    for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
+		    .getArchitectureMicroservices()) {
+		if (desiredMicroservice.getState() != MicroserviceState.RUNNING) {
 		    return false;
 		}
-		Set<OverviewApp> currentApps = SetUtil
-			.searchByName(currentState.getOverviewSite(site).getOverviewApps(), desiredApp.getName());
-		if (!SetUtil.uniqueByPathEnv(currentApps)) {
+		Set<ArchitectureMicroservice> currentMicroservices = SetUtil.searchByName(
+			currentState.getArchitectureSite(site).getArchitectureMicroservices(),
+			desiredMicroservice.getName());
+		if (!SetUtil.uniqueByPathEnv(currentMicroservices)) {
 		    return false;
 		}
 	    }
@@ -50,29 +52,31 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
      */
     protected Transit rolloutTransit = new Transit() {
 	@Override
-	public Overview next(Overview currentState, Overview finalState) {
-	    Overview nextState = new Overview(currentState);
+	public Architecture next(Architecture currentState, Architecture finalState) {
+	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    Set<OverviewApp> nextApps = nextState.getOverviewSite(site).getOverviewApps();
-		    Set<OverviewApp> relatedApps = SetUtil.search(nextApps,
-			    app -> app.getName().equals(desiredApp.getName())
-				    && app.getState().equals(desiredApp.getState())
-				    && app.getRoutes().equals(desiredApp.getRoutes()));
-		    if (relatedApps.stream().mapToInt(app -> app.getNbProcesses()).sum() == desiredApp
-			    .getNbProcesses()) {
-			OverviewApp nextApp = SetUtil.getUniqueApp(relatedApps,
-				app -> !app.getVersion().equals(library.desiredVersion(desiredApp)));
-			boolean canaryNotCreated = SetUtil.noneMatch(relatedApps,
-				app -> app.getVersion().equals(library.desiredVersion(desiredApp)));
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
+			.getArchitectureMicroservices()) {
+		    Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureSite(site)
+			    .getArchitectureMicroservices();
+		    Set<ArchitectureMicroservice> relatedMicroservices = SetUtil.search(nextMicroservices,
+			    ms -> ms.getName().equals(desiredMicroservice.getName())
+				    && ms.getState().equals(desiredMicroservice.getState())
+				    && ms.getRoutes().equals(desiredMicroservice.getRoutes()));
+		    if (relatedMicroservices.stream().mapToInt(ms -> ms.getNbProcesses())
+			    .sum() == desiredMicroservice.getNbProcesses()) {
+			ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(relatedMicroservices,
+				ms -> !ms.getVersion().equals(library.desiredVersion(desiredMicroservice)));
+			boolean canaryNotCreated = SetUtil.noneMatch(relatedMicroservices,
+				ms -> ms.getVersion().equals(library.desiredVersion(desiredMicroservice)));
 			int scaleDownNb = canaryNotCreated ? config.getCanaryNbr() : config.getCanaryIncrease();
-			int nextNbr = nextApp.getNbProcesses() - scaleDownNb;
+			int nextNbr = nextMicroservice.getNbProcesses() - scaleDownNb;
 			if (nextNbr >= 1) {
-			    nextApp.setNbProcesses(nextNbr);
-			    logger.info("rolled out microservice {}", nextApp);
+			    nextMicroservice.setNbProcesses(nextNbr);
+			    logger.info("rolled out microservice {}", nextMicroservice);
 			} else {
-			    nextApps.remove(nextApp);
-			    logger.info("removed microservice {}", nextApp);
+			    nextMicroservices.remove(nextMicroservice);
+			    logger.info("removed microservice {}", nextMicroservice);
 			}
 		    }
 		}
@@ -86,20 +90,22 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
      */
     protected Transit scaleupTransit = new Transit() {
 	@Override
-	public Overview next(Overview currentState, Overview finalState) {
-	    Overview nextState = new Overview(currentState);
+	public Architecture next(Architecture currentState, Architecture finalState) {
+	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    Set<OverviewApp> nextApps = nextState.getOverviewSite(site).getOverviewApps();
-		    if (SetUtil.noneMatch(nextApps, app -> app.isInstantiation(desiredApp))) {
-			OverviewApp nextApp = SetUtil.getUniqueApp(nextApps,
-				app -> app.getName().equals(desiredApp.getName())
-					&& app.getVersion().equals(library.desiredVersion(desiredApp)));
-			int nextNbr = nextApp.getNbProcesses() + config.getCanaryIncrease();
-			if (nextNbr > desiredApp.getNbProcesses()) {
-			    nextNbr = desiredApp.getNbProcesses();
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
+			.getArchitectureMicroservices()) {
+		    Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureSite(site)
+			    .getArchitectureMicroservices();
+		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
+			ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(nextMicroservices,
+				ms -> ms.getName().equals(desiredMicroservice.getName())
+					&& ms.getVersion().equals(library.desiredVersion(desiredMicroservice)));
+			int nextNbr = nextMicroservice.getNbProcesses() + config.getCanaryIncrease();
+			if (nextNbr > desiredMicroservice.getNbProcesses()) {
+			    nextNbr = desiredMicroservice.getNbProcesses();
 			}
-			nextApp.setNbProcesses(nextNbr);
+			nextMicroservice.setNbProcesses(nextNbr);
 		    }
 		}
 	    }

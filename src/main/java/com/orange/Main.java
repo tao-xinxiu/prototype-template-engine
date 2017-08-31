@@ -25,13 +25,13 @@ import org.springframework.web.multipart.MultipartFile;
 import com.orange.model.StrategyConfig;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
-import com.orange.model.state.Overview;
-import com.orange.model.state.OverviewSite;
+import com.orange.model.state.Architecture;
+import com.orange.model.state.ArchitectureSite;
 import com.orange.model.workflow.Workflow;
 import com.orange.nextstate.NextStateCalculator;
 import com.orange.paas.cf.CloudFoundryAPIv2;
 import com.orange.paas.cf.CloudFoundryOperations;
-import com.orange.update.WorkflowCalculator;
+import com.orange.reconfig.WorkflowCalculator;
 
 @SpringBootApplication(exclude = { org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration.class })
 @RestController
@@ -46,19 +46,19 @@ public class Main {
     private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
 
     @RequestMapping(value = "/pull", method = RequestMethod.POST)
-    public @ResponseBody Overview getCurrentState(@RequestBody Collection<PaaSSite> managingSites) {
+    public @ResponseBody Architecture getCurrentState(@RequestBody Collection<PaaSSite> managingSites) {
 	Map<String, PaaSSite> sites = managingSites.stream()
 		.collect(Collectors.toMap(site -> site.getName(), site -> site));
-	Map<String, OverviewSite> overviewSites = managingSites.parallelStream().collect(Collectors
-		.toMap(site -> site.getName(), site -> new CloudFoundryAPIv2(site, operationConfig).getOverviewSite()));
-	Overview currentState = new Overview(sites, overviewSites);
+	Map<String, ArchitectureSite> architectureSites = managingSites.parallelStream().collect(Collectors.toMap(
+		site -> site.getName(), site -> new CloudFoundryAPIv2(site, operationConfig).getSiteArchitecture()));
+	Architecture currentState = new Architecture(sites, architectureSites);
 	logger.info("Got current state! {} ", currentState);
 	return currentState;
     }
-    
+
     @RequestMapping(value = "/push", method = RequestMethod.POST)
-    public @ResponseBody Overview pushState(@RequestBody Overview desiredState) {
-	Overview currentState = getCurrentStableState(desiredState.listPaaSSites());
+    public @ResponseBody Architecture pushState(@RequestBody Architecture desiredState) {
+	Architecture currentState = getCurrentStableState(desiredState.listPaaSSites());
 	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState, operationConfig)
 		.getUpdateWorkflow();
 	updateWorkflow.exec();
@@ -67,11 +67,11 @@ public class Main {
     }
 
     @RequestMapping(value = "/next", method = RequestMethod.POST)
-    public @ResponseBody Overview calcNextState(@RequestBody Overview finalState) {
+    public @ResponseBody Architecture calcNextState(@RequestBody Architecture finalState) {
 	if (nextStateCalculator == null) {
 	    throw new IllegalStateException("Update config not yet set.");
 	}
-	Overview currentState = getCurrentStableState(finalState.listPaaSSites());
+	Architecture currentState = getCurrentStableState(finalState.listPaaSSites());
 	return nextStateCalculator.calcNextStates(currentState, finalState);
     }
 
@@ -89,8 +89,8 @@ public class Main {
     }
 
     @RequestMapping(value = "/is_instantiation", method = RequestMethod.POST)
-    public boolean isInstantiation(@RequestBody Overview desiredState) {
-	Overview currentState = getCurrentState(desiredState.listPaaSSites());
+    public boolean isInstantiation(@RequestBody Architecture desiredState) {
+	Architecture currentState = getCurrentState(desiredState.listPaaSSites());
 	return currentState.isInstantiation(desiredState);
     }
 
@@ -100,12 +100,12 @@ public class Main {
     }
 
     /**
-     * Upload the app binary or source file which is supposed to be uploaded to
-     * the PaaS
+     * Upload the microservice binary or source file which is supposed to be
+     * uploaded to the PaaS
      * 
      * @param file
-     * @return the stored file name, which is supposed to fill out app path in
-     *         the desired state description
+     * @return the stored file name, which is supposed to fill out microservice
+     *         path in the desired state description
      */
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
     public @ResponseBody String handleFileUpload(@RequestParam("file") MultipartFile file) {
@@ -150,13 +150,14 @@ public class Main {
 	}
 	return ops;
     }
-    
-    private Overview getCurrentStableState(Collection<PaaSSite> managingSites) {
+
+    private Architecture getCurrentStableState(Collection<PaaSSite> managingSites) {
 	Map<String, PaaSSite> sites = managingSites.stream()
 		.collect(Collectors.toMap(site -> site.getName(), site -> site));
-	Map<String, OverviewSite> overviewSites = managingSites.parallelStream().collect(Collectors
-		.toMap(site -> site.getName(), site -> new CloudFoundryAPIv2(site, operationConfig).stabilizeOverviewSite()));
-	Overview currentState = new Overview(sites, overviewSites);
+	Map<String, ArchitectureSite> architectureSites = managingSites.parallelStream()
+		.collect(Collectors.toMap(site -> site.getName(),
+			site -> new CloudFoundryAPIv2(site, operationConfig).stabilizeSiteArchitecture()));
+	Architecture currentState = new Architecture(sites, architectureSites);
 	logger.info("Got and stabilized current state! {} ", currentState);
 	return currentState;
     }

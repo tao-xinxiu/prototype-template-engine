@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.Overview;
+import com.orange.model.state.Architecture;
 
 public class CleanRedeployStrategy extends Strategy {
     public CleanRedeployStrategy(StrategyConfig config) {
@@ -12,7 +12,7 @@ public class CleanRedeployStrategy extends Strategy {
     }
 
     @Override
-    public boolean valid(Overview currentState, Overview finalState) {
+    public boolean valid(Architecture currentState, Architecture finalState) {
 	return true;
     }
 

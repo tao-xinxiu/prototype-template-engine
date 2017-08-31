@@ -12,11 +12,11 @@ import org.slf4j.LoggerFactory;
 
 import com.orange.Main;
 import com.orange.model.*;
-import com.orange.model.state.AppState;
-import com.orange.model.state.OverviewApp;
-import com.orange.model.state.OverviewSite;
+import com.orange.model.state.MicroserviceState;
+import com.orange.model.state.ArchitectureMicroservice;
+import com.orange.model.state.ArchitectureSite;
 import com.orange.model.state.Route;
-import com.orange.model.state.cf.CFAppDesiredState;
+import com.orange.model.state.cf.CFMicroserviceDesiredState;
 import com.orange.paas.PaaSAPI;
 
 public class CloudFoundryAPIv2 extends PaaSAPI {
@@ -31,113 +31,121 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     @Override
-    public OverviewSite getOverviewSite() {
+    public ArchitectureSite getSiteArchitecture() {
 	logger.info("Start getting the current state ...");
-	return new OverviewSite(operations.listSpaceApps().parallelStream()
-		.map(appInfo -> new OverviewApp(appInfo.getId(), parseName(appInfo.getName()),
-			parseVersion(appInfo.getName()), parsePath(appInfo), parseState(appInfo),
-			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo), parseServices(appInfo),
-			appInfo.getMemory() + "M", appInfo.getDiskQuota() + "M"))
+	return new ArchitectureSite(operations.listSpaceApps().parallelStream()
+		.map(info -> new ArchitectureMicroservice(info.getId(), parseName(info.getName()),
+			parseVersion(info.getName()), parsePath(info), parseState(info), info.getInstances(),
+			parseEnv(info), parseRoutes(info), parseServices(info), info.getMemory() + "M",
+			info.getDiskQuota() + "M"))
 		.collect(Collectors.toSet()));
     }
 
-    public OverviewSite stabilizeOverviewSite() {
+    public ArchitectureSite stabilizeSiteArchitecture() {
 	logger.info("Start getting the current state and make it stable ...");
-	return new OverviewSite(operations.listSpaceApps().parallelStream()
-		.map(appInfo -> new OverviewApp(appInfo.getId(), parseName(appInfo.getName()),
-			parseVersion(appInfo.getName()), parsePath(appInfo), stabilizeState(appInfo),
-			appInfo.getInstances(), parseEnv(appInfo), parseRoutes(appInfo), parseServices(appInfo),
-			appInfo.getMemory() + "M", appInfo.getDiskQuota() + "M"))
+	return new ArchitectureSite(operations.listSpaceApps().parallelStream()
+		.map(info -> new ArchitectureMicroservice(info.getId(), parseName(info.getName()),
+			parseVersion(info.getName()), parsePath(info), stabilizeState(info), info.getInstances(),
+			parseEnv(info), parseRoutes(info), parseServices(info), info.getMemory() + "M",
+			info.getDiskQuota() + "M"))
 		.collect(Collectors.toSet()));
     }
 
     /**
-     * Get OverviewApp name from CF stored appName
+     * Get microservice name from Cloud Foundry microservice name
      * 
-     * @param appName
-     *            CF stored microservice instance unique name, mapped as "name"
-     *            + "_" + "version" to microservice model (OverviewApp)
+     * @param name
+     *            CF microservice instance unique name, mapped to microservice
+     *            model as "name_version"
      * @return
      */
-    private String parseName(String appName) {
-	int delimiterPosition = appName.lastIndexOf("_");
+    private String parseName(String name) {
+	int delimiterPosition = name.lastIndexOf("_");
 	if (delimiterPosition == -1) {
-	    return appName;
+	    return name;
 	} else {
-	    return appName.substring(0, delimiterPosition);
+	    return name.substring(0, delimiterPosition);
 	}
     }
 
-    private String parseVersion(String appName) {
-	int delimiterPosition = appName.lastIndexOf("_");
+    /**
+     * Get microservice version from Cloud Foundry microservice name
+     * 
+     * @param name
+     *            CF microservice instance unique name, mapped to microservice
+     *            model as "name_version"
+     * @return
+     */
+    private String parseVersion(String name) {
+	int delimiterPosition = name.lastIndexOf("_");
 	if (delimiterPosition == -1) {
 	    return "";
 	} else {
-	    return appName.substring(delimiterPosition + 1);
+	    return name.substring(delimiterPosition + 1);
 	}
     }
 
-    private AppState parseState(SpaceApplicationSummary appInfo) {
-	if (operations.appRunning(appInfo.getId())) {
-	    return AppState.RUNNING;
+    private MicroserviceState parseState(SpaceApplicationSummary info) {
+	if (operations.appRunning(info.getId())) {
+	    return MicroserviceState.RUNNING;
 	}
-	switch (appInfo.getPackageState()) {
+	switch (info.getPackageState()) {
 	case "FAILED":
-	    return AppState.FAILED;
+	    return MicroserviceState.FAILED;
 	case "STAGED":
-	    return AppState.STAGED;
+	    return MicroserviceState.STAGED;
 	default:
-	    if (appInfo.getPackageUpdatedAt() == null) {
-		return AppState.CREATED;
+	    if (info.getPackageUpdatedAt() == null) {
+		return MicroserviceState.CREATED;
 	    } else {
-		return AppState.UPLOADED;
+		return MicroserviceState.UPLOADED;
 	    }
 	}
     }
 
-    private AppState stabilizeState(SpaceApplicationSummary appInfo) {
-	String appId = appInfo.getId();
-	if (operations.appRunning(appId)) {
-	    return AppState.RUNNING;
+    private MicroserviceState stabilizeState(SpaceApplicationSummary info) {
+	String msId = info.getId();
+	if (operations.appRunning(msId)) {
+	    return MicroserviceState.RUNNING;
 	}
-	// If app is not running, change its desired state to STOPPED to attain
-	// an stable state.
-	if (CFAppDesiredState.STARTED.toString().equals(appInfo.getState())) {
-	    logger.info("app {} state will be stabilized.", appInfo);
-	    operations.stopApp(appId);
+	// If microservice is not running, change its desired state to STOPPED
+	// to attain an stable state.
+	if (CFMicroserviceDesiredState.STARTED.toString().equals(info.getState())) {
+	    logger.info("microservice {} state will be stabilized.", info);
+	    operations.stopApp(msId);
 	}
-	switch (appInfo.getPackageState()) {
+	switch (info.getPackageState()) {
 	case "FAILED":
-	    return AppState.FAILED;
+	    return MicroserviceState.FAILED;
 	case "STAGED":
-	    return AppState.STAGED;
+	    return MicroserviceState.STAGED;
 	default:
-	    if (appInfo.getPackageUpdatedAt() == null) {
-		return AppState.CREATED;
+	    if (info.getPackageUpdatedAt() == null) {
+		return MicroserviceState.CREATED;
 	    } else {
-		return AppState.UPLOADED;
+		return MicroserviceState.UPLOADED;
 	    }
 	}
     }
 
-    private Map<String, String> parseEnv(SpaceApplicationSummary appInfo) {
-	Map<String, String> env = new HashMap<>(appInfo.getEnvironmentJsons().entrySet().stream()
+    private Map<String, String> parseEnv(SpaceApplicationSummary info) {
+	Map<String, String> env = new HashMap<>(info.getEnvironmentJsons().entrySet().stream()
 		.collect(Collectors.toMap(entry -> entry.getKey(), entry -> (String) entry.getValue())));
 	env.remove(pathKeyInEnv);
 	return env;
     }
 
-    private Set<Route> parseRoutes(SpaceApplicationSummary appInfo) {
-	return appInfo.getRoutes().stream().map(route -> new Route(route.getHost(), route.getDomain().getName()))
+    private Set<Route> parseRoutes(SpaceApplicationSummary info) {
+	return info.getRoutes().stream().map(route -> new Route(route.getHost(), route.getDomain().getName()))
 		.collect(Collectors.toSet());
     }
 
-    private String parsePath(SpaceApplicationSummary appInfo) {
-	String path = (String) appInfo.getEnvironmentJsons().get(pathKeyInEnv);
+    private String parsePath(SpaceApplicationSummary info) {
+	String path = (String) info.getEnvironmentJsons().get(pathKeyInEnv);
 	return path == null ? "" : path;
     }
 
-    private Set<String> parseServices(SpaceApplicationSummary appInfo) {
-	return new HashSet<>(appInfo.getServiceNames());
+    private Set<String> parseServices(SpaceApplicationSummary info) {
+	return new HashSet<>(info.getServiceNames());
     }
 }

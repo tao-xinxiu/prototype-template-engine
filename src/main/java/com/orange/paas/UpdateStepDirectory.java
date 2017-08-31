@@ -1,12 +1,12 @@
 package com.orange.paas;
 
-import com.orange.model.state.OverviewApp;
+import com.orange.model.state.ArchitectureMicroservice;
 import com.orange.model.workflow.Step;
 
 public interface UpdateStepDirectory {
-    public abstract Step addApp(OverviewApp app);
+    public abstract Step add(ArchitectureMicroservice microservice);
 
-    public abstract Step removeApp(OverviewApp app);
+    public abstract Step remove(ArchitectureMicroservice microservice);
 
-    public abstract Step updateApp(OverviewApp currentApp, OverviewApp desiredApp);
+    public abstract Step update(ArchitectureMicroservice currentMicroservice, ArchitectureMicroservice desiredMicroservice);
 }

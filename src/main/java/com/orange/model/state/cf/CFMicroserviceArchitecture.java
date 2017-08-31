@@ -5,20 +5,20 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.orange.model.state.OverviewApp;
+import com.orange.model.state.ArchitectureMicroservice;
 import com.orange.model.state.Route;
 
-public class CFOverviewApp {
+public class CFMicroserviceArchitecture {
     private String guid;
     private String name;
     private String path;
-    private CFAppState state;
+    private CFMicroserviceState state;
     private int nbProcesses;
     private Map<String, String> env = new HashMap<>();
     private Set<Route> routes = new HashSet<>();
     private Set<String> services = new HashSet<>();
 
-    public CFOverviewApp(String guid, String name, String path, CFAppState state, int nbProcesses,
+    public CFMicroserviceArchitecture(String guid, String name, String path, CFMicroserviceState state, int nbProcesses,
 	    Map<String, String> env, Set<Route> routes, Set<String> services) {
 	super();
 	this.guid = guid;
@@ -31,15 +31,15 @@ public class CFOverviewApp {
 	this.services = services;
     }
 
-    public CFOverviewApp(OverviewApp app) {
-	this.guid = app.getGuid();
-	this.name = app.getName() + "_" + app.getVersion();
-	this.path = app.getPath();
-	this.state = app.getState().asCFState();
-	this.nbProcesses = app.getNbProcesses();
-	this.env = app.getEnv();
-	this.routes = app.listRoutes();
-	this.services = app.getServices();
+    public CFMicroserviceArchitecture(ArchitectureMicroservice microservice) {
+	this.guid = microservice.getGuid();
+	this.name = microservice.getName() + "_" + microservice.getVersion();
+	this.path = microservice.getPath();
+	this.state = microservice.getState().asCFState();
+	this.nbProcesses = microservice.getNbProcesses();
+	this.env = microservice.getEnv();
+	this.routes = microservice.listRoutes();
+	this.services = microservice.getServices();
     }
 
     public String getGuid() {
@@ -54,7 +54,7 @@ public class CFOverviewApp {
 	return path;
     }
 
-    public CFAppState getState() {
+    public CFMicroserviceState getState() {
 	return state;
     }
 
@@ -74,7 +74,7 @@ public class CFOverviewApp {
 	this.path = path;
     }
 
-    public void setState(CFAppState state) {
+    public void setState(CFMicroserviceState state) {
 	this.state = state;
     }
 
@@ -100,7 +100,7 @@ public class CFOverviewApp {
 
     @Override
     public String toString() {
-	return "CFOverviewApp [guid=" + guid + ", name=" + name + ", path=" + path + ", state=" + state
+	return "CFMicroserviceArchitecture [guid=" + guid + ", name=" + name + ", path=" + path + ", state=" + state
 		+ ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes + ", services=" + services
 		+ "]";
     }

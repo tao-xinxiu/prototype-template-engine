@@ -1,5 +1,5 @@
 package com.orange.model.state.cf;
 
-public enum CFAppDesiredState {
+public enum CFMicroserviceDesiredState {
     STOPPED, STARTED
 }

@@ -8,8 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.Overview;
-import com.orange.model.state.OverviewApp;
+import com.orange.model.state.Architecture;
+import com.orange.model.state.ArchitectureMicroservice;
 import com.orange.util.SetUtil;
 
 public class BlueGreenPkgUpdateStrategy extends Strategy {
@@ -20,7 +20,7 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
     }
 
     @Override
-    public boolean valid(Overview currentState, Overview finalState) {
+    public boolean valid(Architecture currentState, Architecture finalState) {
 	return true;
     }
 
@@ -34,22 +34,23 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
      */
     protected Transit newPkgTransit = new Transit() {
 	@Override
-	public Overview next(Overview currentState, Overview finalState) {
-	    Overview nextState = new Overview(currentState);
+	public Architecture next(Architecture currentState, Architecture finalState) {
+	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.search(currentState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.getName().equals(desiredApp.getName())
-				    && app.getPath().equals(desiredApp.getPath()))
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
+			.getArchitectureMicroservices()) {
+		    if (SetUtil.search(currentState.getArchitectureSite(site).getArchitectureMicroservices(),
+			    ms -> ms.getName().equals(desiredMicroservice.getName())
+				    && ms.getPath().equals(desiredMicroservice.getPath()))
 			    .isEmpty()) {
-			OverviewApp newApp = new OverviewApp(desiredApp);
-			newApp.setGuid(null);
-			newApp.setRoutes(library.tmpRoute(site, desiredApp));
-			if (newApp.getVersion() == null) {
-			    newApp.setVersion(config.getUpdatingVersion());
+			ArchitectureMicroservice newMicroservice = new ArchitectureMicroservice(desiredMicroservice);
+			newMicroservice.setGuid(null);
+			newMicroservice.setRoutes(library.tmpRoute(site, desiredMicroservice));
+			if (newMicroservice.getVersion() == null) {
+			    newMicroservice.setVersion(config.getUpdatingVersion());
 			}
-			nextState.getOverviewSite(site).addOverviewApp(newApp);
-			logger.info("Added a new microservice: {} ", newApp);
+			nextState.getArchitectureSite(site).addArchitectureMicroservice(newMicroservice);
+			logger.info("Added a new microservice: {} ", newMicroservice);
 		    }
 		}
 	    }
@@ -61,25 +62,27 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
      * getting next architecture by updating desired microservice properties
      */
     protected Transit updateExceptPkgTransit = new Transit() {
-	// assume that it doesn't exist two apps with same pkg and name
+	// assume that it doesn't exist two microservices with same pkg and name
 	@Override
-	public Overview next(Overview currentState, Overview finalState) {
-	    Overview nextState = new Overview(currentState);
+	public Architecture next(Architecture currentState, Architecture finalState) {
+	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.noneMatch(nextState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.isInstantiation(desiredApp))) {
-			Set<OverviewApp> nextApps = nextState.getOverviewSite(site).getOverviewApps();
-			OverviewApp nextApp = SetUtil.getOneApp(nextApps,
-				app -> app.getName().equals(desiredApp.getName())
-					&& app.getPath().equals(desiredApp.getPath()));
-			nextApp.setRoutes(desiredApp.getRoutes());
-			nextApp.setEnv(desiredApp.getEnv());
-			nextApp.setNbProcesses(desiredApp.getNbProcesses());
-			nextApp.setServices(desiredApp.getServices());
-			nextApp.setState(desiredApp.getState());
-			logger.info("Updated microservice [{}_{}] to {} ", nextApp.getName(), nextApp.getVersion(),
-				nextApp);
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
+			.getArchitectureMicroservices()) {
+		    if (SetUtil.noneMatch(nextState.getArchitectureSite(site).getArchitectureMicroservices(),
+			    ms -> ms.isInstantiation(desiredMicroservice))) {
+			Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureSite(site)
+				.getArchitectureMicroservices();
+			ArchitectureMicroservice nextMicroservice = SetUtil.getOneMicroservice(nextMicroservices,
+				ms -> ms.getName().equals(desiredMicroservice.getName())
+					&& ms.getPath().equals(desiredMicroservice.getPath()));
+			nextMicroservice.setRoutes(desiredMicroservice.getRoutes());
+			nextMicroservice.setEnv(desiredMicroservice.getEnv());
+			nextMicroservice.setNbProcesses(desiredMicroservice.getNbProcesses());
+			nextMicroservice.setServices(desiredMicroservice.getServices());
+			nextMicroservice.setState(desiredMicroservice.getState());
+			logger.info("Updated microservice [{}_{}] to {} ", nextMicroservice.getName(),
+				nextMicroservice.getVersion(), nextMicroservice);
 		    }
 		}
 	    }

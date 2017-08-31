@@ -8,8 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.Overview;
-import com.orange.model.state.OverviewApp;
+import com.orange.model.state.Architecture;
+import com.orange.model.state.ArchitectureMicroservice;
 import com.orange.util.SetUtil;
 
 public class BlueGreenCanaryMixStrategy extends Strategy {
@@ -20,7 +20,7 @@ public class BlueGreenCanaryMixStrategy extends Strategy {
     }
 
     @Override
-    public boolean valid(Overview currentState, Overview finalState) {
+    public boolean valid(Architecture currentState, Architecture finalState) {
 	return true;
     }
 
@@ -35,24 +35,26 @@ public class BlueGreenCanaryMixStrategy extends Strategy {
      */
     protected Transit addCanaryTransit = new Transit() {
 	@Override
-	public Overview next(Overview currentState, Overview finalState) {
-	    Overview nextState = new Overview(currentState);
+	public Architecture next(Architecture currentState, Architecture finalState) {
+	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		Set<OverviewApp> currentApps = nextState.getOverviewSite(site).getOverviewApps();
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.noneMatch(currentApps,
-			    app -> app.getName().equals(desiredApp.getName())
-				    && app.getPath().equals(desiredApp.getPath())
-				    && app.getEnv().equals(desiredApp.getEnv()))) {
-			OverviewApp newApp = new OverviewApp(desiredApp);
-			newApp.setGuid(null);
-			if (newApp.getVersion() == null) {
-			    newApp.setVersion(config.getUpdatingVersion());
+		Set<ArchitectureMicroservice> currentMicroservices = nextState.getArchitectureSite(site)
+			.getArchitectureMicroservices();
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
+			.getArchitectureMicroservices()) {
+		    if (SetUtil.noneMatch(currentMicroservices,
+			    ms -> ms.getName().equals(desiredMicroservice.getName())
+				    && ms.getPath().equals(desiredMicroservice.getPath())
+				    && ms.getEnv().equals(desiredMicroservice.getEnv()))) {
+			ArchitectureMicroservice newMicroservice = new ArchitectureMicroservice(desiredMicroservice);
+			newMicroservice.setGuid(null);
+			if (newMicroservice.getVersion() == null) {
+			    newMicroservice.setVersion(config.getUpdatingVersion());
 			}
-			newApp.setRoutes(library.tmpRoute(site, desiredApp));
-			newApp.setNbProcesses(config.getCanaryNbr());
-			nextState.getOverviewSite(site).addOverviewApp(newApp);
-			logger.info("Added a new microservice: {} ", newApp);
+			newMicroservice.setRoutes(library.tmpRoute(site, desiredMicroservice));
+			newMicroservice.setNbProcesses(config.getCanaryNbr());
+			nextState.getArchitectureSite(site).addArchitectureMicroservice(newMicroservice);
+			logger.info("Added a new microservice: {} ", newMicroservice);
 			continue;
 		    }
 		}
@@ -66,28 +68,30 @@ public class BlueGreenCanaryMixStrategy extends Strategy {
      * nbrProcesses and routes
      */
     protected Transit updateExceptInstancesRoutesTransit = new Transit() {
-	// assume that it doesn't exist two apps with same pkg and name
+	// assume that it doesn't exist two microservices with same pkg and name
 	@Override
-	public Overview next(Overview currentState, Overview finalState) {
-	    Overview nextState = new Overview(currentState);
+	public Architecture next(Architecture currentState, Architecture finalState) {
+	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.noneMatch(nextState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.getName().equals(desiredApp.getName())
-				    && app.getVersion().equals(config.getUpdatingVersion())
-				    && app.getPath().equals(desiredApp.getPath())
-				    && app.getEnv().equals(desiredApp.getEnv())
-				    && app.getServices().equals(desiredApp.getServices())
-				    && app.getState().equals(desiredApp.getState()))) {
-			OverviewApp nextApp = SetUtil.getUniqueApp(nextState.getOverviewSite(site).getOverviewApps(),
-				app -> app.getName().equals(desiredApp.getName())
-					&& app.getVersion().equals(config.getUpdatingVersion()));
-			nextApp.setPath(desiredApp.getPath());
-			nextApp.setEnv(desiredApp.getEnv());
-			nextApp.setServices(desiredApp.getServices());
-			nextApp.setState(desiredApp.getState());
-			logger.info("Updated microservice [{}_{}] to {} ", nextApp.getName(), nextApp.getVersion(),
-				nextApp);
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
+			.getArchitectureMicroservices()) {
+		    if (SetUtil.noneMatch(nextState.getArchitectureSite(site).getArchitectureMicroservices(),
+			    ms -> ms.getName().equals(desiredMicroservice.getName())
+				    && ms.getVersion().equals(config.getUpdatingVersion())
+				    && ms.getPath().equals(desiredMicroservice.getPath())
+				    && ms.getEnv().equals(desiredMicroservice.getEnv())
+				    && ms.getServices().equals(desiredMicroservice.getServices())
+				    && ms.getState().equals(desiredMicroservice.getState()))) {
+			ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(
+				nextState.getArchitectureSite(site).getArchitectureMicroservices(),
+				ms -> ms.getName().equals(desiredMicroservice.getName())
+					&& ms.getVersion().equals(config.getUpdatingVersion()));
+			nextMicroservice.setPath(desiredMicroservice.getPath());
+			nextMicroservice.setEnv(desiredMicroservice.getEnv());
+			nextMicroservice.setServices(desiredMicroservice.getServices());
+			nextMicroservice.setState(desiredMicroservice.getState());
+			logger.info("Updated microservice [{}_{}] to {} ", nextMicroservice.getName(),
+				nextMicroservice.getVersion(), nextMicroservice);
 		    }
 		}
 	    }
@@ -99,26 +103,28 @@ public class BlueGreenCanaryMixStrategy extends Strategy {
      * next architecture: update desired microservice route
      */
     protected Transit updateRouteTransit = new Transit() {
-	// assume that it doesn't exist two apps with same pkg and name
+	// assume that it doesn't exist two microservices with same pkg and name
 	@Override
-	public Overview next(Overview currentState, Overview finalState) {
-	    Overview nextState = new Overview(currentState);
+	public Architecture next(Architecture currentState, Architecture finalState) {
+	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    if (SetUtil.noneMatch(nextState.getOverviewSite(site).getOverviewApps(),
-			    app -> app.getName().equals(desiredApp.getName())
-				    && app.getVersion().equals(config.getUpdatingVersion())
-				    && app.getPath().equals(desiredApp.getPath())
-				    && app.getEnv().equals(desiredApp.getEnv())
-				    && app.getServices().equals(desiredApp.getServices())
-				    && app.getState().equals(desiredApp.getState())
-				    && app.getRoutes().equals(desiredApp.getRoutes()))) {
-			OverviewApp nextApp = SetUtil.getUniqueApp(nextState.getOverviewSite(site).getOverviewApps(),
-				app -> app.getName().equals(desiredApp.getName())
-					&& app.getVersion().equals(config.getUpdatingVersion()));
-			nextApp.setRoutes(desiredApp.getRoutes());
-			logger.info("Updated microservice [{}_{}] route to {} ", nextApp.getName(),
-				nextApp.getVersion(), nextApp.getRoutes());
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
+			.getArchitectureMicroservices()) {
+		    if (SetUtil.noneMatch(nextState.getArchitectureSite(site).getArchitectureMicroservices(),
+			    ms -> ms.getName().equals(desiredMicroservice.getName())
+				    && ms.getVersion().equals(config.getUpdatingVersion())
+				    && ms.getPath().equals(desiredMicroservice.getPath())
+				    && ms.getEnv().equals(desiredMicroservice.getEnv())
+				    && ms.getServices().equals(desiredMicroservice.getServices())
+				    && ms.getState().equals(desiredMicroservice.getState())
+				    && ms.getRoutes().equals(desiredMicroservice.getRoutes()))) {
+			ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(
+				nextState.getArchitectureSite(site).getArchitectureMicroservices(),
+				ms -> ms.getName().equals(desiredMicroservice.getName())
+					&& ms.getVersion().equals(config.getUpdatingVersion()));
+			nextMicroservice.setRoutes(desiredMicroservice.getRoutes());
+			logger.info("Updated microservice [{}_{}] route to {} ", nextMicroservice.getName(),
+				nextMicroservice.getVersion(), nextMicroservice.getRoutes());
 		    }
 		}
 	    }
@@ -131,25 +137,28 @@ public class BlueGreenCanaryMixStrategy extends Strategy {
      */
     protected Transit rolloutTransit = new Transit() {
 	@Override
-	public Overview next(Overview currentState, Overview finalState) {
-	    Overview nextState = new Overview(currentState);
+	public Architecture next(Architecture currentState, Architecture finalState) {
+	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (OverviewApp desiredApp : finalState.getOverviewSite(site).getOverviewApps()) {
-		    Set<OverviewApp> nextApps = nextState.getOverviewSite(site).getOverviewApps();
-		    if (SetUtil.noneMatch(nextApps, app -> app.isInstantiation(desiredApp))) {
-			for (OverviewApp nextApp : SetUtil.searchByName(nextApps, desiredApp.getName())) {
-			    if (nextApp.getVersion().equals(library.desiredVersion(desiredApp))) {
-				int nextNbr = nextApp.getNbProcesses() + config.getCanaryIncrease();
-				if (nextNbr > desiredApp.getNbProcesses()) {
-				    nextNbr = desiredApp.getNbProcesses();
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
+			.getArchitectureMicroservices()) {
+		    Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureSite(site)
+			    .getArchitectureMicroservices();
+		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
+			for (ArchitectureMicroservice nextMicroservice : SetUtil.searchByName(nextMicroservices,
+				desiredMicroservice.getName())) {
+			    if (nextMicroservice.getVersion().equals(library.desiredVersion(desiredMicroservice))) {
+				int nextNbr = nextMicroservice.getNbProcesses() + config.getCanaryIncrease();
+				if (nextNbr > desiredMicroservice.getNbProcesses()) {
+				    nextNbr = desiredMicroservice.getNbProcesses();
 				}
-				nextApp.setNbProcesses(nextNbr);
+				nextMicroservice.setNbProcesses(nextNbr);
 			    } else {
-				int nextNbr = nextApp.getNbProcesses() - config.getCanaryIncrease();
+				int nextNbr = nextMicroservice.getNbProcesses() - config.getCanaryIncrease();
 				if (nextNbr < 1) {
 				    nextNbr = 1;
 				}
-				nextApp.setNbProcesses(nextNbr);
+				nextMicroservice.setNbProcesses(nextNbr);
 			    }
 			}
 		    }

@@ -32,8 +32,8 @@ public class StrategySiteConfig {
 	return defaultTmpRouteHostSuffix;
     }
 
-    public String getTmpRoute(String appName) {
-	return appName + tmpRouteHostSuffix + "." + tmpRouteDomain;
+    public String getTmpRoute(String microserviceName) {
+	return microserviceName + tmpRouteHostSuffix + "." + tmpRouteDomain;
     }
 
     @Override

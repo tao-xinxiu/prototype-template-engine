@@ -6,49 +6,55 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.orange.model.state.AppState;
-import com.orange.model.state.OverviewApp;
+import com.orange.model.state.MicroserviceState;
+import com.orange.model.state.ArchitectureMicroservice;
 
 public class SetUtil {
-    public static Set<OverviewApp> deepCopy(Set<OverviewApp> apps) {
-	return apps.stream().map(OverviewApp::new).collect(Collectors.toSet());
+    public static Set<ArchitectureMicroservice> deepCopy(Set<ArchitectureMicroservice> microservices) {
+	return microservices.stream().map(ArchitectureMicroservice::new).collect(Collectors.toSet());
     }
 
-    public static Set<OverviewApp> searchByName(Set<OverviewApp> apps, String appName) {
-	return search(apps, app -> app.getName().equals(appName));
+    public static Set<ArchitectureMicroservice> searchByName(Set<ArchitectureMicroservice> microservices, String name) {
+	return search(microservices, ms -> ms.getName().equals(name));
     }
 
-    public static Set<OverviewApp> searchByState(Set<OverviewApp> apps, AppState appState) {
-	return search(apps, app -> app.getState() == appState);
+    public static Set<ArchitectureMicroservice> searchByState(Set<ArchitectureMicroservice> microservices,
+	    MicroserviceState state) {
+	return search(microservices, ms -> ms.getState() == state);
     }
 
-    public static Set<OverviewApp> search(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
-	return apps.stream().filter(predicate).collect(Collectors.toSet());
+    public static Set<ArchitectureMicroservice> search(Set<ArchitectureMicroservice> microservices,
+	    Predicate<ArchitectureMicroservice> predicate) {
+	return microservices.stream().filter(predicate).collect(Collectors.toSet());
     }
 
-    public static boolean noneMatch(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
-	return apps.stream().noneMatch(predicate);
+    public static boolean noneMatch(Set<ArchitectureMicroservice> microservices,
+	    Predicate<ArchitectureMicroservice> predicate) {
+	return microservices.stream().noneMatch(predicate);
     }
 
-    public static OverviewApp getUniqueApp(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
-	Set<OverviewApp> result = search(apps, predicate);
+    public static ArchitectureMicroservice getUniqueMicroservice(Set<ArchitectureMicroservice> microservices,
+	    Predicate<ArchitectureMicroservice> predicate) {
+	Set<ArchitectureMicroservice> result = search(microservices, predicate);
 	switch (result.size()) {
 	case 0:
 	    return null;
 	case 1:
 	    return result.iterator().next();
 	default:
-	    throw new IllegalStateException(String
-		    .format("Illegal state: found more than one apps [%s] which satisfy [%s]", result, predicate));
+	    throw new IllegalStateException(String.format(
+		    "Illegal state: found more than one microservice [%s] which satisfy [%s]", result, predicate));
 	}
     }
 
-    public static OverviewApp getUniqueApp(Set<OverviewApp> apps, String name, String version) {
-	return getUniqueApp(apps, app -> app.getName().equals(name) && app.getVersion().equals(version));
+    public static ArchitectureMicroservice getUniqueMicroservice(Set<ArchitectureMicroservice> microservices,
+	    String name, String version) {
+	return getUniqueMicroservice(microservices, ms -> ms.getName().equals(name) && ms.getVersion().equals(version));
     }
 
-    public static OverviewApp getOneApp(Set<OverviewApp> apps, Predicate<OverviewApp> predicate) {
-	Set<OverviewApp> result = search(apps, predicate);
+    public static ArchitectureMicroservice getOneMicroservice(Set<ArchitectureMicroservice> microservices,
+	    Predicate<ArchitectureMicroservice> predicate) {
+	Set<ArchitectureMicroservice> result = search(microservices, predicate);
 	switch (result.size()) {
 	case 0:
 	    return null;
@@ -57,33 +63,25 @@ public class SetUtil {
 	}
     }
 
-    public static Set<String> collectVersions(Set<OverviewApp> apps) {
-	return apps.stream().map(app -> app.getVersion()).collect(Collectors.toSet());
+    public static Set<String> collectVersions(Set<ArchitectureMicroservice> microservices) {
+	return microservices.stream().map(ms -> ms.getVersion()).collect(Collectors.toSet());
     }
 
-    public static Set<OverviewApp> exludedApps(Set<OverviewApp> apps, OverviewApp inclusion) {
-	return apps.stream().filter(app -> app != inclusion).collect(Collectors.toSet());
-    }
-
-    public static Set<OverviewApp> exludedApps(Set<OverviewApp> apps, Set<OverviewApp> inclusion) {
-	return apps.stream().filter(app -> !inclusion.contains(app)).collect(Collectors.toSet());
-    }
-
-    public static boolean uniqueByName(Set<OverviewApp> apps) {
+    public static boolean uniqueByName(Set<ArchitectureMicroservice> microservices) {
 	Set<String> names = new HashSet<>();
-	for (OverviewApp app : apps) {
-	    if (!names.add(app.getName())) {
+	for (ArchitectureMicroservice ms : microservices) {
+	    if (!names.add(ms.getName())) {
 		return false;
 	    }
 	}
 	return true;
     }
 
-    // verify whether apps have unique path and env
-    public static boolean uniqueByPathEnv(Set<OverviewApp> apps) {
+    // verify whether microservices have unique path and env
+    public static boolean uniqueByPathEnv(Set<ArchitectureMicroservice> microservices) {
 	Set<PathEnv> appeared = new HashSet<>();
-	for (OverviewApp app : apps) {
-	    if (!appeared.add(new PathEnv(app.getPath(), app.getEnv()))) {
+	for (ArchitectureMicroservice ms : microservices) {
+	    if (!appeared.add(new PathEnv(ms.getPath(), ms.getEnv()))) {
 		return false;
 	    }
 	}

@@ -62,7 +62,7 @@ import com.orange.Main;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.state.Route;
-import com.orange.model.state.cf.CFAppDesiredState;
+import com.orange.model.state.cf.CFMicroserviceDesiredState;
 import com.orange.util.RetryFunction;
 
 public class CloudFoundryOperations {
@@ -180,7 +180,7 @@ public class CloudFoundryOperations {
     public boolean appRunning(String appId) {
 	try {
 	    SummaryApplicationResponse appSummary = getAppSummary(appId);
-	    if (!CFAppDesiredState.STARTED.toString().equals(appSummary.getState())) {
+	    if (!CFMicroserviceDesiredState.STARTED.toString().equals(appSummary.getState())) {
 		return false;
 	    }
 	    if (!appStaged(appSummary)) {
@@ -435,7 +435,7 @@ public class CloudFoundryOperations {
      * @param state
      */
     private void updateApp(String appId, String name, Map<String, String> env, Integer instances,
-	    CFAppDesiredState state) {
+	    CFMicroserviceDesiredState state) {
 	try {
 	    UpdateApplicationRequest request = UpdateApplicationRequest.builder().applicationId(appId).name(name)
 		    .environmentJsons(env).instances(instances).state(state == null ? null : state.name()).build();
@@ -449,12 +449,12 @@ public class CloudFoundryOperations {
     }
 
     public void startApp(String appId) {
-	updateApp(appId, null, null, null, CFAppDesiredState.STARTED);
+	updateApp(appId, null, null, null, CFMicroserviceDesiredState.STARTED);
 	logger.info("app {} desired state updated to STARTED.", appId);
     }
 
     public void stopApp(String appId) {
-	updateApp(appId, null, null, null, CFAppDesiredState.STOPPED);
+	updateApp(appId, null, null, null, CFMicroserviceDesiredState.STOPPED);
 	logger.info("app {} desired state updated to STOPPED.", appId);
     }
 
