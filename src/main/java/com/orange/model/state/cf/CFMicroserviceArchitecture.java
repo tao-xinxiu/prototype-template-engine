@@ -70,6 +70,14 @@ public class CFMicroserviceArchitecture {
 	return routes;
     }
 
+    public void setGuid(String guid) {
+	this.guid = guid;
+    }
+
+    public void setName(String name) {
+	this.name = name;
+    }
+
     public void setPath(String path) {
 	this.path = path;
     }
