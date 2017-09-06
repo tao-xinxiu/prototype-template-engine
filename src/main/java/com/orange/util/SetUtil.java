@@ -67,6 +67,10 @@ public class SetUtil {
 	return microservices.stream().map(ms -> ms.getVersion()).collect(Collectors.toSet());
     }
 
+    public static Set<String> collectNames(Set<ArchitectureMicroservice> microservices) {
+	return microservices.stream().map(ms -> ms.getName()).collect(Collectors.toSet());
+    }
+
     public static boolean uniqueByName(Set<ArchitectureMicroservice> microservices) {
 	Set<String> names = new HashSet<>();
 	for (ArchitectureMicroservice ms : microservices) {

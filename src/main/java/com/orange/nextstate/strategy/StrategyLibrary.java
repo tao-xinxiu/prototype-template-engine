@@ -55,7 +55,7 @@ public class StrategyLibrary {
 
     /**
      * next architecture: adding new micro-services (in finalState, not in
-     * currentState)
+     * currentState, identified by name)
      */
     protected Transit addNewTransit = new Transit() {
 	@Override
@@ -68,9 +68,34 @@ public class StrategyLibrary {
 			    ms -> ms.getName().equals(desiredMicroservice.getName()))) {
 			ArchitectureMicroservice newMicroservice = new ArchitectureMicroservice(desiredMicroservice);
 			newMicroservice.setGuid(null);
-			newMicroservice.setVersion(VersionGenerator.random(new HashSet<>()));
-			nextState.getArchitectureSite(site).addArchitectureMicroservice(newMicroservice);
+			Set<String> usedVersions = SetUtil.collectVersions(
+				SetUtil.searchByName(currentMicroservices, desiredMicroservice.getName()));
+			newMicroservice.setVersion(VersionGenerator.random(usedVersions));
+			currentMicroservices.add(newMicroservice);
 			logger.info("Added a new microservice: {} ", newMicroservice);
+			continue;
+		    }
+		}
+	    }
+	    return nextState;
+	}
+    };
+
+    /**
+     * next architecture: remove old micro-services (in currentState, not in
+     * finalState, identified by name)
+     */
+    protected Transit removeOldTransit = new Transit() {
+	@Override
+	public Architecture next(Architecture currentState, Architecture finalState) {
+	    Architecture nextState = new Architecture(currentState);
+	    for (String site : finalState.listSitesName()) {
+		Set<String> desiredMsName = SetUtil.collectNames(finalState.getArchitectureMicroservices(site));
+		Set<ArchitectureMicroservice> currentMicroservices = nextState.getArchitectureMicroservices(site);
+		for (ArchitectureMicroservice currentMicroservice : currentMicroservices) {
+		    if (!desiredMsName.contains(currentMicroservice.getName())) {
+			currentMicroservices.remove(currentMicroservice);
+			logger.info("Removed an old microservice: {} ", currentMicroservice);
 			continue;
 		    }
 		}
