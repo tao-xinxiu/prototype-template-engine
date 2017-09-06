@@ -1,0 +1,20 @@
+participant "Client" as C
+participant "NextStateCalculator" as Next
+participant "PaaSInterface" as P
+participant "StrategyInterface" as SG
+
+C->Next:next(final_architecture)
+activate Next
+Next->P:pull(final_architecture.sites)
+activate P
+Next<--P:current_architecture
+deactivate P
+Next->SG:next(current_architecture, final_architecture)
+activate SG
+Next<--SG:next_architecture
+deactivate SG
+C<--Next:next_architecture
+deactivate Next
+
+
+

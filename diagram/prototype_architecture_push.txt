@@ -1,0 +1,45 @@
+participant "Client" as C
+participant "PushExecutor" as P
+participant "PaaSInterface" as PI
+participant "WorkflowCalculator" as WC
+participant ":workflow" as W
+
+C->P:push(next_architecture)
+activate P
+
+P->PI:pull(final_architecture.sites)
+activate PI
+P<--PI:current_architecture
+deactivate PI
+
+P->WC:getWorkflow(current_architecture, final_architecture)
+activate WC
+WC->WC:diff(current_architecture, final_architecture)
+loop all_new_microservices
+WC->PI:how_to_add(new_microservice)
+activate PI
+WC<--PI:step(add_new_microservice)
+deactivate PI
+end
+loop all_old_microservices
+WC->PI:how_to_remove(old_microservice)
+activate PI
+WC<--PI:step(add_new_microservice)
+deactivate PI
+end
+loop all_updated_microservices
+WC->PI:how_to_update(old_microservice, new_microservice)
+activate PI
+WC<--PI:step(add_new_microservice)
+deactivate PI
+end
+WC->WC:compose_steps
+P<--WC:workflow
+deactivate WC
+
+P->W:exec()
+activate W
+P<--W:DONE
+deactivate W
+C<--P:OK
+deactivate P

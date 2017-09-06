@@ -1,0 +1,19 @@
+participant "Client" as C
+participant "Server" as S
+
+C->S:set_strategy_config(strategy_name, strategy_config)
+C<--S:OK
+
+loop  !is_instantiation(final_architecture) 
+
+C->S:next(final_architecture)
+activate S
+C<--S:next_architecture
+deactivate S
+
+C->S:push(next_architecture)
+activate S
+C<--S:OK
+deactivate S
+
+end
