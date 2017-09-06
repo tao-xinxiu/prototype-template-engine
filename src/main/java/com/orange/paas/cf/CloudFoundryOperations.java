@@ -223,6 +223,13 @@ public class CloudFoundryOperations {
 	unbindServiecs.stream().forEach(service -> unbindAppServices(msId, service));
     }
 
+    /**
+     * update microservice state (i.e. manage its lifecycle), contains
+     * updatePath if necessary for state change (i.e. change from CREATED state)
+     * 
+     * @param currentMicroservice
+     * @param desiredMicroservice
+     */
     public void updateStateIfNeed(CFMicroserviceArchitecture currentMicroservice,
 	    CFMicroserviceArchitecture desiredMicroservice) {
 	if (currentMicroservice.getState() == desiredMicroservice.getState()) {

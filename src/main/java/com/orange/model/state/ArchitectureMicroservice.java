@@ -231,30 +231,4 @@ public class ArchitectureMicroservice {
 	    return false;
 	return true;
     }
-
-    /**
-     * return whether "this" is an instantiated microservice of
-     * "desiredMicroservice".
-     * 
-     * @param desiredMicroservice
-     * @return
-     */
-    public boolean isInstantiation(ArchitectureMicroservice desiredMicroservice) {
-	if (desiredMicroservice == null) {
-	    return false;
-	}
-	if (desiredMicroservice.guid != null && !desiredMicroservice.guid.equals(this.guid)) {
-	    return false;
-	}
-	if (desiredMicroservice.version != null && !desiredMicroservice.version.equals(this.version)) {
-	    return false;
-	}
-	if (!this.name.equals(desiredMicroservice.name) || !this.path.equals(desiredMicroservice.path)
-		|| !this.state.equals(desiredMicroservice.state) || this.nbProcesses != desiredMicroservice.nbProcesses
-		|| !this.env.equals(desiredMicroservice.env) || !this.routes.equals(desiredMicroservice.routes)
-		|| !this.memory.equals(desiredMicroservice.memory) || !this.disk.equals(desiredMicroservice.disk)) {
-	    return false;
-	}
-	return true;
-    }
 }

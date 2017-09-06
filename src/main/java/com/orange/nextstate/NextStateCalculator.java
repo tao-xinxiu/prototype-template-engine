@@ -17,12 +17,23 @@ import com.orange.nextstate.strategy.Transit;
 public class NextStateCalculator {
     private static final Logger logger = LoggerFactory.getLogger(NextStateCalculator.class);
 
-    private String strategyClass;
     private StrategyConfig strategyConfig;
+    private Strategy strategy;
 
     public NextStateCalculator(String strategyClass, StrategyConfig strategyConfig) {
-	this.strategyClass = strategyClass;
 	this.strategyConfig = strategyConfig;
+	try {
+	    this.strategy = (Strategy) Class.forName(strategyClass).getConstructor(StrategyConfig.class)
+		    .newInstance(strategyConfig);
+	} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+		| NoSuchMethodException | SecurityException | ClassNotFoundException e) {
+	    throw new IllegalStateException(String.format("Exception [%s] in Strategy [%s] instantiation.",
+		    e.getClass().getName(), strategyClass), e);
+	}
+    }
+
+    public boolean isInstantiation(Architecture currentState, Architecture desiredState) {
+	return strategy.isInstantiation(currentState, desiredState);
     }
 
     /**
@@ -35,7 +46,7 @@ public class NextStateCalculator {
      */
     public Architecture calcNextStates(final Architecture currentState, final Architecture finalState) {
 	// return null when arrived final state
-	if (currentState.isInstantiation(finalState)) {
+	if (strategy.isInstantiation(currentState, finalState)) {
 	    return null;
 	}
 	if (!strategyConfig.isParallelAllSites()) {
@@ -44,11 +55,12 @@ public class NextStateCalculator {
 	    for (Set<String> sites : strategyConfig.getSitesOrder()) {
 		Architecture currentSubArchitecture = currentState.getSubArchitecture(sites);
 		Architecture finalSubArchitecture = finalState.getSubArchitecture(sites);
-		if (currentSubArchitecture.isInstantiation(finalSubArchitecture)) {
+		if (strategy.isInstantiation(currentSubArchitecture, finalSubArchitecture)) {
 		    logger.info("Sites {} are already the instantiation of the final state.", sites);
 		    continue;
 		} else {
-		    Architecture updatedSitesArchitecture = strategyNextStates(currentSubArchitecture, finalSubArchitecture);
+		    Architecture updatedSitesArchitecture = strategyNextStates(currentSubArchitecture,
+			    finalSubArchitecture);
 		    logger.info("Get next state {} for the sites {}.", updatedSitesArchitecture, sites);
 		    nextStates.mergeArchitecture(updatedSitesArchitecture);
 		    return nextStates;
@@ -63,24 +75,16 @@ public class NextStateCalculator {
     }
 
     private Architecture strategyNextStates(final Architecture currentState, final Architecture finalState) {
-	try {
-	    Strategy strategy = (Strategy) Class.forName(strategyClass).getConstructor(StrategyConfig.class)
-		    .newInstance(strategyConfig);
-	    if (!strategy.valid(currentState, finalState)) {
-		throw new IllegalStateException("Strategy disallowed situation");
-	    }
-	    for (Transit transit : strategy.transits()) {
-		Architecture next = transit.next(currentState, finalState);
-		if (!next.equals(currentState)) {
-		    return next;
-		}
-	    }
-	    return finalState;
-	} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-		| NoSuchMethodException | SecurityException | ClassNotFoundException e) {
-	    throw new IllegalStateException(String.format("Exception [%s] in Strategy [%s] instantiation.",
-		    e.getClass().getName(), strategyClass), e);
+	if (!strategy.valid(currentState, finalState)) {
+	    throw new IllegalStateException("Strategy disallowed situation");
 	}
+	for (Transit transit : strategy.transits()) {
+	    Architecture next = transit.next(currentState, finalState);
+	    if (!next.equals(currentState)) {
+		return next;
+	    }
+	}
+	return finalState;
     }
 
     private void validSitesOrder(Set<String> completeSites) {

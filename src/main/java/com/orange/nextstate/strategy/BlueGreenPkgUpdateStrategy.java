@@ -12,7 +12,7 @@ import com.orange.model.state.Architecture;
 import com.orange.model.state.ArchitectureMicroservice;
 import com.orange.util.SetUtil;
 
-public class BlueGreenPkgUpdateStrategy extends Strategy {
+public class BlueGreenPkgUpdateStrategy extends TagUpdatingVersionStrategy {
     private static final Logger logger = LoggerFactory.getLogger(BlueGreenPkgUpdateStrategy.class);
 
     public BlueGreenPkgUpdateStrategy(StrategyConfig config) {
@@ -37,9 +37,8 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
-			.getArchitectureMicroservices()) {
-		    if (SetUtil.search(currentState.getArchitectureSite(site).getArchitectureMicroservices(),
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
+		    if (SetUtil.search(currentState.getArchitectureMicroservices(site),
 			    ms -> ms.getName().equals(desiredMicroservice.getName())
 				    && ms.getPath().equals(desiredMicroservice.getPath()))
 			    .isEmpty()) {
@@ -67,12 +66,10 @@ public class BlueGreenPkgUpdateStrategy extends Strategy {
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
-			.getArchitectureMicroservices()) {
-		    if (SetUtil.noneMatch(nextState.getArchitectureSite(site).getArchitectureMicroservices(),
-			    ms -> ms.isInstantiation(desiredMicroservice))) {
-			Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureSite(site)
-				.getArchitectureMicroservices();
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
+		    if (SetUtil.noneMatch(nextState.getArchitectureMicroservices(site),
+			    ms -> isInstantiation(ms, desiredMicroservice))) {
+			Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureMicroservices(site);
 			ArchitectureMicroservice nextMicroservice = SetUtil.getOneMicroservice(nextMicroservices,
 				ms -> ms.getName().equals(desiredMicroservice.getName())
 					&& ms.getPath().equals(desiredMicroservice.getPath()));

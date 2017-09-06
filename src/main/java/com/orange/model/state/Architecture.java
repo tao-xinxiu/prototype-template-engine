@@ -45,15 +45,19 @@ public class Architecture {
     }
 
     public Map<String, ArchitectureSite> getArchitectureSites() {
-        return architectureSites;
+	return architectureSites;
     }
 
     public void setArchitectureSites(Map<String, ArchitectureSite> architectureSites) {
-        this.architectureSites = architectureSites;
+	this.architectureSites = architectureSites;
     }
 
     public ArchitectureSite getArchitectureSite(String siteName) {
 	return architectureSites.get(siteName);
+    }
+
+    public Set<ArchitectureMicroservice> getArchitectureMicroservices(String siteName) {
+	return getArchitectureSite(siteName).getArchitectureMicroservices();
     }
 
     public Architecture getSubArchitecture(Set<String> siteNames) {
@@ -114,35 +118,6 @@ public class Architecture {
 		return false;
 	} else if (!sites.equals(other.sites))
 	    return false;
-	return true;
-    }
-
-    /**
-     * return whether "this" is an instantiated state of "desiredState".
-     * 
-     * @param desiredState
-     * @return
-     */
-    public boolean isInstantiation(Architecture desiredState) {
-	if (desiredState == null) {
-	    return false;
-	}
-	if (!this.sites.equals(desiredState.sites)) {
-	    return false;
-	}
-	for (String site : this.sites.keySet()) {
-	    Set<ArchitectureMicroservice> desiredMicroservices = desiredState.getArchitectureSite(site)
-		    .getArchitectureMicroservices();
-	    Set<ArchitectureMicroservice> microservices = this.getArchitectureSite(site).getArchitectureMicroservices();
-	    if (microservices.size() != desiredMicroservices.size()) {
-		return false;
-	    }
-	    for (ArchitectureMicroservice desiredMicroservice : desiredMicroservices) {
-		if (microservices.stream().noneMatch(ms -> ms.isInstantiation(desiredMicroservice))) {
-		    return false;
-		}
-	    }
-	}
 	return true;
     }
 

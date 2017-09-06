@@ -12,7 +12,7 @@ import com.orange.model.state.Architecture;
 import com.orange.model.state.ArchitectureMicroservice;
 import com.orange.util.SetUtil;
 
-public class BlueGreenCanaryMixStrategy extends Strategy {
+public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
     private static final Logger logger = LoggerFactory.getLogger(BlueGreenCanaryMixStrategy.class);
 
     public BlueGreenCanaryMixStrategy(StrategyConfig config) {
@@ -38,10 +38,8 @@ public class BlueGreenCanaryMixStrategy extends Strategy {
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		Set<ArchitectureMicroservice> currentMicroservices = nextState.getArchitectureSite(site)
-			.getArchitectureMicroservices();
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
-			.getArchitectureMicroservices()) {
+		Set<ArchitectureMicroservice> currentMicroservices = nextState.getArchitectureMicroservices(site);
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
 		    if (SetUtil.noneMatch(currentMicroservices,
 			    ms -> ms.getName().equals(desiredMicroservice.getName())
 				    && ms.getPath().equals(desiredMicroservice.getPath())
@@ -73,9 +71,8 @@ public class BlueGreenCanaryMixStrategy extends Strategy {
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
-			.getArchitectureMicroservices()) {
-		    if (SetUtil.noneMatch(nextState.getArchitectureSite(site).getArchitectureMicroservices(),
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
+		    if (SetUtil.noneMatch(nextState.getArchitectureMicroservices(site),
 			    ms -> ms.getName().equals(desiredMicroservice.getName())
 				    && ms.getVersion().equals(config.getUpdatingVersion())
 				    && ms.getPath().equals(desiredMicroservice.getPath())
@@ -83,13 +80,14 @@ public class BlueGreenCanaryMixStrategy extends Strategy {
 				    && ms.getServices().equals(desiredMicroservice.getServices())
 				    && ms.getState().equals(desiredMicroservice.getState()))) {
 			ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(
-				nextState.getArchitectureSite(site).getArchitectureMicroservices(),
+				nextState.getArchitectureMicroservices(site),
 				ms -> ms.getName().equals(desiredMicroservice.getName())
 					&& ms.getVersion().equals(config.getUpdatingVersion()));
 			nextMicroservice.setPath(desiredMicroservice.getPath());
 			nextMicroservice.setEnv(desiredMicroservice.getEnv());
 			nextMicroservice.setServices(desiredMicroservice.getServices());
 			nextMicroservice.setState(desiredMicroservice.getState());
+			nextMicroservice.setRoutes(library.tmpRoute(site, desiredMicroservice));
 			logger.info("Updated microservice [{}_{}] to {} ", nextMicroservice.getName(),
 				nextMicroservice.getVersion(), nextMicroservice);
 		    }
@@ -108,9 +106,8 @@ public class BlueGreenCanaryMixStrategy extends Strategy {
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
-			.getArchitectureMicroservices()) {
-		    if (SetUtil.noneMatch(nextState.getArchitectureSite(site).getArchitectureMicroservices(),
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
+		    if (SetUtil.noneMatch(nextState.getArchitectureMicroservices(site),
 			    ms -> ms.getName().equals(desiredMicroservice.getName())
 				    && ms.getVersion().equals(config.getUpdatingVersion())
 				    && ms.getPath().equals(desiredMicroservice.getPath())
@@ -119,7 +116,7 @@ public class BlueGreenCanaryMixStrategy extends Strategy {
 				    && ms.getState().equals(desiredMicroservice.getState())
 				    && ms.getRoutes().equals(desiredMicroservice.getRoutes()))) {
 			ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(
-				nextState.getArchitectureSite(site).getArchitectureMicroservices(),
+				nextState.getArchitectureMicroservices(site),
 				ms -> ms.getName().equals(desiredMicroservice.getName())
 					&& ms.getVersion().equals(config.getUpdatingVersion()));
 			nextMicroservice.setRoutes(desiredMicroservice.getRoutes());
@@ -140,11 +137,9 @@ public class BlueGreenCanaryMixStrategy extends Strategy {
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
 	    for (String site : finalState.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureSite(site)
-			.getArchitectureMicroservices()) {
-		    Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureSite(site)
-			    .getArchitectureMicroservices();
-		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
+		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
+		    Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureMicroservices(site);
+		    if (SetUtil.noneMatch(nextMicroservices, ms -> isInstantiation(ms, desiredMicroservice))) {
 			for (ArchitectureMicroservice nextMicroservice : SetUtil.searchByName(nextMicroservices,
 				desiredMicroservice.getName())) {
 			    if (nextMicroservice.getVersion().equals(library.desiredVersion(desiredMicroservice))) {

@@ -25,7 +25,7 @@ public class InplaceStrategy extends Strategy {
     @Override
     public boolean valid(Architecture currentState, Architecture finalState) {
 	for (String site : finalState.listSitesName()) {
-	    if (!SetUtil.uniqueByName(finalState.getArchitectureSite(site).getArchitectureMicroservices())) {
+	    if (!SetUtil.uniqueByName(finalState.getArchitectureMicroservices(site))) {
 		logger.error("InplaceStrategy should be used for the case that multi versions in currentState.");
 		return false;
 	    }

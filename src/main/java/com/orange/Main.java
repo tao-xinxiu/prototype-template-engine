@@ -40,7 +40,7 @@ public class Main {
     // storePath and nextStateCalculator(strategy&config) are specific to user
     public static final String storePath = "./store/";
     private static final String strategyPackage = "com.orange.nextstate.strategy.";
-    private static NextStateCalculator nextStateCalculator;
+    private static NextStateCalculator nextStateCalculator; 
     private static OperationConfig operationConfig = new OperationConfig();
     // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
     private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
@@ -69,7 +69,7 @@ public class Main {
     @RequestMapping(value = "/next", method = RequestMethod.POST)
     public @ResponseBody Architecture calcNextState(@RequestBody Architecture finalState) {
 	if (nextStateCalculator == null) {
-	    throw new IllegalStateException("Update config not yet set.");
+	    throw new IllegalStateException("Strategy config not yet set.");
 	}
 	Architecture currentState = getCurrentStableState(finalState.listPaaSSites());
 	return nextStateCalculator.calcNextStates(currentState, finalState);
@@ -90,8 +90,11 @@ public class Main {
 
     @RequestMapping(value = "/is_instantiation", method = RequestMethod.POST)
     public boolean isInstantiation(@RequestBody Architecture desiredState) {
+	if (nextStateCalculator == null) {
+	    throw new IllegalStateException("Strategy config not yet set.");
+	}
 	Architecture currentState = getCurrentState(desiredState.listPaaSSites());
-	return currentState.isInstantiation(desiredState);
+	return nextStateCalculator.isInstantiation(currentState, desiredState);
     }
 
     @RequestMapping(value = "health", method = RequestMethod.GET)
