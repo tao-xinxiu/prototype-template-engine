@@ -1,5 +1,5 @@
 # prototype-template-engine
-The project is the prototype of an Architecture-based Framework for automating the update of multiple microservices on multiple distributed PaaS platforms (ex. Cloud Foundry, Heroku).
+The project is the prototype of an Architecture-based Framework for automating the update of multiple microservices on multiple distributed PaaS platforms (ex. Cloud Foundry, Heroku). The framework supports multiple updating strategies (ex. BlueGreen, Canary, CleanRedeploy etc.), and greatly facilitates fixing failures during updating.
 
 ## Usage
 ### start server
@@ -21,9 +21,6 @@ while(!is_instantiation(final_architecture))
 done
 ```
 To perform a more prudent updating process, the user could invoke manually `next` and `push` command, so that it could always preview the next architecture before delivering it. This usage mode is often used during the implementation and testing of new custom strategy.
-
-### robust client
-This framework provides the kill-continue capability. That is, whenever the update process is stopped, either voluntarily by the user or involuntarily due to a failure, user could always re-start it by re-invoking the demonstrated  `update` script. In the practise, the user could easily configure `retry` in the pipeline setup or use loop in the script to avoid temporary failures (ex. network error). To correct the failure caused by microservice implementation or configuration, the user could change the desired microservice architecture `final_architecture`. In addition, the user could also change the chosen `strategy` to correct the erroneous strategy implementation.
 
 ## Model
 An [architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/state/Architecture.java) is composed by the multiple PaaS sites, each site contains a set of [microservices architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/state/ArchitectureMicroservice.java).
@@ -57,3 +54,23 @@ body: [StrategyConfig](https://github.com/tao-xinxiu/prototype-template-engine/b
 ### set operation configuration
 request: PUT /set_operation_config  
 body: [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
+
+## Robustness
+This framework provides the kill-continue capability. That is, whenever the update process is stopped, either voluntarily by the user or involuntarily due to a failure, user could always re-start it by re-invoking the demonstrated  `update` script. In the practise, the user could easily configure `retry` in the pipeline setup or use loop in the script to avoid temporary failures (ex. network error). To correct the failure caused by microservice implementation or configuration, the user could change the desired microservice architecture `final_architecture`. In addition, the user could also change the chosen `strategy` to correct the erroneous strategy implementation.
+
+## Updating Strategy
+In the framework, user control the updating process by choosing a provided or custom strategy. The choice of strategy is depending on the microservice architecture constraints and non-functional requirement (availability, resource usage, or updating duration etc.)
+
+### provided strategy
+The following strategies is provided:
+- [BlueGreen](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/BlueGreenStrategy.java)
+- [Canary](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/CanaryStrategy.java)
+- [BlueGreen Canary Mix](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/BlueGreenCanaryMixStrategy.java)
+- [Inplace](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/InplaceStrategy.java)
+- [Inplace with test](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/InplaceTestStrategy.java)
+- [Clean up then redeploy](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/CleanRedeployStrategy.java)
+- [Add then Remove](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/AddRemoveStrategy.java)
+- [Remove then Add](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/RemoveAddStrategy.java)
+
+### custom strategy
+The user could implement its proper strategy by implement [Strategy interface](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/Strategy.java). The key of the implementation of a strategy is to specify a sequence of [transitions](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/Transit.java). The `transitions` defined in [strategy library](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/StrategyLibrary.java) could be used to compose a new strategy.
