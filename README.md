@@ -11,7 +11,8 @@ java -jar target/prototype-template-engine-0.0.1-SNAPSHOT.jar
 ```
 
 ### client
-The client could setup a pipeline (with tools as [Jenkins](https://jenkins.io/) or [Concourse](https://concourse.ci/)) as [example](https://gitlab.com/x_tao/microservices-demo-deployment), or write a simple script as [example](https://gitlab.com/x_tao/experiment/blob/master/scripts/update.sh) to send the update request to the server. The basic idea is demonstrated in following `update` script:
+The basic idea of perfoming an update process with the framework is demonstrated as following digram: ![prototype sequence diagram](diagram/prototype_client_seqdiag.png)
+The client could setup a pipeline (with tools as [Jenkins](https://jenkins.io/) or [Concourse](https://concourse.ci/)) as [example](https://gitlab.com/x_tao/microservices-demo-deployment), or write a simple script as [example](https://gitlab.com/x_tao/experiment/blob/master/scripts/update.sh) to send the update request to the server. Here is an example `update` script:
 ```
 set_strategy_config(strategy_name, strategy_config)
 
@@ -56,7 +57,7 @@ request: PUT /set_operation_config
 body: [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
 
 ## Robustness
-This framework provides the kill-continue capability. That is, whenever the update process is stopped, either voluntarily by the user or involuntarily due to a failure, user could always re-start it by re-invoking the demonstrated  `update` script. In the practise, the user could easily configure `retry` in the pipeline setup or use loop in the script to avoid temporary failures (ex. network error). To correct the failure caused by microservice implementation or configuration, the user could change the desired microservice architecture `final_architecture`. In addition, the user could also change the chosen `strategy` to correct the erroneous strategy implementation.
+This framework provides the kill-continue capability. That is, whenever the update process is stopped, either voluntarily by the user or involuntarily due to a failure, user could always re-start it by re-invoking the demonstrated  `update` [script](#client). In the practise, the user could easily configure `retry` in the pipeline setup or use loop in the script to avoid temporary failures (ex. network error). To correct the failure caused by microservice implementation or configuration, the user could change the desired microservice architecture `final_architecture`. In addition, the user could also change the chosen `strategy` to correct the erroneous strategy implementation.
 
 ## Updating Strategy
 In the framework, user control the updating process by choosing a provided or custom strategy. The choice of strategy is depending on the microservice architecture constraints and non-functional requirement (availability, resource usage, or updating duration etc.)
