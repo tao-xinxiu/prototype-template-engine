@@ -73,5 +73,17 @@ The following strategies is provided:
 - [Add then Remove](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/AddRemoveStrategy.java)
 - [Remove then Add](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/RemoveAddStrategy.java)
 
+To choose the proper strategy, you could check their comparison in the following table. It shows the influence of applying different strategies for updating the code of a microservice.
+
+| strategy | multi-version coexisted | duration | resource consumption | performance degradation | available instances |
+|-----------|-----|-----|---------|-----|---------|
+| BlueGreen | Yes | ++  | N ~ 2N  | 0   | N ~ 2N  |
+| Canary    | Yes | +++ | N-1 ~ N | +   | N-1 ~ N |
+| Mix       | Yes | ++  | N ~ N+1 | 0   | N ~ N+1 |
+| Inplace   | No  | +   | N       | +++ | 0 ~ N   |
+| CleanRedeploy | No | ++ | 0 ~ N | ++++ | 0 ~ N  |
+
+In the table, the property `resource consumption` is shown by the number of instances. `N` means desired number of instances of the microservice. The property `available instances` means the number of instances in running. It is used to demonstrate more clearly `performance degradation`, as more instances available mean less performance degradation.
+
 ### custom strategy
 The user could implement its proper strategy by implement [Strategy interface](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/Strategy.java). The key of the implementation of a strategy is to specify a sequence of [transitions](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/Transit.java). The `transitions` defined in [strategy library](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/StrategyLibrary.java) could be used to compose a new strategy.
