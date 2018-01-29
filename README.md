@@ -10,9 +10,9 @@ mvn install
 java -jar target/prototype-template-engine-0.0.1-SNAPSHOT.jar
 ```
 
-### client
+### setup client
 The basic idea of perfoming an update process with the framework is demonstrated as following digram: ![prototype sequence diagram](diagram/prototype_client_seqdiag.png)  
-The client could setup a pipeline (with tools as [Jenkins](https://jenkins.io/) or [Concourse](https://concourse.ci/)) as [example](https://gitlab.com/x_tao/microservices-demo-deployment), or write a simple script as [example](https://gitlab.com/x_tao/experiment/blob/master/scripts/update.sh) to send the update request to the server. Here is an example `update` script:
+The client could setup a pipeline (with tools as [Jenkins](https://jenkins.io/) or [Concourse](https://concourse.ci/)) as [example](https://gitlab.com/xxtao/microservices-demo-deployment), or write a simple script as [example](https://gitlab.com/xxtao/experiment/blob/master/scripts/update.sh) to send the update request to the server. Here is an example `update` script:
 ```
 set_strategy_config(strategy_name, strategy_config)
 
