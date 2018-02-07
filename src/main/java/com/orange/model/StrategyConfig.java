@@ -2,9 +2,11 @@ package com.orange.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class StrategyConfig {
     private boolean parallelAllSites = true;
@@ -75,6 +77,22 @@ public class StrategyConfig {
 
     public void setUpdatingVersion(String updatingVersion) {
 	this.updatingVersion = updatingVersion;
+    }
+    
+    public void validSitesOrder(Set<String> completeSites) {
+	if (sitesOrder.isEmpty()) {
+	    throw new IllegalStateException(
+		    "strategyConfig.sitesOrder is not specified for a non-parallel update sites strategy.");
+	}
+	List<String> sitesInOrder = sitesOrder.stream().flatMap(s -> s.stream()).collect(Collectors.toList());
+	if (completeSites.size() != sitesInOrder.size()) {
+	    throw new IllegalStateException(
+		    "Number of sites in strategyConfig.sitesOrder is not equal to the number of sites specified in the finalState.");
+	}
+	if (!completeSites.equals(new HashSet<>(sitesInOrder))) {
+	    throw new IllegalStateException(
+		    "sites in strategyConfig.sitesOrder is not equal to the sites specified in the finalState");
+	}
     }
 
     @Override

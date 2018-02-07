@@ -72,7 +72,7 @@ public class Main {
 	    throw new IllegalStateException("Strategy config not yet set.");
 	}
 	Architecture currentState = getCurrentStableState(finalState.listPaaSSites());
-	return nextStateCalculator.calcNextStates(currentState, finalState);
+	return nextStateCalculator.nextArchitecture(currentState, finalState);
     }
 
     @RequestMapping(value = "/set_strategy_config", method = RequestMethod.PUT)

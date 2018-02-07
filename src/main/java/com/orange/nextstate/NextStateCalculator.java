@@ -1,10 +1,6 @@
 package com.orange.nextstate;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import com.orange.model.StrategyConfig;
 import com.orange.model.state.Architecture;
 import com.orange.nextstate.strategy.Strategy;
-import com.orange.nextstate.strategy.Transition;
 
 public class NextStateCalculator {
     private static final Logger logger = LoggerFactory.getLogger(NextStateCalculator.class);
@@ -32,75 +27,19 @@ public class NextStateCalculator {
 	}
     }
 
-    public boolean isInstantiation(Architecture currentState, Architecture desiredState) {
-	return strategy.isInstantiation(currentState, desiredState);
+    public boolean isInstantiation(final Architecture currentArchitecture, final Architecture finalArchitecture) {
+	return strategy.isInstantiation(currentArchitecture, finalArchitecture);
     }
 
-    /**
-     * calculate next mid state to achieve the final state, based on current
-     * state and different deployment configurations and update strategies.
-     * 
-     * @param currentState
-     * @param finalState
-     * @return
-     */
-    public Architecture calcNextStates(final Architecture currentState, final Architecture finalState) {
+    public Architecture nextArchitecture(final Architecture currentArchitecture, final Architecture finalArchitecture) {
 	// return null when arrived final state
-	if (strategy.isInstantiation(currentState, finalState)) {
+	if (isInstantiation(currentArchitecture, finalArchitecture)) {
 	    return null;
 	}
-	if (!strategyConfig.isParallelAllSites()) {
-	    validSitesOrder(finalState.listSitesName());
-	    Architecture nextStates = new Architecture(currentState);
-	    for (Set<String> sites : strategyConfig.getSitesOrder()) {
-		Architecture currentSubArchitecture = currentState.getSubArchitecture(sites);
-		Architecture finalSubArchitecture = finalState.getSubArchitecture(sites);
-		if (strategy.isInstantiation(currentSubArchitecture, finalSubArchitecture)) {
-		    logger.info("Sites {} are already the instantiation of the final state.", sites);
-		    continue;
-		} else {
-		    Architecture updatedSitesArchitecture = strategyNextStates(currentSubArchitecture,
-			    finalSubArchitecture);
-		    logger.info("Get next state {} for the sites {}.", updatedSitesArchitecture, sites);
-		    nextStates.mergeArchitecture(updatedSitesArchitecture);
-		    return nextStates;
-		}
-	    }
-	    logger.error(
-		    "Abnormal state in calcNextStates: not found sites which is not already the instantiation of the final state.");
-	    return null;
+	if (strategyConfig.isParallelAllSites()) {
+	    return strategy.nextArchitecture(currentArchitecture, finalArchitecture);
 	} else {
-	    return strategyNextStates(currentState, finalState);
-	}
-    }
-
-    private Architecture strategyNextStates(final Architecture currentState, final Architecture finalState) {
-	if (!strategy.valid(currentState, finalState)) {
-	    throw new IllegalStateException("Strategy disallowed situation");
-	}
-	for (Transition transit : strategy.getTransitions()) {
-	    Architecture next = transit.next(currentState, finalState);
-	    if (!next.equals(currentState)) {
-		return next;
-	    }
-	}
-	return finalState;
-    }
-
-    private void validSitesOrder(Set<String> completeSites) {
-	List<Set<String>> sitesOrder = strategyConfig.getSitesOrder();
-	if (sitesOrder.isEmpty()) {
-	    throw new IllegalStateException(
-		    "strategyConfig.sitesOrder is not specified for a non-parallel update sites strategy.");
-	}
-	List<String> sitesInOrder = sitesOrder.stream().flatMap(s -> s.stream()).collect(Collectors.toList());
-	if (completeSites.size() != sitesInOrder.size()) {
-	    throw new IllegalStateException(
-		    "Number of sites in strategyConfig.sitesOrder is not equal to the number of sites specified in the finalState.");
-	}
-	if (!completeSites.equals(new HashSet<>(sitesInOrder))) {
-	    throw new IllegalStateException(
-		    "sites in strategyConfig.sitesOrder is not equal to the sites specified in the finalState");
+	    return strategy.nextArchitectureSitesOrdered(currentArchitecture, finalArchitecture);
 	}
     }
 }

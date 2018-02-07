@@ -4,15 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.orange.model.StrategyConfig;
 import com.orange.model.state.Architecture;
 import com.orange.model.state.ArchitectureMicroservice;
 
 public abstract class Strategy {
+    private static final Logger logger = LoggerFactory.getLogger(Strategy.class);
+
     protected List<Transition> transitions = new ArrayList<Transition>();
+
     public abstract boolean valid(Architecture currentState, Architecture finalState);
-//    public abstract List<Transition> transitions();
-    
+    // public abstract List<Transition> transitions();
+
     protected StrategyConfig config;
     protected StrategyLibrary library;
 
@@ -22,27 +28,80 @@ public abstract class Strategy {
     }
 
     public List<Transition> getTransitions() {
-        return transitions;
+	return transitions;
     }
 
     /**
-     * return whether currentState is an instantiated architecture of
-     * desiredState.
+     * for the strategy which is configured to be updated all sites in parallel
+     * (i.e.config.parallelAllSites is true), calculate next mid architecture to
+     * achieve the final architecture, based on current architecture, update
+     * strategy and deployment configurations.
      * 
-     * @param currentState
-     * @param desiredState
+     * @param currentArchitecture
+     * @param finalArchitecture
      * @return
      */
-    public boolean isInstantiation(Architecture currentState, Architecture desiredState) {
-	if (desiredState == null) {
+    public Architecture nextArchitecture(final Architecture currentArchitecture, final Architecture finalArchitecture) {
+	if (!valid(currentArchitecture, finalArchitecture)) {
+	    throw new IllegalStateException("Strategy disallowed situation");
+	}
+	for (Transition transition : transitions) {
+	    Architecture next = transition.next(currentArchitecture, finalArchitecture);
+	    if (!next.equals(currentArchitecture)) {
+		return next;
+	    }
+	}
+	return finalArchitecture;
+    }
+
+    /**
+     * depending on the config.sitesOrder, calculate next mid architecture to
+     * achieve the final architecture.
+     * 
+     * @param currentArchitecture
+     * @param finalArchitecture
+     * @return
+     */
+    public Architecture nextArchitectureSitesOrdered(final Architecture currentArchitecture,
+	    final Architecture finalArchitecture) {
+	config.validSitesOrder(finalArchitecture.listSitesName());
+	Architecture nextStates = new Architecture(currentArchitecture);
+	for (Set<String> sites : config.getSitesOrder()) {
+	    Architecture currentSubArchitecture = currentArchitecture.getSubArchitecture(sites);
+	    Architecture finalSubArchitecture = finalArchitecture.getSubArchitecture(sites);
+	    if (isInstantiation(currentSubArchitecture, finalSubArchitecture)) {
+		logger.info("Sites {} are already the instantiation of the final state.", sites);
+		continue;
+	    } else {
+		Architecture updatedSitesArchitecture = nextArchitecture(currentSubArchitecture, finalSubArchitecture);
+		logger.info("Get next state {} for the sites {}.", updatedSitesArchitecture, sites);
+		nextStates.mergeArchitecture(updatedSitesArchitecture);
+		return nextStates;
+	    }
+	}
+	logger.error(
+		"Abnormal state in calcNextStates: not found sites which is not already the instantiation of the final state.");
+	return null;
+    }
+
+    /**
+     * return whether currentArchitecture is an instantiated architecture of
+     * finalArchitecture.
+     * 
+     * @param currentArchitecture
+     * @param finalArchitecture
+     * @return
+     */
+    public boolean isInstantiation(Architecture currentArchitecture, Architecture finalArchitecture) {
+	if (finalArchitecture == null) {
 	    return false;
 	}
-	if (!currentState.getSites().equals(desiredState.getSites())) {
+	if (!currentArchitecture.getSites().equals(finalArchitecture.getSites())) {
 	    return false;
 	}
-	for (String site : currentState.listSitesName()) {
-	    Set<ArchitectureMicroservice> desiredMicroservices = desiredState.getArchitectureMicroservices(site);
-	    Set<ArchitectureMicroservice> microservices = currentState.getArchitectureMicroservices(site);
+	for (String site : currentArchitecture.listSitesName()) {
+	    Set<ArchitectureMicroservice> desiredMicroservices = finalArchitecture.getArchitectureMicroservices(site);
+	    Set<ArchitectureMicroservice> microservices = currentArchitecture.getArchitectureMicroservices(site);
 	    if (microservices.size() != desiredMicroservices.size()) {
 		return false;
 	    }
