@@ -1,4 +1,4 @@
-package com.orange.model.state;
+package com.orange.model.architecture;
 
 public class Route {
     private String hostname;

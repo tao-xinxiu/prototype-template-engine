@@ -6,8 +6,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.orange.model.state.MicroserviceState;
-import com.orange.model.state.ArchitectureMicroservice;
+import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.MicroserviceState;
 
 public class SetUtil {
     public static Set<ArchitectureMicroservice> deepCopy(Set<ArchitectureMicroservice> microservices) {

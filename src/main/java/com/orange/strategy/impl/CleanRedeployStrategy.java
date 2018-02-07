@@ -1,9 +1,10 @@
-package com.orange.nextstate.strategy;
+package com.orange.strategy.impl;
 
 import java.util.Arrays;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.Architecture;
+import com.orange.model.architecture.Architecture;
+import com.orange.strategy.Strategy;
 
 public class CleanRedeployStrategy extends Strategy {
     public CleanRedeployStrategy(StrategyConfig config) {
@@ -12,7 +13,7 @@ public class CleanRedeployStrategy extends Strategy {
     }
 
     @Override
-    public boolean valid(Architecture currentState, Architecture finalState) {
+    public boolean valid(Architecture currentArchitecture, Architecture finalArchitecture) {
 	return true;
     }
 

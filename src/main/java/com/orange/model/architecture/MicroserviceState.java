@@ -1,6 +1,6 @@
-package com.orange.model.state;
+package com.orange.model.architecture;
 
-import com.orange.model.state.cf.CFMicroserviceState;
+import com.orange.model.architecture.cf.CFMicroserviceState;
 
 public enum MicroserviceState {
     CREATED(CFMicroserviceState.CREATED), UPLOADED(CFMicroserviceState.UPLOADED), STAGED(

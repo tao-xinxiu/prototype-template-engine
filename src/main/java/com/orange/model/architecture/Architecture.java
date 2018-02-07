@@ -1,4 +1,4 @@
-package com.orange.model.state;
+package com.orange.model.architecture;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,7 +56,7 @@ public class Architecture {
 	return architectureSites.get(siteName);
     }
 
-    public Set<ArchitectureMicroservice> getArchitectureMicroservices(String siteName) {
+    public Set<ArchitectureMicroservice> getSiteMicroservices(String siteName) {
 	return getArchitectureSite(siteName).getArchitectureMicroservices();
     }
 
@@ -140,8 +140,8 @@ public class Architecture {
 	    return false;
 	}
 	for (String site : listSitesName()) {
-	    Set<ArchitectureMicroservice> desiredMicroservices = finalArchitecture.getArchitectureMicroservices(site);
-	    Set<ArchitectureMicroservice> microservices = getArchitectureMicroservices(site);
+	    Set<ArchitectureMicroservice> desiredMicroservices = finalArchitecture.getSiteMicroservices(site);
+	    Set<ArchitectureMicroservice> microservices = getSiteMicroservices(site);
 	    if (microservices.size() != desiredMicroservices.size()) {
 		return false;
 	    }

@@ -56,9 +56,9 @@ import org.slf4j.LoggerFactory;
 import com.orange.Main;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
-import com.orange.model.state.Route;
-import com.orange.model.state.cf.CFMicroserviceArchitecture;
-import com.orange.model.state.cf.CFMicroserviceDesiredState;
+import com.orange.model.architecture.Route;
+import com.orange.model.architecture.cf.CFMicroserviceArchitecture;
+import com.orange.model.architecture.cf.CFMicroserviceDesiredState;
 import com.orange.util.RetryFunction;
 import com.orange.util.Wait;
 

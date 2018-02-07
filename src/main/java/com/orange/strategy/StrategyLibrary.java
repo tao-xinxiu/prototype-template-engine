@@ -1,4 +1,4 @@
-package com.orange.nextstate.strategy;
+package com.orange.strategy;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -9,9 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.MicroserviceState;
-import com.orange.model.state.Architecture;
-import com.orange.model.state.ArchitectureMicroservice;
+import com.orange.model.architecture.Architecture;
+import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.MicroserviceState;
 import com.orange.util.SetUtil;
 import com.orange.util.VersionGenerator;
 
@@ -25,18 +25,18 @@ public class StrategyLibrary {
     }
 
     /**
-     * next architecture: remove micro-services not in finalState
+     * next architecture: remove micro-services not in finalArchitecture
      */
-    protected Transition removeUndesiredTransit = new Transition() {
+    public Transition removeUndesiredTransit = new Transition() {
 	@Override
-	public Architecture next(Architecture currentState, Architecture finalState) {
-	    Architecture nextState = new Architecture(currentState);
-	    for (String site : finalState.listSitesName()) {
-		Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureMicroservices(site);
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		Set<ArchitectureMicroservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
 		Iterator<ArchitectureMicroservice> iterator = nextMicroservices.iterator();
 		while (iterator.hasNext()) {
 		    ArchitectureMicroservice microservice = iterator.next();
-		    if (SetUtil.noneMatch(finalState.getArchitectureMicroservices(site),
+		    if (SetUtil.noneMatch(finalArchitecture.getSiteMicroservices(site),
 			    desiredMs -> microservice.isInstantiation(desiredMs))) {
 			iterator.remove();
 			logger.info("Removed microservice [{}]", microservice);
@@ -47,21 +47,21 @@ public class StrategyLibrary {
 		    }
 		}
 	    }
-	    return nextState;
+	    return nextArchitecture;
 	}
     };
 
     /**
-     * next architecture: adding new micro-services (in finalState, not in
-     * currentState, identified by name)
+     * next architecture: adding new micro-services (in finalArchitecture, not
+     * in currentArchitecture, identified by name)
      */
-    protected Transition addNewTransit = new Transition() {
+    public Transition addNewTransit = new Transition() {
 	@Override
-	public Architecture next(Architecture currentState, Architecture finalState) {
-	    Architecture nextState = new Architecture(currentState);
-	    for (String site : finalState.listSitesName()) {
-		Set<ArchitectureMicroservice> currentMicroservices = nextState.getArchitectureMicroservices(site);
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		Set<ArchitectureMicroservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
+		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(currentMicroservices,
 			    ms -> ms.getName().equals(desiredMicroservice.getName()))) {
 			ArchitectureMicroservice newMicroservice = new ArchitectureMicroservice(desiredMicroservice);
@@ -75,21 +75,21 @@ public class StrategyLibrary {
 		    }
 		}
 	    }
-	    return nextState;
+	    return nextArchitecture;
 	}
     };
 
     /**
-     * next architecture: remove old micro-services (in currentState, not in
-     * finalState, identified by name)
+     * next architecture: remove old micro-services (in currentArchitecture, not
+     * in finalArchitecture, identified by name)
      */
-    protected Transition removeOldTransit = new Transition() {
+    public Transition removeOldTransit = new Transition() {
 	@Override
-	public Architecture next(Architecture currentState, Architecture finalState) {
-	    Architecture nextState = new Architecture(currentState);
-	    for (String site : finalState.listSitesName()) {
-		Set<String> desiredMsName = SetUtil.collectNames(finalState.getArchitectureMicroservices(site));
-		Set<ArchitectureMicroservice> currentMicroservices = nextState.getArchitectureMicroservices(site);
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		Set<String> desiredMsName = SetUtil.collectNames(finalArchitecture.getSiteMicroservices(site));
+		Set<ArchitectureMicroservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
 		for (ArchitectureMicroservice currentMicroservice : currentMicroservices) {
 		    if (!desiredMsName.contains(currentMicroservice.getName())) {
 			currentMicroservices.remove(currentMicroservice);
@@ -98,7 +98,7 @@ public class StrategyLibrary {
 		    }
 		}
 	    }
-	    return nextState;
+	    return nextArchitecture;
 	}
     };
 
@@ -111,15 +111,15 @@ public class StrategyLibrary {
      *            temporary route
      * @return
      */
-    protected Transition directTransit(boolean tmpRoute) {
+    public Transition directTransit(boolean tmpRoute) {
 	return new Transition() {
 	    @Override
-	    public Architecture next(Architecture currentState, Architecture finalState) {
-		Architecture nextState = new Architecture(finalState);
-		for (String site : finalState.listSitesName()) {
-		    for (ArchitectureMicroservice nextMicroservice : nextState.getArchitectureMicroservices(site)) {
+	    public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+		Architecture nextArchitecture = new Architecture(finalArchitecture);
+		for (String site : finalArchitecture.listSitesName()) {
+		    for (ArchitectureMicroservice nextMicroservice : nextArchitecture.getSiteMicroservices(site)) {
 			Set<ArchitectureMicroservice> currentMicroservices = SetUtil.searchByName(
-				currentState.getArchitectureMicroservices(site), nextMicroservice.getName());
+				currentArchitecture.getSiteMicroservices(site), nextMicroservice.getName());
 			if (currentMicroservices.size() == 0) {
 			    // Add non-exist microservice
 			    nextMicroservice.setGuid(null);
@@ -146,7 +146,7 @@ public class StrategyLibrary {
 			}
 		    }
 		}
-		return nextState;
+		return nextArchitecture;
 	    }
 	};
     }
@@ -155,15 +155,15 @@ public class StrategyLibrary {
      * getting next architecture by updating desired microservice route and
      * setting version
      */
-    protected Transition updateRouteTransit = new Transition() {
+    public Transition updateRouteTransit = new Transition() {
 	// assume that it doesn't exist two microservices with same pkg and name
 	@Override
-	public Architecture next(Architecture currentState, Architecture finalState) {
-	    Architecture nextState = new Architecture(currentState);
-	    for (String site : finalState.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    Set<ArchitectureMicroservice> nextMicroservices = SetUtil
-			    .searchByName(nextState.getArchitectureMicroservices(site), desiredMicroservice.getName());
+			    .searchByName(nextArchitecture.getSiteMicroservices(site), desiredMicroservice.getName());
 		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
 			ArchitectureMicroservice nextMs = SetUtil.getOneMicroservice(nextMicroservices,
 				ms -> ms.getVersion().equals(desiredVersion(desiredMicroservice))
@@ -178,41 +178,42 @@ public class StrategyLibrary {
 		    }
 		}
 	    }
-	    return nextState;
+	    return nextArchitecture;
 	}
     };
 
-    protected Transition cleanAllTransit = new Transition() {
+    public Transition cleanAllTransit = new Transition() {
 	@Override
-	public Architecture next(Architecture currentState, Architecture finalState) {
-	    Architecture nextState = new Architecture(currentState);
-	    nextState.getArchitectureSites().values().stream().forEach(s -> s.getArchitectureMicroservices().clear());
-	    return nextState;
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    nextArchitecture.getArchitectureSites().values().stream()
+		    .forEach(s -> s.getArchitectureMicroservices().clear());
+	    return nextArchitecture;
 	}
     };
 
-    protected Transition deployAllTransit = new Transition() {
+    public Transition deployAllTransit = new Transition() {
 	@Override
-	public Architecture next(Architecture currentState, Architecture finalState) {
-	    Architecture nextState = new Architecture(currentState);
-	    for (String site : finalState.listSitesName()) {
-		Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureMicroservices(site);
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		Set<ArchitectureMicroservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
 		if (nextMicroservices.isEmpty()) {
-		    nextMicroservices.addAll(finalState.getArchitectureMicroservices(site));
+		    nextMicroservices.addAll(finalArchitecture.getSiteMicroservices(site));
 		}
 	    }
-	    return nextState;
+	    return nextArchitecture;
 	}
     };
 
-    protected Transition scaleHorizontalTransit = new Transition() {
+    public Transition scaleHorizontalTransit = new Transition() {
 	@Override
-	public Architecture next(Architecture currentState, Architecture finalState) {
-	    Architecture nextState = new Architecture(currentState);
-	    for (String site : finalState.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(
-			    nextState.getArchitectureMicroservices(site), desiredMicroservice.getName(),
+			    nextArchitecture.getSiteMicroservices(site), desiredMicroservice.getName(),
 			    desiredVersion(desiredMicroservice));
 		    if (nextMicroservice.getNbProcesses() != desiredMicroservice.getNbProcesses()) {
 			nextMicroservice.setNbProcesses(desiredMicroservice.getNbProcesses());
@@ -221,18 +222,18 @@ public class StrategyLibrary {
 		    }
 		}
 	    }
-	    return nextState;
+	    return nextArchitecture;
 	}
     };
 
-    protected Transition scaleIncrementalTransit = new Transition() {
+    public Transition scaleIncrementalTransit = new Transition() {
 	@Override
-	public Architecture next(Architecture currentState, Architecture finalState) {
-	    Architecture nextState = new Architecture(currentState);
-	    for (String site : finalState.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(
-			    nextState.getArchitectureMicroservices(site), desiredMicroservice.getName(),
+			    nextArchitecture.getSiteMicroservices(site), desiredMicroservice.getName(),
 			    desiredVersion(desiredMicroservice));
 		    if (nextMicroservice.getNbProcesses() <= desiredMicroservice.getNbProcesses()) {
 			int nextNbr = nextMicroservice.getNbProcesses() + config.getCanaryIncrease();
@@ -244,18 +245,18 @@ public class StrategyLibrary {
 		    }
 		}
 	    }
-	    return nextState;
+	    return nextArchitecture;
 	}
     };
 
-    protected Transition scaleVerticalTransit = new Transition() {
+    public Transition scaleVerticalTransit = new Transition() {
 	@Override
-	public Architecture next(Architecture currentState, Architecture finalState) {
-	    Architecture nextState = new Architecture(currentState);
-	    for (String site : finalState.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(
-			    nextState.getArchitectureMicroservices(site), desiredMicroservice.getName(),
+			    nextArchitecture.getSiteMicroservices(site), desiredMicroservice.getName(),
 			    desiredVersion(desiredMicroservice));
 		    if (nextMicroservice.getMemory().equals(desiredMicroservice.getMemory())) {
 			nextMicroservice.setMemory(desiredMicroservice.getMemory());
@@ -269,17 +270,18 @@ public class StrategyLibrary {
 		    }
 		}
 	    }
-	    return nextState;
+	    return nextArchitecture;
 	}
     };
 
-    protected Transition cleanNotUpdatableMicroserviceTransit = new Transition() {
+    public Transition cleanNotUpdatableMicroserviceTransit = new Transition() {
 	@Override
-	public Architecture next(Architecture currentState, Architecture finalState) {
-	    Architecture nextState = new Architecture(currentState);
-	    for (String site : finalState.listSitesName()) {
-		// based on path = "" if null, during getCurrentState
-		Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureMicroservices(site);
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		// based on the assumption that path is set to "" in case of
+		// null, during getCurrentArchitecture
+		Set<ArchitectureMicroservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
 		Set<ArchitectureMicroservice> nonUpdatableMicroservice = SetUtil.search(nextMicroservices,
 			ms -> "".equals(ms.getPath()) || ms.getState().equals(MicroserviceState.CREATED));
 		if (!nonUpdatableMicroservice.isEmpty()) {
@@ -287,7 +289,7 @@ public class StrategyLibrary {
 		    nextMicroservices.removeAll(nonUpdatableMicroservice);
 		}
 	    }
-	    return nextState;
+	    return nextArchitecture;
 	}
     };
 

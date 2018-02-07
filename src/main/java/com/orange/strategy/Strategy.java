@@ -1,4 +1,4 @@
-package com.orange.nextstate.strategy;
+package com.orange.strategy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,14 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.Architecture;
+import com.orange.model.architecture.Architecture;
 
 public abstract class Strategy {
     private static final Logger logger = LoggerFactory.getLogger(Strategy.class);
 
     protected List<Transition> transitions = new ArrayList<Transition>();
 
-    public abstract boolean valid(Architecture currentState, Architecture finalState);
+    public abstract boolean valid(Architecture currentArchitecture, Architecture finalArchitecture);
     // public abstract List<Transition> transitions();
 
     protected StrategyConfig config;
@@ -64,23 +64,21 @@ public abstract class Strategy {
     public Architecture nextArchitectureSitesOrdered(final Architecture currentArchitecture,
 	    final Architecture finalArchitecture) {
 	config.validSitesOrder(finalArchitecture.listSitesName());
-	Architecture nextStates = new Architecture(currentArchitecture);
+	Architecture nextArchitecture = new Architecture(currentArchitecture);
 	for (Set<String> sites : config.getSitesOrder()) {
 	    // get the subset of the architecture with the sites to be updated.
 	    Architecture currentSubArchitecture = currentArchitecture.getSubArchitecture(sites);
 	    Architecture finalSubArchitecture = finalArchitecture.getSubArchitecture(sites);
 	    if (currentSubArchitecture.isInstantiation(finalSubArchitecture)) {
-		logger.info("Sites {} are already the instantiation of the final state.", sites);
+		logger.info("Sites {} are already the instantiation of the final architecture.", sites);
 		continue;
 	    } else {
 		Architecture updatedSitesArchitecture = nextArchitecture(currentSubArchitecture, finalSubArchitecture);
-		logger.info("Get next state {} for the sites {}.", updatedSitesArchitecture, sites);
-		nextStates.mergeArchitecture(updatedSitesArchitecture);
-		return nextStates;
+		logger.info("Get next architecture {} for the sites {}.", updatedSitesArchitecture, sites);
+		nextArchitecture.mergeArchitecture(updatedSitesArchitecture);
+		return nextArchitecture;
 	    }
 	}
-	logger.error(
-		"Abnormal state in calcNextStates: not found sites which is not already the instantiation of the final state.");
 	return null;
     }
 

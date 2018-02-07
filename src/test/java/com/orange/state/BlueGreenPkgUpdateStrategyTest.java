@@ -12,13 +12,13 @@ import org.junit.Test;
 import com.orange.model.StrategyConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.StrategySiteConfig;
-import com.orange.model.state.MicroserviceState;
-import com.orange.model.state.Architecture;
-import com.orange.model.state.ArchitectureMicroservice;
-import com.orange.model.state.ArchitectureSite;
-import com.orange.model.state.Route;
-import com.orange.nextstate.strategy.BlueGreenPkgUpdateStrategy;
-import com.orange.nextstate.strategy.Strategy;
+import com.orange.model.architecture.Architecture;
+import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.ArchitectureSite;
+import com.orange.model.architecture.MicroserviceState;
+import com.orange.model.architecture.Route;
+import com.orange.strategy.Strategy;
+import com.orange.strategy.impl.BlueGreenPkgUpdateStrategy;
 
 public class BlueGreenPkgUpdateStrategyTest {
     private static final String site1name = "site1";
@@ -48,47 +48,47 @@ public class BlueGreenPkgUpdateStrategyTest {
 	    "site1-pwd", "site1-org", "site1-space", true);
     private static final PaaSSite site2 = new PaaSSite(site2name, "CloudFoundry", "site2-api", "site2-user",
 	    "site2-pwd", "site2-org", "site2-space", true);
-    private final static Architecture initState = initState();
-    private final static Architecture finalState = finalState();
+    private final static Architecture initArchitecture = initArchitecture();
+    private final static Architecture finalArchitecture = finalArchitecture();
 
     @Test
-    public void should_get_expected_midstate1() {
+    public void should_get_expected_midArchitecture1() {
 	Strategy bgStrategy = new BlueGreenPkgUpdateStrategy(config);
-	Assert.assertFalse(initState.isInstantiation(finalState));
-	Assert.assertTrue(bgStrategy.valid(initState, finalState));
-	// Assert.assertTrue(bgStrategy.transits().get(0).condition(initState,
-	// finalState));
-	Assert.assertEquals(bgStrategy.getTransitions().get(0).next(initState, finalState), midState1());
+	Assert.assertFalse(initArchitecture.isInstantiation(finalArchitecture));
+	Assert.assertTrue(bgStrategy.valid(initArchitecture, finalArchitecture));
+	// Assert.assertTrue(bgStrategy.transits().get(0).condition(initArchitecture,
+	// finalArchitecture));
+	Assert.assertEquals(bgStrategy.getTransitions().get(0).next(initArchitecture, finalArchitecture), midArchitecture1());
     }
 
     @Test
-    public void should_get_expected_midstate2() {
+    public void should_get_expected_midArchitecture2() {
 	Strategy bgStrategy = new BlueGreenPkgUpdateStrategy(config);
-	Architecture currentState = midState1Instantiated();
-	Assert.assertFalse(currentState.isInstantiation(finalState));
-	Assert.assertTrue(bgStrategy.valid(currentState, finalState));
-	// Assert.assertFalse(bgStrategy.transits().get(0).condition(currentState,
-	// finalState));
-	// Assert.assertTrue(bgStrategy.transits().get(1).condition(currentState,
-	// finalState));
-	Assert.assertEquals(midState2(), bgStrategy.getTransitions().get(1).next(currentState, finalState));
+	Architecture currentArchitecture = midArchitecture1Instantiated();
+	Assert.assertFalse(currentArchitecture.isInstantiation(finalArchitecture));
+	Assert.assertTrue(bgStrategy.valid(currentArchitecture, finalArchitecture));
+	// Assert.assertFalse(bgStrategy.transits().get(0).condition(currentArchitecture,
+	// finalArchitecture));
+	// Assert.assertTrue(bgStrategy.transits().get(1).condition(currentArchitecture,
+	// finalArchitecture));
+	Assert.assertEquals(midArchitecture2(), bgStrategy.getTransitions().get(1).next(currentArchitecture, finalArchitecture));
     }
 
     @Test
-    public void should_get_expected_midstate3() {
+    public void should_get_expected_midArchitecture3() {
 	Strategy bgStrategy = new BlueGreenPkgUpdateStrategy(config);
-	Architecture currentState = midState2();
-	Assert.assertFalse(currentState.isInstantiation(finalState));
-	Assert.assertTrue(bgStrategy.valid(currentState, finalState));
-	// Assert.assertFalse(bgStrategy.transits().get(0).condition(currentState,
-	// finalState));
-	// Assert.assertFalse(bgStrategy.transits().get(1).condition(currentState,
-	// finalState));
-	// Assert.assertTrue(bgStrategy.transits().get(2).condition(currentState,
-	// finalState));
-	Architecture midState3 = bgStrategy.getTransitions().get(2).next(currentState, finalState);
-	Assert.assertEquals(midState3(), midState3);
-	Assert.assertTrue(bgStrategy.valid(midState3, finalState));
+	Architecture currentArchitecture = midArchitecture2();
+	Assert.assertFalse(currentArchitecture.isInstantiation(finalArchitecture));
+	Assert.assertTrue(bgStrategy.valid(currentArchitecture, finalArchitecture));
+	// Assert.assertFalse(bgStrategy.transits().get(0).condition(currentArchitecture,
+	// finalArchitecture));
+	// Assert.assertFalse(bgStrategy.transits().get(1).condition(currentArchitecture,
+	// finalArchitecture));
+	// Assert.assertTrue(bgStrategy.transits().get(2).condition(currentArchitecture,
+	// finalArchitecture));
+	Architecture midArchitecture3 = bgStrategy.getTransitions().get(2).next(currentArchitecture, finalArchitecture);
+	Assert.assertEquals(midArchitecture3(), midArchitecture3);
+	Assert.assertTrue(bgStrategy.valid(midArchitecture3, finalArchitecture));
     }
 
     private final static StrategyConfig config() {
@@ -98,31 +98,31 @@ public class BlueGreenPkgUpdateStrategyTest {
 	return config;
     }
 
-    private final static Architecture initState() {
-	Architecture initState = new Architecture();
-	initState
+    private final static Architecture initArchitecture() {
+	Architecture initArchitecture = new Architecture();
+	initArchitecture
 		.addPaaSSite(site1,
 			new ArchitectureSite(Collections.singleton(new ArchitectureMicroservice(oldMsSite1Id, msName,
 				oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes,
 				msServices, memory, disk))));
-	initState
+	initArchitecture
 		.addPaaSSite(site2,
 			new ArchitectureSite(Collections.singleton(new ArchitectureMicroservice(oldMsSite2Id, msName,
 				oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes,
 				msServices, memory, disk))));
-	return initState;
+	return initArchitecture;
     }
 
-    private final static Architecture finalState() {
+    private final static Architecture finalArchitecture() {
 	ArchitectureMicroservice newMs = new ArchitectureMicroservice(null, msName, null, newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk);
-	Architecture finalState = new Architecture();
-	finalState.addPaaSSite(site1, new ArchitectureSite(Collections.singleton(newMs)));
-	finalState.addPaaSSite(site2, new ArchitectureSite(Collections.singleton(newMs)));
-	return finalState;
+	Architecture finalArchitecture = new Architecture();
+	finalArchitecture.addPaaSSite(site1, new ArchitectureSite(Collections.singleton(newMs)));
+	finalArchitecture.addPaaSSite(site2, new ArchitectureSite(Collections.singleton(newMs)));
+	return finalArchitecture;
     }
 
-    private final static Architecture midState1() {
+    private final static Architecture midArchitecture1() {
 	Set<ArchitectureMicroservice> site1Ms = new HashSet<>();
 	site1Ms.add(new ArchitectureMicroservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
@@ -133,13 +133,13 @@ public class BlueGreenPkgUpdateStrategyTest {
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
 	site2Ms.add(new ArchitectureMicroservice(null, msName, config.getUpdatingVersion(), newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
-	Architecture midState1 = new Architecture();
-	midState1.addPaaSSite(site1, new ArchitectureSite(site1Ms));
-	midState1.addPaaSSite(site2, new ArchitectureSite(site2Ms));
-	return midState1;
+	Architecture midArchitecture1 = new Architecture();
+	midArchitecture1.addPaaSSite(site1, new ArchitectureSite(site1Ms));
+	midArchitecture1.addPaaSSite(site2, new ArchitectureSite(site2Ms));
+	return midArchitecture1;
     }
 
-    private final static Architecture midState1Instantiated() {
+    private final static Architecture midArchitecture1Instantiated() {
 	Set<ArchitectureMicroservice> site1Ms = new HashSet<>();
 	site1Ms.add(new ArchitectureMicroservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
@@ -150,13 +150,13 @@ public class BlueGreenPkgUpdateStrategyTest {
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
 	site2Ms.add(new ArchitectureMicroservice(newMsSite2Id, msName, newMsVersion, newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
-	Architecture midState1 = new Architecture();
-	midState1.addPaaSSite(site1, new ArchitectureSite(site1Ms));
-	midState1.addPaaSSite(site2, new ArchitectureSite(site2Ms));
-	return midState1;
+	Architecture instantiatedArchitecture1 = new Architecture();
+	instantiatedArchitecture1.addPaaSSite(site1, new ArchitectureSite(site1Ms));
+	instantiatedArchitecture1.addPaaSSite(site2, new ArchitectureSite(site2Ms));
+	return instantiatedArchitecture1;
     }
 
-    private final static Architecture midState2() {
+    private final static Architecture midArchitecture2() {
 	Set<ArchitectureMicroservice> site1Ms = new HashSet<>();
 	site1Ms.add(new ArchitectureMicroservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
@@ -167,25 +167,25 @@ public class BlueGreenPkgUpdateStrategyTest {
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
 	site2Ms.add(new ArchitectureMicroservice(newMsSite2Id, msName, newMsVersion, newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	Architecture midState2 = new Architecture();
-	midState2.addPaaSSite(site1, new ArchitectureSite(site1Ms));
-	midState2.addPaaSSite(site2, new ArchitectureSite(site2Ms));
-	return midState2;
+	Architecture midArchitecture2 = new Architecture();
+	midArchitecture2.addPaaSSite(site1, new ArchitectureSite(site1Ms));
+	midArchitecture2.addPaaSSite(site2, new ArchitectureSite(site2Ms));
+	return midArchitecture2;
     }
 
-    private final static Architecture midState3() {
-	Architecture midState3 = new Architecture();
-	midState3
+    private final static Architecture midArchitecture3() {
+	Architecture midArchitecture3 = new Architecture();
+	midArchitecture3
 		.addPaaSSite(site1,
 			new ArchitectureSite(Collections.singleton(new ArchitectureMicroservice(newMsSite1Id, msName,
 				newMsVersion, newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes,
 				msServices, memory, disk))));
-	midState3
+	midArchitecture3
 		.addPaaSSite(site2,
 			new ArchitectureSite(Collections.singleton(new ArchitectureMicroservice(newMsSite2Id, msName,
 				newMsVersion, newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes,
 				msServices, memory, disk))));
-	return midState3;
+	return midArchitecture3;
     }
 
 }

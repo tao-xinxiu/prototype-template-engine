@@ -1,8 +1,8 @@
 package com.orange.paas;
 
 import com.orange.model.*;
-import com.orange.model.state.ArchitectureMicroservice;
-import com.orange.model.state.ArchitectureSite;
+import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.ArchitectureSite;
 import com.orange.model.workflow.Step;
 
 public abstract class PaaSAPI {

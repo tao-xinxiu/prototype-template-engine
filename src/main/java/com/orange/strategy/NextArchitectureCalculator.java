@@ -1,16 +1,15 @@
-package com.orange.nextstate;
+package com.orange.strategy;
 
 import java.lang.reflect.InvocationTargetException;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.Architecture;
-import com.orange.nextstate.strategy.Strategy;
+import com.orange.model.architecture.Architecture;
 
-public class NextStateCalculator {
+public class NextArchitectureCalculator {
     private StrategyConfig strategyConfig;
     private Strategy strategy;
 
-    public NextStateCalculator(String strategyClass, StrategyConfig strategyConfig) {
+    public NextArchitectureCalculator(String strategyClass, StrategyConfig strategyConfig) {
 	this.strategyConfig = strategyConfig;
 	try {
 	    this.strategy = (Strategy) Class.forName(strategyClass).getConstructor(StrategyConfig.class)
@@ -23,7 +22,7 @@ public class NextStateCalculator {
     }
 
     public Architecture nextArchitecture(final Architecture currentArchitecture, final Architecture finalArchitecture) {
-	// return null when arrived final state
+	// return null when arrived final architecture
 	if (currentArchitecture.isInstantiation(finalArchitecture)) {
 	    return null;
 	}

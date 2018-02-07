@@ -1,4 +1,4 @@
-package com.orange.model.state.cf;
+package com.orange.model.architecture.cf;
 
 public enum CFMicroserviceDesiredState {
     STOPPED, STARTED

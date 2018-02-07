@@ -23,62 +23,63 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.orange.model.StrategyConfig;
+import com.orange.model.architecture.Architecture;
+import com.orange.model.architecture.ArchitectureSite;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
-import com.orange.model.state.Architecture;
-import com.orange.model.state.ArchitectureSite;
 import com.orange.model.workflow.Workflow;
-import com.orange.nextstate.NextStateCalculator;
 import com.orange.paas.cf.CloudFoundryAPIv2;
 import com.orange.paas.cf.CloudFoundryOperations;
 import com.orange.reconfig.WorkflowCalculator;
+import com.orange.strategy.NextArchitectureCalculator;
 
 @SpringBootApplication(exclude = { org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration.class })
 @RestController
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-    // storePath and nextStateCalculator(strategy&config) are specific to user
+    // storePath and NextArchitectureCalculator(depending on strategy &
+    // StrategyConfig) are supposed to be specific to a user
     public static final String storePath = "./store/";
-    private static final String strategyPackage = "com.orange.nextstate.strategy.";
-    private static NextStateCalculator nextStateCalculator;
+    private static final String strategyPackage = "com.orange.strategy.impl";
+    private static NextArchitectureCalculator nextArchitectureCalculator;
     private static OperationConfig operationConfig = new OperationConfig();
     // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
     private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
 
     @RequestMapping(value = "/pull", method = RequestMethod.PUT)
-    public @ResponseBody Architecture getCurrentState(@RequestBody Collection<PaaSSite> managingSites) {
+    public @ResponseBody Architecture getCurrentArchitecture(@RequestBody Collection<PaaSSite> managingSites) {
 	Map<String, PaaSSite> sites = managingSites.stream()
 		.collect(Collectors.toMap(site -> site.getName(), site -> site));
 	Map<String, ArchitectureSite> architectureSites = managingSites.parallelStream().collect(Collectors.toMap(
 		site -> site.getName(), site -> new CloudFoundryAPIv2(site, operationConfig).getSiteArchitecture()));
-	Architecture currentState = new Architecture(sites, architectureSites);
-	logger.info("Got current state! {} ", currentState);
-	return currentState;
+	Architecture currentArchitecture = new Architecture(sites, architectureSites);
+	logger.info("Got current architecture: {} ", currentArchitecture);
+	return currentArchitecture;
     }
 
     @RequestMapping(value = "/push", method = RequestMethod.POST)
-    public @ResponseBody Architecture pushState(@RequestBody Architecture desiredState) {
-	Architecture currentState = getCurrentStableState(desiredState.listPaaSSites());
-	Workflow updateWorkflow = new WorkflowCalculator(currentState, desiredState, operationConfig)
-		.getUpdateWorkflow();
-	updateWorkflow.exec();
-	logger.info("Workflow {} finished!", updateWorkflow);
-	return getCurrentState(desiredState.listPaaSSites());
+    public @ResponseBody Architecture pushArchitecture(@RequestBody Architecture desiredArchitecture) {
+	Architecture currentArchitecture = getCurrentStableArchitecture(desiredArchitecture.listPaaSSites());
+	Workflow reconfigureWorkflow = new WorkflowCalculator(currentArchitecture, desiredArchitecture, operationConfig)
+		.getReconfigureWorkflow();
+	reconfigureWorkflow.exec();
+	logger.info("Workflow {} finished!", reconfigureWorkflow);
+	return getCurrentArchitecture(desiredArchitecture.listPaaSSites());
     }
 
     @RequestMapping(value = "/next", method = RequestMethod.POST)
-    public @ResponseBody Architecture calcNextState(@RequestBody Architecture finalState) {
-	if (nextStateCalculator == null) {
+    public @ResponseBody Architecture nextArchitecture(@RequestBody Architecture finalArchitecture) {
+	if (nextArchitectureCalculator == null) {
 	    throw new IllegalStateException("Strategy config not yet set.");
 	}
-	Architecture currentState = getCurrentStableState(finalState.listPaaSSites());
-	return nextStateCalculator.nextArchitecture(currentState, finalState);
+	Architecture currentArchitecture = getCurrentStableArchitecture(finalArchitecture.listPaaSSites());
+	return nextArchitectureCalculator.nextArchitecture(currentArchitecture, finalArchitecture);
     }
 
     @RequestMapping(value = "/set_strategy_config", method = RequestMethod.PUT)
     public void setStrategyConfig(@RequestParam("strategy") String strategy, @RequestBody StrategyConfig config) {
 	strategy = strategyPackage + strategy;
-	nextStateCalculator = new NextStateCalculator(strategy, config);
+	nextArchitectureCalculator = new NextArchitectureCalculator(strategy, config);
 	logger.info("Strategy set: [{}]. Update config set: [{}]", strategy, config);
     }
 
@@ -89,12 +90,12 @@ public class Main {
     }
 
     @RequestMapping(value = "/is_instantiation", method = RequestMethod.POST)
-    public boolean isInstantiation(@RequestBody Architecture desiredState) {
-	if (nextStateCalculator == null) {
+    public boolean isInstantiation(@RequestBody Architecture desiredArchitecture) {
+	if (nextArchitectureCalculator == null) {
 	    throw new IllegalStateException("Strategy config not yet set.");
 	}
-	Architecture currentState = getCurrentState(desiredState.listPaaSSites());
-	return currentState.isInstantiation(desiredState);
+	Architecture currentArchitecture = getCurrentArchitecture(desiredArchitecture.listPaaSSites());
+	return currentArchitecture.isInstantiation(desiredArchitecture);
     }
 
     @RequestMapping(value = "health", method = RequestMethod.GET)
@@ -108,7 +109,7 @@ public class Main {
      * 
      * @param file
      * @return the stored file name, which is supposed to fill out microservice
-     *         path in the desired state description
+     *         path in the desired architecture description
      */
     @RequestMapping(value = "/upload", method = RequestMethod.POST)
     public @ResponseBody String handleFileUpload(@RequestParam("file") MultipartFile file) {
@@ -154,15 +155,22 @@ public class Main {
 	return ops;
     }
 
-    private Architecture getCurrentStableState(Collection<PaaSSite> managingSites) {
+    /**
+     * Get the current architecture and stabilize it. (i.e. stop the currently
+     * starting microservices)
+     * 
+     * @param managingSites
+     * @return
+     */
+    private Architecture getCurrentStableArchitecture(Collection<PaaSSite> managingSites) {
 	Map<String, PaaSSite> sites = managingSites.stream()
 		.collect(Collectors.toMap(site -> site.getName(), site -> site));
 	Map<String, ArchitectureSite> architectureSites = managingSites.parallelStream()
 		.collect(Collectors.toMap(site -> site.getName(),
 			site -> new CloudFoundryAPIv2(site, operationConfig).stabilizeSiteArchitecture()));
-	Architecture currentState = new Architecture(sites, architectureSites);
-	logger.info("Got and stabilized current state! {} ", currentState);
-	return currentState;
+	Architecture currentArchitecture = new Architecture(sites, architectureSites);
+	logger.info("Got and stabilized current architecture: {} ", currentArchitecture);
+	return currentArchitecture;
     }
 
     public static void main(String[] args) {

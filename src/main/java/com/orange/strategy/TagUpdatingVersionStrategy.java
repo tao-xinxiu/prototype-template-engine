@@ -1,4 +1,4 @@
-package com.orange.nextstate.strategy;
+package com.orange.strategy;
 
 import com.orange.model.StrategyConfig;
 

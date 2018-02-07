@@ -1,10 +1,11 @@
-package com.orange.nextstate.strategy;
+package com.orange.strategy.impl;
 
 import java.util.Arrays;
 import java.util.Set;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.Architecture;
+import com.orange.model.architecture.Architecture;
+import com.orange.strategy.Strategy;
 import com.orange.util.SetUtil;
 
 public class AddRemoveStrategy extends Strategy {
@@ -16,13 +17,13 @@ public class AddRemoveStrategy extends Strategy {
     /**
      * This strategy only deal with additions and removals of microservice. i.e.
      * It should not exist microservice (identify by name) which is in both
-     * currentState and finalState
+     * currentArchitecture and finalArchitecture
      */
     @Override
-    public boolean valid(Architecture currentState, Architecture finalState) {
-	for (String site : finalState.listSitesName()) {
-	    Set<String> currentMsName = SetUtil.collectNames(currentState.getArchitectureMicroservices(site));
-	    Set<String> finalMsName = SetUtil.collectNames(finalState.getArchitectureMicroservices(site));
+    public boolean valid(Architecture currentArchitecture, Architecture finalArchitecture) {
+	for (String site : finalArchitecture.listSitesName()) {
+	    Set<String> currentMsName = SetUtil.collectNames(currentArchitecture.getSiteMicroservices(site));
+	    Set<String> finalMsName = SetUtil.collectNames(finalArchitecture.getSiteMicroservices(site));
 	    if (currentMsName.stream().anyMatch(finalMsName::contains)) {
 		return false;
 	    }

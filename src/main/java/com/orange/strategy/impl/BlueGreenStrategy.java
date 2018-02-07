@@ -1,4 +1,4 @@
-package com.orange.nextstate.strategy;
+package com.orange.strategy.impl;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -7,8 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.Architecture;
-import com.orange.model.state.ArchitectureMicroservice;
+import com.orange.model.architecture.Architecture;
+import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.strategy.TagUpdatingVersionStrategy;
+import com.orange.strategy.Transition;
 import com.orange.util.SetUtil;
 
 public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
@@ -21,9 +23,9 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
     }
 
     @Override
-    public boolean valid(Architecture currentState, Architecture finalState) {
+    public boolean valid(Architecture currentArchitecture, Architecture finalArchitecture) {
 	// TODO in the case of multi new versions, version should be specified
-	// in finalState
+	// (i.e. not null) in finalArchitecture
 	return true;
     }
 
@@ -33,11 +35,13 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
      */
     protected Transition newPkgEnvTransit = new Transition() {
 	@Override
-	public Architecture next(Architecture currentState, Architecture finalState) {
-	    Architecture nextState = new Architecture(currentState);
-	    for (String site : finalState.listSitesName()) {
-		Set<ArchitectureMicroservice> currentMicroservices = nextState.getArchitectureMicroservices(site);
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		Set<ArchitectureMicroservice> currentMicroservices = nextArchitecture
+			.getSiteMicroservices(site);
+		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture
+			.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(currentMicroservices, ms -> ms.getName().equals(desiredMicroservice.getName())
 			    && ms.getVersion().equals(library.desiredVersion(desiredMicroservice)))) {
 			ArchitectureMicroservice newMicroservice = new ArchitectureMicroservice(desiredMicroservice);
@@ -46,13 +50,13 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 			if (newMicroservice.getVersion() == null) {
 			    newMicroservice.setVersion(config.getUpdatingVersion());
 			}
-			nextState.getArchitectureSite(site).addArchitectureMicroservice(newMicroservice);
+			nextArchitecture.getArchitectureSite(site).addArchitectureMicroservice(newMicroservice);
 			logger.info("Added a new microservice: {} ", newMicroservice);
 			continue;
 		    }
 		}
 	    }
-	    return nextState;
+	    return nextArchitecture;
 	}
     };
 
@@ -63,11 +67,12 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
     protected Transition updateExceptRouteTransit = new Transition() {
 	// assume that it doesn't exist two microservices with same pkg and name
 	@Override
-	public Architecture next(Architecture currentState, Architecture finalState) {
-	    Architecture nextState = new Architecture(currentState);
-	    for (String site : finalState.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
-		    if (SetUtil.noneMatch(nextState.getArchitectureMicroservices(site),
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture
+			.getSiteMicroservices(site)) {
+		    if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
 			    ms -> ms.getName().equals(desiredMicroservice.getName())
 				    && ms.getVersion().equals(library.desiredVersion(desiredMicroservice))
 				    && ms.getPath().equals(desiredMicroservice.getPath())
@@ -76,7 +81,7 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 				    && ms.getServices().equals(desiredMicroservice.getServices())
 				    && ms.getState().equals(desiredMicroservice.getState()))) {
 			ArchitectureMicroservice nextMicroservice = SetUtil.getOneMicroservice(
-				nextState.getArchitectureMicroservices(site),
+				nextArchitecture.getSiteMicroservices(site),
 				ms -> ms.getName().equals(desiredMicroservice.getName())
 					&& ms.getVersion().equals(library.desiredVersion(desiredMicroservice)));
 			nextMicroservice.setPath(desiredMicroservice.getPath());
@@ -90,7 +95,7 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 		    }
 		}
 	    }
-	    return nextState;
+	    return nextArchitecture;
 	}
     };
 }

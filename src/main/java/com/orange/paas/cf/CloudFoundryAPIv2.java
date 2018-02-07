@@ -13,13 +13,13 @@ import org.slf4j.LoggerFactory;
 
 import com.orange.Main;
 import com.orange.model.*;
-import com.orange.model.state.MicroserviceState;
-import com.orange.model.state.ArchitectureMicroservice;
-import com.orange.model.state.ArchitectureSite;
-import com.orange.model.state.Route;
-import com.orange.model.state.cf.CFMicroserviceArchitecture;
-import com.orange.model.state.cf.CFMicroserviceDesiredState;
-import com.orange.model.state.cf.CFMicroserviceState;
+import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.ArchitectureSite;
+import com.orange.model.architecture.MicroserviceState;
+import com.orange.model.architecture.Route;
+import com.orange.model.architecture.cf.CFMicroserviceArchitecture;
+import com.orange.model.architecture.cf.CFMicroserviceDesiredState;
+import com.orange.model.architecture.cf.CFMicroserviceState;
 import com.orange.model.workflow.Step;
 import com.orange.paas.PaaSAPI;
 
@@ -37,7 +37,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 
     @Override
     public ArchitectureSite getSiteArchitecture() {
-	logger.info("Start getting the current state ...");
+	logger.info("Start getting the current architecture ...");
 	return new ArchitectureSite(operations.listSpaceApps().parallelStream()
 		.map(info -> new ArchitectureMicroservice(info.getId(), parseName(info.getName()),
 			parseVersion(info.getName()), parsePath(info), parseState(info), info.getInstances(),
@@ -47,7 +47,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     public ArchitectureSite stabilizeSiteArchitecture() {
-	logger.info("Start getting the current state and make it stable ...");
+	logger.info("Start getting the current architecture and stabilize it ...");
 	return new ArchitectureSite(operations.listSpaceApps().parallelStream()
 		.map(info -> new ArchitectureMicroservice(info.getId(), parseName(info.getName()),
 			parseVersion(info.getName()), parsePath(info), stabilizeState(info), info.getInstances(),
@@ -128,9 +128,9 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     private boolean stagedMicroservice(CFMicroserviceState msState) {
-	Set<CFMicroserviceState> upstagedStates = new HashSet<>(
+	Set<CFMicroserviceState> unstagedStates = new HashSet<>(
 		Arrays.asList(CFMicroserviceState.CREATED, CFMicroserviceState.UPLOADED));
-	return !upstagedStates.contains(msState);
+	return !unstagedStates.contains(msState);
     }
 
     /**

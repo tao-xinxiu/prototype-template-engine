@@ -1,12 +1,12 @@
-package com.orange.model.state.cf;
+package com.orange.model.architecture.cf;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.orange.model.state.ArchitectureMicroservice;
-import com.orange.model.state.Route;
+import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.Route;
 
 public class CFMicroserviceArchitecture {
     private String guid;
