@@ -1,7 +1,6 @@
 package com.orange.nextstate.strategy;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +14,7 @@ public class InplaceStrategy extends Strategy {
 
     public InplaceStrategy(StrategyConfig config) {
 	super(config);
+	transitions = Arrays.asList(library.directTransit(false));
     }
 
     /**
@@ -32,10 +32,4 @@ public class InplaceStrategy extends Strategy {
 	}
 	return true;
     }
-
-    @Override
-    public List<Transit> transits() {
-	return Arrays.asList(library.directTransit(false));
-    }
-
 }

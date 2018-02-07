@@ -1,7 +1,6 @@
 package com.orange.nextstate.strategy;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -19,6 +18,8 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 
     public CanaryStrategy(StrategyConfig config) {
 	super(config);
+	transitions = Arrays.asList(rolloutTransit, addCanaryTransit, updateExceptInstancesRoutesTransit, updateRouteTransit,
+		scaleupTransit, library.removeUndesiredTransit);
     }
 
     @Override
@@ -38,17 +39,11 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 	return true;
     }
 
-    @Override
-    public List<Transit> transits() {
-	return Arrays.asList(rolloutTransit, addCanaryTransit, updateExceptInstancesRoutesTransit, updateRouteTransit,
-		scaleupTransit, library.removeUndesiredTransit);
-    }
-
     /**
      * next architecture: scale down non-desired microservice when the
      * microservice routed running instances equals to desired instances
      */
-    protected Transit rolloutTransit = new Transit() {
+    protected Transition rolloutTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
@@ -84,7 +79,7 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
     /**
      * get next architecture: scale up desired microservices
      */
-    protected Transit scaleupTransit = new Transit() {
+    protected Transition scaleupTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);

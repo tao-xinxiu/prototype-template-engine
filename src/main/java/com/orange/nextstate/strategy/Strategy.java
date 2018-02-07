@@ -1,5 +1,6 @@
 package com.orange.nextstate.strategy;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -8,6 +9,10 @@ import com.orange.model.state.Architecture;
 import com.orange.model.state.ArchitectureMicroservice;
 
 public abstract class Strategy {
+    protected List<Transition> transitions = new ArrayList<Transition>();
+    public abstract boolean valid(Architecture currentState, Architecture finalState);
+//    public abstract List<Transition> transitions();
+    
     protected StrategyConfig config;
     protected StrategyLibrary library;
 
@@ -16,9 +21,9 @@ public abstract class Strategy {
 	this.library = new StrategyLibrary(this);
     }
 
-    public abstract boolean valid(Architecture currentState, Architecture finalState);
-
-    public abstract List<Transit> transits();
+    public List<Transition> getTransitions() {
+        return transitions;
+    }
 
     /**
      * return whether currentState is an instantiated architecture of
@@ -83,4 +88,5 @@ public abstract class Strategy {
 	}
 	return true;
     }
+
 }

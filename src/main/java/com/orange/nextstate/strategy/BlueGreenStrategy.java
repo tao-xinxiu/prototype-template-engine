@@ -1,7 +1,6 @@
 package com.orange.nextstate.strategy;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -17,6 +16,8 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 
     public BlueGreenStrategy(StrategyConfig config) {
 	super(config);
+	transitions = Arrays.asList(newPkgEnvTransit, updateExceptRouteTransit, library.updateRouteTransit,
+		library.removeUndesiredTransit);
     }
 
     @Override
@@ -26,17 +27,11 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 	return true;
     }
 
-    @Override
-    public List<Transit> transits() {
-	return Arrays.asList(newPkgEnvTransit, updateExceptRouteTransit, library.updateRouteTransit,
-		library.removeUndesiredTransit);
-    }
-
     /**
      * next architecture: add microservice with new pkg and env. Tagging
      * updating microservice with version "updating"
      */
-    protected Transit newPkgEnvTransit = new Transit() {
+    protected Transition newPkgEnvTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
@@ -65,7 +60,7 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
      * getting next architecture by updating desired microservice properties
      * (except route)
      */
-    protected Transit updateExceptRouteTransit = new Transit() {
+    protected Transition updateExceptRouteTransit = new Transition() {
 	// assume that it doesn't exist two microservices with same pkg and name
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {

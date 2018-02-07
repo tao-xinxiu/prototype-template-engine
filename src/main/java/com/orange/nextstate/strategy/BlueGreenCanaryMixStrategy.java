@@ -1,7 +1,6 @@
 package com.orange.nextstate.strategy;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -17,6 +16,8 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 
     public BlueGreenCanaryMixStrategy(StrategyConfig config) {
 	super(config);
+	transitions = Arrays.asList(addCanaryTransit, updateExceptInstancesRoutesTransit, updateRouteTransit, rolloutTransit,
+		library.removeUndesiredTransit);
     }
 
     @Override
@@ -24,16 +25,10 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 	return true;
     }
 
-    @Override
-    public List<Transit> transits() {
-	return Arrays.asList(addCanaryTransit, updateExceptInstancesRoutesTransit, updateRouteTransit, rolloutTransit,
-		library.removeUndesiredTransit);
-    }
-
     /**
      * next architecture: add canary microservice with new pkg and env
      */
-    protected Transit addCanaryTransit = new Transit() {
+    protected Transition addCanaryTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
@@ -65,7 +60,7 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
      * next architecture: update desired microservice properties except
      * nbrProcesses and routes
      */
-    protected Transit updateExceptInstancesRoutesTransit = new Transit() {
+    protected Transition updateExceptInstancesRoutesTransit = new Transition() {
 	// assume that it doesn't exist two microservices with same pkg and name
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
@@ -100,7 +95,7 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
     /**
      * next architecture: update desired microservice route
      */
-    protected Transit updateRouteTransit = new Transit() {
+    protected Transition updateRouteTransit = new Transition() {
 	// assume that it doesn't exist two microservices with same pkg and name
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
@@ -132,7 +127,7 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
     /**
      * next architecture: scale up desired microservice and rollout old ones
      */
-    protected Transit rolloutTransit = new Transit() {
+    protected Transition rolloutTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);

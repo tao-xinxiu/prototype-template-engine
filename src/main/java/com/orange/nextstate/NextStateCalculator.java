@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.orange.model.StrategyConfig;
 import com.orange.model.state.Architecture;
 import com.orange.nextstate.strategy.Strategy;
-import com.orange.nextstate.strategy.Transit;
+import com.orange.nextstate.strategy.Transition;
 
 public class NextStateCalculator {
     private static final Logger logger = LoggerFactory.getLogger(NextStateCalculator.class);
@@ -78,7 +78,7 @@ public class NextStateCalculator {
 	if (!strategy.valid(currentState, finalState)) {
 	    throw new IllegalStateException("Strategy disallowed situation");
 	}
-	for (Transit transit : strategy.transits()) {
+	for (Transition transit : strategy.getTransitions()) {
 	    Architecture next = transit.next(currentState, finalState);
 	    if (!next.equals(currentState)) {
 		return next;

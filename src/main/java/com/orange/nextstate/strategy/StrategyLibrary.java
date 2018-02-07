@@ -29,7 +29,7 @@ public class StrategyLibrary {
     /**
      * next architecture: remove micro-services not in finalState
      */
-    protected Transit removeUndesiredTransit = new Transit() {
+    protected Transition removeUndesiredTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
@@ -57,7 +57,7 @@ public class StrategyLibrary {
      * next architecture: adding new micro-services (in finalState, not in
      * currentState, identified by name)
      */
-    protected Transit addNewTransit = new Transit() {
+    protected Transition addNewTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
@@ -85,7 +85,7 @@ public class StrategyLibrary {
      * next architecture: remove old micro-services (in currentState, not in
      * finalState, identified by name)
      */
-    protected Transit removeOldTransit = new Transit() {
+    protected Transition removeOldTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
@@ -113,8 +113,8 @@ public class StrategyLibrary {
      *            temporary route
      * @return
      */
-    protected Transit directTransit(boolean tmpRoute) {
-	return new Transit() {
+    protected Transition directTransit(boolean tmpRoute) {
+	return new Transition() {
 	    @Override
 	    public Architecture next(Architecture currentState, Architecture finalState) {
 		Architecture nextState = new Architecture(finalState);
@@ -157,7 +157,7 @@ public class StrategyLibrary {
      * getting next architecture by updating desired microservice route and
      * setting version
      */
-    protected Transit updateRouteTransit = new Transit() {
+    protected Transition updateRouteTransit = new Transition() {
 	// assume that it doesn't exist two microservices with same pkg and name
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
@@ -180,13 +180,11 @@ public class StrategyLibrary {
 		    }
 		}
 	    }
-	    System.err.println("updateRouteTransit.next: " + nextState);
-	    System.err.println("updateRouteTransit.current: " + currentState);
 	    return nextState;
 	}
     };
 
-    protected Transit cleanAllTransit = new Transit() {
+    protected Transition cleanAllTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
@@ -195,7 +193,7 @@ public class StrategyLibrary {
 	}
     };
 
-    protected Transit deployAllTransit = new Transit() {
+    protected Transition deployAllTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
@@ -209,7 +207,7 @@ public class StrategyLibrary {
 	}
     };
 
-    protected Transit scaleHorizontalTransit = new Transit() {
+    protected Transition scaleHorizontalTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
@@ -229,7 +227,7 @@ public class StrategyLibrary {
 	}
     };
 
-    protected Transit scaleIncrementalTransit = new Transit() {
+    protected Transition scaleIncrementalTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
@@ -252,7 +250,7 @@ public class StrategyLibrary {
 	}
     };
 
-    protected Transit scaleVerticalTransit = new Transit() {
+    protected Transition scaleVerticalTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);
@@ -277,7 +275,7 @@ public class StrategyLibrary {
 	}
     };
 
-    protected Transit cleanNotUpdatableMicroserviceTransit = new Transit() {
+    protected Transition cleanNotUpdatableMicroserviceTransit = new Transition() {
 	@Override
 	public Architecture next(Architecture currentState, Architecture finalState) {
 	    Architecture nextState = new Architecture(currentState);

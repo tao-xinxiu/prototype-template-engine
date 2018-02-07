@@ -1,7 +1,6 @@
 package com.orange.nextstate.strategy;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 import com.orange.model.StrategyConfig;
@@ -11,6 +10,7 @@ import com.orange.util.SetUtil;
 public class RemoveAddStrategy extends Strategy {
     public RemoveAddStrategy(StrategyConfig config) {
 	super(config);
+	transitions = Arrays.asList(library.removeOldTransit, library.addNewTransit);
     }
 
     /**
@@ -30,8 +30,4 @@ public class RemoveAddStrategy extends Strategy {
 	return true;
     }
 
-    @Override
-    public List<Transit> transits() {
-	return Arrays.asList(library.removeOldTransit, library.addNewTransit);
-    }
 }
