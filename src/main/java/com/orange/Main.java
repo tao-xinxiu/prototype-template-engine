@@ -40,7 +40,7 @@ public class Main {
     // storePath and nextStateCalculator(strategy&config) are specific to user
     public static final String storePath = "./store/";
     private static final String strategyPackage = "com.orange.nextstate.strategy.";
-    private static NextStateCalculator nextStateCalculator; 
+    private static NextStateCalculator nextStateCalculator;
     private static OperationConfig operationConfig = new OperationConfig();
     // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
     private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
@@ -94,7 +94,7 @@ public class Main {
 	    throw new IllegalStateException("Strategy config not yet set.");
 	}
 	Architecture currentState = getCurrentState(desiredState.listPaaSSites());
-	return nextStateCalculator.isInstantiation(currentState, desiredState);
+	return currentState.isInstantiation(desiredState);
     }
 
     @RequestMapping(value = "health", method = RequestMethod.GET)

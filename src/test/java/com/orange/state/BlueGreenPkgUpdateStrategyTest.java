@@ -54,7 +54,7 @@ public class BlueGreenPkgUpdateStrategyTest {
     @Test
     public void should_get_expected_midstate1() {
 	Strategy bgStrategy = new BlueGreenPkgUpdateStrategy(config);
-	Assert.assertFalse(bgStrategy.isInstantiation(initState, finalState));
+	Assert.assertFalse(initState.isInstantiation(finalState));
 	Assert.assertTrue(bgStrategy.valid(initState, finalState));
 	// Assert.assertTrue(bgStrategy.transits().get(0).condition(initState,
 	// finalState));
@@ -65,7 +65,7 @@ public class BlueGreenPkgUpdateStrategyTest {
     public void should_get_expected_midstate2() {
 	Strategy bgStrategy = new BlueGreenPkgUpdateStrategy(config);
 	Architecture currentState = midState1Instantiated();
-	Assert.assertFalse(bgStrategy.isInstantiation(currentState, finalState));
+	Assert.assertFalse(currentState.isInstantiation(finalState));
 	Assert.assertTrue(bgStrategy.valid(currentState, finalState));
 	// Assert.assertFalse(bgStrategy.transits().get(0).condition(currentState,
 	// finalState));
@@ -78,7 +78,7 @@ public class BlueGreenPkgUpdateStrategyTest {
     public void should_get_expected_midstate3() {
 	Strategy bgStrategy = new BlueGreenPkgUpdateStrategy(config);
 	Architecture currentState = midState2();
-	Assert.assertFalse(bgStrategy.isInstantiation(currentState, finalState));
+	Assert.assertFalse(currentState.isInstantiation(finalState));
 	Assert.assertTrue(bgStrategy.valid(currentState, finalState));
 	// Assert.assertFalse(bgStrategy.transits().get(0).condition(currentState,
 	// finalState));
@@ -126,13 +126,13 @@ public class BlueGreenPkgUpdateStrategyTest {
 	Set<ArchitectureMicroservice> site1Ms = new HashSet<>();
 	site1Ms.add(new ArchitectureMicroservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(new ArchitectureMicroservice(null, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
+	site1Ms.add(new ArchitectureMicroservice(null, msName, config.getUpdatingVersion(), newMsPath,
+		MicroserviceState.RUNNING, msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
 	Set<ArchitectureMicroservice> site2Ms = new HashSet<>();
 	site2Ms.add(new ArchitectureMicroservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(new ArchitectureMicroservice(null, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
+	site2Ms.add(new ArchitectureMicroservice(null, msName, config.getUpdatingVersion(), newMsPath,
+		MicroserviceState.RUNNING, msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
 	Architecture midState1 = new Architecture();
 	midState1.addPaaSSite(site1, new ArchitectureSite(site1Ms));
 	midState1.addPaaSSite(site2, new ArchitectureSite(site2Ms));

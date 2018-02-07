@@ -18,8 +18,8 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 
     public CanaryStrategy(StrategyConfig config) {
 	super(config);
-	transitions = Arrays.asList(rolloutTransit, addCanaryTransit, updateExceptInstancesRoutesTransit, updateRouteTransit,
-		scaleupTransit, library.removeUndesiredTransit);
+	transitions = Arrays.asList(rolloutTransit, addCanaryTransit, updateExceptInstancesRoutesTransit,
+		updateRouteTransit, scaleupTransit, library.removeUndesiredTransit);
     }
 
     @Override
@@ -86,7 +86,7 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 	    for (String site : finalState.listSitesName()) {
 		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
 		    Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureMicroservices(site);
-		    if (SetUtil.noneMatch(nextMicroservices, ms -> isInstantiation(ms, desiredMicroservice))) {
+		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
 			ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(nextMicroservices,
 				ms -> ms.getName().equals(desiredMicroservice.getName())
 					&& ms.getVersion().equals(library.desiredVersion(desiredMicroservice)));

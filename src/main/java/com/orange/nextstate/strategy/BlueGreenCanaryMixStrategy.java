@@ -134,7 +134,7 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 	    for (String site : finalState.listSitesName()) {
 		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
 		    Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureMicroservices(site);
-		    if (SetUtil.noneMatch(nextMicroservices, ms -> isInstantiation(ms, desiredMicroservice))) {
+		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
 			for (ArchitectureMicroservice nextMicroservice : SetUtil.searchByName(nextMicroservices,
 				desiredMicroservice.getName())) {
 			    if (nextMicroservice.getVersion().equals(library.desiredVersion(desiredMicroservice))) {

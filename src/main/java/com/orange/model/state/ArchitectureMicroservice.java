@@ -231,4 +231,29 @@ public class ArchitectureMicroservice {
 	    return false;
 	return true;
     }
+
+    /**
+     * return whether "this" is an instantiation of desiredMicroservice.
+     * 
+     * @param desiredMicroservice
+     * @return
+     */
+    public boolean isInstantiation(ArchitectureMicroservice desiredMicroservice) {
+	if (desiredMicroservice == null) {
+	    return false;
+	}
+	if (desiredMicroservice.guid != null && !desiredMicroservice.guid.equals(guid)) {
+	    return false;
+	}
+	if (desiredMicroservice.version != null && !desiredMicroservice.version.equals(version)) {
+	    return false;
+	}
+	if (!name.equals(desiredMicroservice.name) || !path.equals(desiredMicroservice.path)
+		|| !state.equals(desiredMicroservice.state) || nbProcesses != desiredMicroservice.nbProcesses
+		|| !env.equals(desiredMicroservice.env) || !routes.equals(desiredMicroservice.routes)
+		|| !memory.equals(desiredMicroservice.memory) || !disk.equals(desiredMicroservice.disk)) {
+	    return false;
+	}
+	return true;
+    }
 }

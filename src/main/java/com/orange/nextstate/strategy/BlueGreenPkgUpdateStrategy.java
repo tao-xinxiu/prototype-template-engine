@@ -63,7 +63,7 @@ public class BlueGreenPkgUpdateStrategy extends TagUpdatingVersionStrategy {
 	    for (String site : finalState.listSitesName()) {
 		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
 		    if (SetUtil.noneMatch(nextState.getArchitectureMicroservices(site),
-			    ms -> isInstantiation(ms, desiredMicroservice))) {
+			    ms -> ms.isInstantiation(desiredMicroservice))) {
 			Set<ArchitectureMicroservice> nextMicroservices = nextState.getArchitectureMicroservices(site);
 			ArchitectureMicroservice nextMicroservice = SetUtil.getOneMicroservice(nextMicroservices,
 				ms -> ms.getName().equals(desiredMicroservice.getName())

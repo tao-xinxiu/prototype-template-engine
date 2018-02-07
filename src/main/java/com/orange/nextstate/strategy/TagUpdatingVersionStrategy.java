@@ -1,7 +1,6 @@
 package com.orange.nextstate.strategy;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.state.ArchitectureMicroservice;
 
 public abstract class TagUpdatingVersionStrategy extends Strategy {
     public TagUpdatingVersionStrategy(StrategyConfig config) {
@@ -11,10 +10,10 @@ public abstract class TagUpdatingVersionStrategy extends Strategy {
 	}
     }
 
-    @Override
-    protected boolean isInstantiation(ArchitectureMicroservice currentMicroservice,
-	    ArchitectureMicroservice desiredMicroservice) {
-	return super.isInstantiation(currentMicroservice, desiredMicroservice)
-		&& !currentMicroservice.getVersion().equals(config.getUpdatingVersion());
-    }
+//    @Override
+//    protected boolean isInstantiation(ArchitectureMicroservice currentMicroservice,
+//	    ArchitectureMicroservice desiredMicroservice) {
+//	return super.isInstantiation(currentMicroservice, desiredMicroservice)
+//		&& !currentMicroservice.getVersion().equals(config.getUpdatingVersion());
+//    }
 }

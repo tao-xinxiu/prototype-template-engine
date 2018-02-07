@@ -16,14 +16,12 @@ import com.orange.util.SetUtil;
 import com.orange.util.VersionGenerator;
 
 public class StrategyLibrary {
-    private Strategy strategy;
     private Logger logger;
     private StrategyConfig config;
 
-    public StrategyLibrary(Strategy strategy) {
-	this.strategy = strategy;
-	this.logger = LoggerFactory.getLogger(strategy.getClass());
-	this.config = strategy.config;
+    public StrategyLibrary(StrategyConfig config) {
+	this.logger = LoggerFactory.getLogger(StrategyLibrary.class);
+	this.config = config;
     }
 
     /**
@@ -39,7 +37,7 @@ public class StrategyLibrary {
 		while (iterator.hasNext()) {
 		    ArchitectureMicroservice microservice = iterator.next();
 		    if (SetUtil.noneMatch(finalState.getArchitectureMicroservices(site),
-			    desiredMs -> strategy.isInstantiation(microservice, desiredMs))) {
+			    desiredMs -> microservice.isInstantiation(desiredMs))) {
 			iterator.remove();
 			logger.info("Removed microservice [{}]", microservice);
 		    } else if (microservice.getVersion().equals(config.getUpdatingVersion())) {
@@ -166,7 +164,7 @@ public class StrategyLibrary {
 		for (ArchitectureMicroservice desiredMicroservice : finalState.getArchitectureMicroservices(site)) {
 		    Set<ArchitectureMicroservice> nextMicroservices = SetUtil
 			    .searchByName(nextState.getArchitectureMicroservices(site), desiredMicroservice.getName());
-		    if (SetUtil.noneMatch(nextMicroservices, ms -> strategy.isInstantiation(ms, desiredMicroservice))) {
+		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
 			ArchitectureMicroservice nextMs = SetUtil.getOneMicroservice(nextMicroservices,
 				ms -> ms.getVersion().equals(desiredVersion(desiredMicroservice))
 					&& ms.getPath().equals(desiredMicroservice.getPath())

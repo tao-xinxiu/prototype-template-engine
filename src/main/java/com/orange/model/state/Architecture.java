@@ -125,4 +125,32 @@ public class Architecture {
     public String toString() {
 	return "Architecture [sites=" + sites + ", architectureSites=" + architectureSites + "]";
     }
+
+    /**
+     * return whether "this" is an instantiation of finalArchitecture.
+     * 
+     * @param finalArchitecture
+     * @return
+     */
+    public boolean isInstantiation(Architecture finalArchitecture) {
+	if (finalArchitecture == null) {
+	    return false;
+	}
+	if (!sites.equals(finalArchitecture.sites)) {
+	    return false;
+	}
+	for (String site : listSitesName()) {
+	    Set<ArchitectureMicroservice> desiredMicroservices = finalArchitecture.getArchitectureMicroservices(site);
+	    Set<ArchitectureMicroservice> microservices = getArchitectureMicroservices(site);
+	    if (microservices.size() != desiredMicroservices.size()) {
+		return false;
+	    }
+	    for (ArchitectureMicroservice desiredMicroservice : desiredMicroservices) {
+		if (microservices.stream().noneMatch(ms -> ms.isInstantiation(desiredMicroservice))) {
+		    return false;
+		}
+	    }
+	}
+	return true;
+    }
 }
