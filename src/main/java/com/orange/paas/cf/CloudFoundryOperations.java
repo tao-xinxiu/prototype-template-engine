@@ -55,9 +55,9 @@ import org.slf4j.LoggerFactory;
 
 import com.orange.Main;
 import com.orange.model.OperationConfig;
-import com.orange.model.PaaSSite;
+import com.orange.model.PaaSSiteAccess;
 import com.orange.model.architecture.Route;
-import com.orange.model.architecture.cf.CFMicroserviceArchitecture;
+import com.orange.model.architecture.cf.CFMicroservice;
 import com.orange.model.architecture.cf.CFMicroserviceDesiredState;
 import com.orange.util.RetryFunction;
 import com.orange.util.Wait;
@@ -69,13 +69,13 @@ public class CloudFoundryOperations {
     private final Logger logger;
     private final String siteInfo;
 
-    private PaaSSite site;
+    private PaaSSiteAccess site;
     private CloudFoundryClient cloudFoundryClient;
     private String spaceId;
     private OperationConfig opConfig;
     private Duration timeout;
 
-    public CloudFoundryOperations(PaaSSite site, OperationConfig opConfig) {
+    public CloudFoundryOperations(PaaSSiteAccess site, OperationConfig opConfig) {
 	this.site = site;
 	this.logger = LoggerFactory.getLogger(String.format("%s(%s)", getClass(), site.getName()));
 	this.siteInfo = String.format(" at site [%s]", site.getName());
@@ -230,8 +230,8 @@ public class CloudFoundryOperations {
      * @param currentMicroservice
      * @param desiredMicroservice
      */
-    public void updateStateIfNeed(CFMicroserviceArchitecture currentMicroservice,
-	    CFMicroserviceArchitecture desiredMicroservice) {
+    public void updateStateIfNeed(CFMicroservice currentMicroservice,
+	    CFMicroservice desiredMicroservice) {
 	if (currentMicroservice.getState() == desiredMicroservice.getState()) {
 	    return;
 	}

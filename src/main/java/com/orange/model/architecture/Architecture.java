@@ -1,20 +1,19 @@
 package com.orange.model.architecture;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.Map.Entry;
 
-import com.orange.model.PaaSSite;
+import com.orange.model.PaaSSiteAccess;
 
 public class Architecture {
-    private Map<String, PaaSSite> sites = new HashMap<>();
-    private Map<String, ArchitectureSite> architectureSites = new HashMap<>();
+    // private Map<String, PaaSSiteAccess> sites = new HashMap<>();
+    private Map<String, Site> sites = new HashMap<>();
 
-    public Architecture(Map<String, PaaSSite> sites, Map<String, ArchitectureSite> architectureSites) {
-	this.sites = sites;
-	this.architectureSites = architectureSites;
+    public Architecture(Map<String, Site> architectureSites) {
+	this.sites = architectureSites;
 	assert valid();
     }
 
@@ -22,38 +21,42 @@ public class Architecture {
     }
 
     public Architecture(Architecture other) {
-	for (Entry<String, PaaSSite> entry : other.sites.entrySet()) {
-	    this.sites.put(entry.getKey(), new PaaSSite(entry.getValue()));
-	}
-	for (Entry<String, ArchitectureSite> entry : other.architectureSites.entrySet()) {
-	    this.architectureSites.put(entry.getKey(), new ArchitectureSite(entry.getValue()));
+	for (Entry<String, Site> entry : other.sites.entrySet()) {
+	    this.sites.put(entry.getKey(), new Site(entry.getValue()));
 	}
     }
 
-    public void addPaaSSite(PaaSSite site, ArchitectureSite architectureSite) {
-	assert site != null && architectureSite != null;
-	sites.put(site.getName(), site);
-	architectureSites.put(site.getName(), architectureSite);
+    public void addSite(String siteName, Site site) {
+	sites.put(siteName, site);
+    }
+    
+    public void addSite(PaaSSiteAccess siteAccess, Set<Microservice> microservices) {
+	assert siteAccess != null && microservices != null;
+	sites.put(siteAccess.getName(), new Site(siteAccess, microservices));
+    }
+    
+    public Site getSite(String siteName) {
+	return sites.get(siteName);
     }
 
-    public Map<String, PaaSSite> getSites() {
+//    public Map<String, PaaSSiteAccess> getSites() {
+//	return sites;
+//    }
+//
+//    public void setSites(Map<String, PaaSSiteAccess> sites) {
+//	this.sites = sites;
+//    }
+
+    public Map<String, Site> getArchitectureSites() {
 	return sites;
     }
+//
+//    public void setArchitectureSites(Map<String, ArchitectureSite> architectureSites) {
+//	this.sites = architectureSites;
+//    }
 
-    public void setSites(Map<String, PaaSSite> sites) {
-	this.sites = sites;
-    }
-
-    public Map<String, ArchitectureSite> getArchitectureSites() {
-	return architectureSites;
-    }
-
-    public void setArchitectureSites(Map<String, ArchitectureSite> architectureSites) {
-	this.architectureSites = architectureSites;
-    }
-
-    public ArchitectureSite getArchitectureSite(String siteName) {
-	return architectureSites.get(siteName);
+    public Site getArchitectureSite(String siteName) {
+	return sites.get(siteName);
     }
 
     public Set<Microservice> getSiteMicroservices(String siteName) {
@@ -63,30 +66,30 @@ public class Architecture {
     public Architecture getSubArchitecture(Set<String> siteNames) {
 	Architecture subArchitecture = new Architecture();
 	for (String siteName : siteNames) {
-	    subArchitecture.addPaaSSite(sites.get(siteName), architectureSites.get(siteName));
+	    subArchitecture.addSite(siteName, sites.get(siteName));
 	}
 	return subArchitecture;
     }
 
     public void mergeArchitecture(Architecture subArhictecture) {
-	architectureSites.putAll(subArhictecture.architectureSites);
+	sites.putAll(subArhictecture.sites);
     }
 
     public Set<String> listSitesName() {
 	return sites.keySet();
     }
 
-    public Set<PaaSSite> listPaaSSites() {
-	return new HashSet<>(sites.values());
+    public Set<PaaSSiteAccess> listPaaSSites() {
+	return sites.values().stream().map(s -> s.getSiteAccess()).collect(Collectors.toSet());
     }
 
     public boolean valid() {
 	if (sites == null) {
-	    return architectureSites == null;
+	    return sites == null;
 	} else if (sites.keySet() == null) {
-	    return architectureSites.keySet() == null;
+	    return sites.keySet() == null;
 	} else {
-	    return sites.keySet().equals(architectureSites.keySet());
+	    return sites.keySet().equals(sites.keySet());
 	}
     }
 
@@ -94,7 +97,7 @@ public class Architecture {
     public int hashCode() {
 	final int prime = 31;
 	int result = 1;
-	result = prime * result + ((architectureSites == null) ? 0 : architectureSites.hashCode());
+	result = prime * result + ((sites == null) ? 0 : sites.hashCode());
 	result = prime * result + ((sites == null) ? 0 : sites.hashCode());
 	return result;
     }
@@ -108,10 +111,10 @@ public class Architecture {
 	if (getClass() != obj.getClass())
 	    return false;
 	Architecture other = (Architecture) obj;
-	if (architectureSites == null) {
-	    if (other.architectureSites != null)
+	if (sites == null) {
+	    if (other.sites != null)
 		return false;
-	} else if (!architectureSites.equals(other.architectureSites))
+	} else if (!sites.equals(other.sites))
 	    return false;
 	if (sites == null) {
 	    if (other.sites != null)
@@ -123,7 +126,7 @@ public class Architecture {
 
     @Override
     public String toString() {
-	return "Architecture [sites=" + sites + ", architectureSites=" + architectureSites + "]";
+	return "Architecture [sites=" + sites + ", architectureSites=" + sites + "]";
     }
 
     /**

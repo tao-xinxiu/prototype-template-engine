@@ -8,7 +8,7 @@ import java.util.Set;
 import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.Route;
 
-public class CFMicroserviceArchitecture {
+public class CFMicroservice {
     private String guid;
     private String name;
     private String path;
@@ -18,7 +18,7 @@ public class CFMicroserviceArchitecture {
     private Set<Route> routes = new HashSet<>();
     private Set<String> services = new HashSet<>();
 
-    public CFMicroserviceArchitecture(String guid, String name, String path, CFMicroserviceState state, int nbProcesses,
+    public CFMicroservice(String guid, String name, String path, CFMicroserviceState state, int nbProcesses,
 	    Map<String, String> env, Set<Route> routes, Set<String> services) {
 	super();
 	this.guid = guid;
@@ -31,7 +31,7 @@ public class CFMicroserviceArchitecture {
 	this.services = services;
     }
 
-    public CFMicroserviceArchitecture(Microservice microservice) {
+    public CFMicroservice(Microservice microservice) {
 	this.guid = microservice.getGuid();
 	this.name = microservice.getName() + "_" + microservice.getVersion();
 	this.path = microservice.getPath();

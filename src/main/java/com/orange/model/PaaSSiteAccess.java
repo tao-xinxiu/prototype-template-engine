@@ -1,6 +1,6 @@
 package com.orange.model;
 
-public class PaaSSite {
+public class PaaSSiteAccess {
     private String name;
     private String type; // ex. "CloudFoundry", "Heroku"
     private String api;
@@ -10,10 +10,10 @@ public class PaaSSite {
     private String space;
     private boolean skipSslValidation;
 
-    public PaaSSite() {
+    public PaaSSiteAccess() {
     }
 
-    public PaaSSite(String name, String type, String api, String user, String pwd, String org, String space,
+    public PaaSSiteAccess(String name, String type, String api, String user, String pwd, String org, String space,
 	    boolean skipSslValidation) {
 	this.name = name;
 	this.type = type;
@@ -25,7 +25,7 @@ public class PaaSSite {
 	this.skipSslValidation = skipSslValidation;
     }
 
-    public PaaSSite(PaaSSite other) {
+    public PaaSSiteAccess(PaaSSiteAccess other) {
 	this.name = other.name;
 	this.type = other.type;
 	this.api = other.api;
@@ -130,7 +130,7 @@ public class PaaSSite {
 	    return false;
 	if (getClass() != obj.getClass())
 	    return false;
-	PaaSSite other = (PaaSSite) obj;
+	PaaSSiteAccess other = (PaaSSiteAccess) obj;
 	if (name == null) {
 	    if (other.name != null)
 		return false;
@@ -141,8 +141,8 @@ public class PaaSSite {
 
     @Override
     public String toString() {
-	return String.format("{api: %s; user: %s; pwd: %s; org:%s; space:%s; skipSslValidation:%s}", api, user, pwd,
-		org, space, skipSslValidation);
+	return "PaaSSiteAccess [name=" + name + ", type=" + type + ", api=" + api + ", user=" + user + ", pwd=" + pwd
+		+ ", org=" + org + ", space=" + space + ", skipSslValidation=" + skipSslValidation + "]";
     }
 
 }

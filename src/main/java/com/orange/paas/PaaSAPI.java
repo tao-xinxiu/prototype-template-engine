@@ -1,20 +1,21 @@
 package com.orange.paas;
 
+import java.util.Set;
+
 import com.orange.model.*;
 import com.orange.model.architecture.Microservice;
-import com.orange.model.architecture.ArchitectureSite;
 import com.orange.model.workflow.Step;
 
 public abstract class PaaSAPI {
-    protected PaaSSite site;
+    protected PaaSSiteAccess site;
     protected OperationConfig operationConfig;
 
-    public PaaSAPI(PaaSSite site, OperationConfig operationConfig) {
+    public PaaSAPI(PaaSSiteAccess site, OperationConfig operationConfig) {
 	this.site = site;
 	this.operationConfig = operationConfig;
     }
 
-    public abstract ArchitectureSite get();
+    public abstract Set<Microservice> get();
 
     public abstract Step add(Microservice microservice);
 

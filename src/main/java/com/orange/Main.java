@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +24,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
-import com.orange.model.architecture.ArchitectureSite;
+import com.orange.model.architecture.Microservice;
 import com.orange.model.OperationConfig;
-import com.orange.model.PaaSSite;
+import com.orange.model.PaaSSiteAccess;
 import com.orange.model.workflow.Workflow;
 import com.orange.paas.cf.CloudFoundryAPIv2;
 import com.orange.paas.cf.CloudFoundryOperations;
@@ -47,12 +47,12 @@ public class Main {
     private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
 
     @RequestMapping(value = "/pull", method = RequestMethod.PUT)
-    public @ResponseBody Architecture getCurrentArchitecture(@RequestBody Collection<PaaSSite> managingSites) {
-	Map<String, PaaSSite> sites = managingSites.stream()
-		.collect(Collectors.toMap(site -> site.getName(), site -> site));
-	Map<String, ArchitectureSite> architectureSites = managingSites.parallelStream().collect(Collectors.toMap(
-		site -> site.getName(), site -> new CloudFoundryAPIv2(site, operationConfig).get()));
-	Architecture currentArchitecture = new Architecture(sites, architectureSites);
+    public @ResponseBody Architecture getCurrentArchitecture(@RequestBody Collection<PaaSSiteAccess> managingSites) {
+	Architecture currentArchitecture = new Architecture();
+	for (PaaSSiteAccess siteAccess : managingSites) {
+	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, operationConfig).get();
+	    currentArchitecture.addSite(siteAccess, microservices);
+	}
 	logger.info("Got current architecture: {} ", currentArchitecture);
 	return currentArchitecture;
     }
@@ -146,7 +146,7 @@ public class Main {
 	}
     }
 
-    public static CloudFoundryOperations getCloudFoundryOperations(PaaSSite site, OperationConfig config) {
+    public static CloudFoundryOperations getCloudFoundryOperations(PaaSSiteAccess site, OperationConfig config) {
 	CloudFoundryOperations ops = connectedSites.get(site.getName());
 	if (ops == null) {
 	    ops = new CloudFoundryOperations(site, config);
@@ -162,13 +162,13 @@ public class Main {
      * @param managingSites
      * @return
      */
-    private Architecture getCurrentStableArchitecture(Collection<PaaSSite> managingSites) {
-	Map<String, PaaSSite> sites = managingSites.stream()
-		.collect(Collectors.toMap(site -> site.getName(), site -> site));
-	Map<String, ArchitectureSite> architectureSites = managingSites.parallelStream()
-		.collect(Collectors.toMap(site -> site.getName(),
-			site -> new CloudFoundryAPIv2(site, operationConfig).stabilizeSiteArchitecture()));
-	Architecture currentArchitecture = new Architecture(sites, architectureSites);
+    private Architecture getCurrentStableArchitecture(Collection<PaaSSiteAccess> managingSites) {
+	Architecture currentArchitecture = new Architecture();
+	for (PaaSSiteAccess siteAccess : managingSites) {
+	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, operationConfig)
+		    .getStabilizedMicroservices();
+	    currentArchitecture.addSite(siteAccess, microservices);
+	}
 	logger.info("Got and stabilized current architecture: {} ", currentArchitecture);
 	return currentArchitecture;
     }

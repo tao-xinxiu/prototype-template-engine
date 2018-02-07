@@ -3,7 +3,7 @@ package com.orange.reconfig;
 import java.util.Map.Entry;
 
 import com.orange.model.OperationConfig;
-import com.orange.model.PaaSSite;
+import com.orange.model.PaaSSiteAccess;
 import com.orange.model.architecture.Architecture;
 import com.orange.model.architecture.Microservice;
 import com.orange.model.workflow.ParallelWorkflow;
@@ -25,7 +25,7 @@ public class WorkflowCalculator {
 
     public Workflow getReconfigureWorkflow() {
 	Workflow reconfigure = new ParallelWorkflow("parallel update sites");
-	for (PaaSSite site : desiredArchitecture.listPaaSSites()) {
+	for (PaaSSiteAccess site : desiredArchitecture.listPaaSSites()) {
 	    Workflow reconfigSite = config.isParallelUpdateMicroservices()
 		    ? new ParallelWorkflow(String.format("parallel update site %s entities", site.getName()))
 		    : new SerialWorkflow(String.format("serial update site %s entities", site.getName()));

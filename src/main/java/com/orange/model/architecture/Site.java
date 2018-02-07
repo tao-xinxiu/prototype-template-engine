@@ -3,21 +3,31 @@ package com.orange.model.architecture;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ArchitectureSite {
+import com.orange.model.PaaSSiteAccess;
+
+public class Site {
+    private PaaSSiteAccess siteAccess;
     private Set<Microservice> microservices = new HashSet<>();
     // TODO add architectureServices for managing external services
 
-    public ArchitectureSite() {
+    public Site() {
     }
 
-    public ArchitectureSite(Set<Microservice> microservices) {
+    public Site(PaaSSiteAccess siteAccess, Set<Microservice> microservices) {
+	super();
+	this.siteAccess = siteAccess;
 	this.microservices = microservices;
     }
 
-    public ArchitectureSite(ArchitectureSite other) {
+    public Site(Site other) {
+	this.siteAccess = new PaaSSiteAccess(other.siteAccess);
 	for (Microservice microservice : other.microservices) {
 	    this.microservices.add(new Microservice(microservice));
 	}
+    }
+
+    public PaaSSiteAccess getSiteAccess() {
+	return siteAccess;
     }
 
     public Set<Microservice> getMicroservices() {
@@ -52,7 +62,7 @@ public class ArchitectureSite {
 	    return false;
 	if (getClass() != obj.getClass())
 	    return false;
-	ArchitectureSite other = (ArchitectureSite) obj;
+	Site other = (Site) obj;
 	if (microservices == null) {
 	    if (other.microservices != null)
 		return false;

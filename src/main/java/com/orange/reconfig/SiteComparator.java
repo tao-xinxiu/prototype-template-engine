@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orange.model.architecture.Microservice;
-import com.orange.model.architecture.ArchitectureSite;
+import com.orange.model.architecture.Site;
 import com.orange.util.SetUtil;
 
 public class SiteComparator {
@@ -17,7 +17,7 @@ public class SiteComparator {
     // microservices different in currentArchitecture and desiredArchitecture
     private Map<Microservice, Microservice> modifiedMicroservices = new HashMap<>();
 
-    public SiteComparator(ArchitectureSite currentArchitecture, ArchitectureSite desiredArchitecture) {
+    public SiteComparator(Site currentArchitecture, Site desiredArchitecture) {
 	Set<String> desiredMicroserviceIds = new HashSet<>();
 	for (Microservice desiredMicroservice : desiredArchitecture.getMicroservices()) {
 	    if (desiredMicroservice.getGuid() == null) {

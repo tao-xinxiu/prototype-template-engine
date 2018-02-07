@@ -10,11 +10,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.orange.model.StrategyConfig;
-import com.orange.model.PaaSSite;
+import com.orange.model.PaaSSiteAccess;
 import com.orange.model.StrategySiteConfig;
 import com.orange.model.architecture.Architecture;
 import com.orange.model.architecture.Microservice;
-import com.orange.model.architecture.ArchitectureSite;
 import com.orange.model.architecture.MicroserviceState;
 import com.orange.model.architecture.Route;
 import com.orange.strategy.Strategy;
@@ -44,9 +43,9 @@ public class BlueGreenPkgUpdateStrategyTest {
 
     private final static StrategyConfig config = config();
 
-    private static final PaaSSite site1 = new PaaSSite(site1name, "CloudFoundry", "site1-api", "site1-user",
+    private static final PaaSSiteAccess site1 = new PaaSSiteAccess(site1name, "CloudFoundry", "site1-api", "site1-user",
 	    "site1-pwd", "site1-org", "site1-space", true);
-    private static final PaaSSite site2 = new PaaSSite(site2name, "CloudFoundry", "site2-api", "site2-user",
+    private static final PaaSSiteAccess site2 = new PaaSSiteAccess(site2name, "CloudFoundry", "site2-api", "site2-user",
 	    "site2-pwd", "site2-org", "site2-space", true);
     private final static Architecture initArchitecture = initArchitecture();
     private final static Architecture finalArchitecture = finalArchitecture();
@@ -58,7 +57,8 @@ public class BlueGreenPkgUpdateStrategyTest {
 	Assert.assertTrue(bgStrategy.valid(initArchitecture, finalArchitecture));
 	// Assert.assertTrue(bgStrategy.transits().get(0).condition(initArchitecture,
 	// finalArchitecture));
-	Assert.assertEquals(bgStrategy.getTransitions().get(0).next(initArchitecture, finalArchitecture), midArchitecture1());
+	Assert.assertEquals(bgStrategy.getTransitions().get(0).next(initArchitecture, finalArchitecture),
+		midArchitecture1());
     }
 
     @Test
@@ -71,7 +71,8 @@ public class BlueGreenPkgUpdateStrategyTest {
 	// finalArchitecture));
 	// Assert.assertTrue(bgStrategy.transits().get(1).condition(currentArchitecture,
 	// finalArchitecture));
-	Assert.assertEquals(midArchitecture2(), bgStrategy.getTransitions().get(1).next(currentArchitecture, finalArchitecture));
+	Assert.assertEquals(midArchitecture2(),
+		bgStrategy.getTransitions().get(1).next(currentArchitecture, finalArchitecture));
     }
 
     @Test
@@ -100,91 +101,79 @@ public class BlueGreenPkgUpdateStrategyTest {
 
     private final static Architecture initArchitecture() {
 	Architecture initArchitecture = new Architecture();
-	initArchitecture
-		.addPaaSSite(site1,
-			new ArchitectureSite(Collections.singleton(new Microservice(oldMsSite1Id, msName,
-				oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes,
-				msServices, memory, disk))));
-	initArchitecture
-		.addPaaSSite(site2,
-			new ArchitectureSite(Collections.singleton(new Microservice(oldMsSite2Id, msName,
-				oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes,
-				msServices, memory, disk))));
+	initArchitecture.addSite(site1, Collections.singleton(new Microservice(oldMsSite1Id, msName, oldMsVersion,
+		oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
+	initArchitecture.addSite(site2, Collections.singleton(new Microservice(oldMsSite2Id, msName, oldMsVersion,
+		oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
 	return initArchitecture;
     }
 
     private final static Architecture finalArchitecture() {
-	Microservice newMs = new Microservice(null, msName, null, newMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk);
+	Microservice newMs = new Microservice(null, msName, null, newMsPath, MicroserviceState.RUNNING, msNbProcesses,
+		msEnv, msRoutes, msServices, memory, disk);
 	Architecture finalArchitecture = new Architecture();
-	finalArchitecture.addPaaSSite(site1, new ArchitectureSite(Collections.singleton(newMs)));
-	finalArchitecture.addPaaSSite(site2, new ArchitectureSite(Collections.singleton(newMs)));
+	finalArchitecture.addSite(site1, Collections.singleton(newMs));
+	finalArchitecture.addSite(site2, Collections.singleton(newMs));
 	return finalArchitecture;
     }
 
     private final static Architecture midArchitecture1() {
 	Set<Microservice> site1Ms = new HashSet<>();
-	site1Ms.add(new Microservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(new Microservice(null, msName, config.getUpdatingVersion(), newMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
+	site1Ms.add(new Microservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
+	site1Ms.add(new Microservice(null, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
-	site2Ms.add(new Microservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(new Microservice(null, msName, config.getUpdatingVersion(), newMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
+	site2Ms.add(new Microservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
+	site2Ms.add(new Microservice(null, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
 	Architecture midArchitecture1 = new Architecture();
-	midArchitecture1.addPaaSSite(site1, new ArchitectureSite(site1Ms));
-	midArchitecture1.addPaaSSite(site2, new ArchitectureSite(site2Ms));
+	midArchitecture1.addSite(site1, site1Ms);
+	midArchitecture1.addSite(site2, site2Ms);
 	return midArchitecture1;
     }
 
     private final static Architecture midArchitecture1Instantiated() {
 	Set<Microservice> site1Ms = new HashSet<>();
-	site1Ms.add(new Microservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(new Microservice(newMsSite1Id, msName, newMsVersion, newMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
+	site1Ms.add(new Microservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
+	site1Ms.add(new Microservice(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
-	site2Ms.add(new Microservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(new Microservice(newMsSite2Id, msName, newMsVersion, newMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
+	site2Ms.add(new Microservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
+	site2Ms.add(new Microservice(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
 	Architecture instantiatedArchitecture1 = new Architecture();
-	instantiatedArchitecture1.addPaaSSite(site1, new ArchitectureSite(site1Ms));
-	instantiatedArchitecture1.addPaaSSite(site2, new ArchitectureSite(site2Ms));
+	instantiatedArchitecture1.addSite(site1, site1Ms);
+	instantiatedArchitecture1.addSite(site2, site2Ms);
 	return instantiatedArchitecture1;
     }
 
     private final static Architecture midArchitecture2() {
 	Set<Microservice> site1Ms = new HashSet<>();
-	site1Ms.add(new Microservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(new Microservice(newMsSite1Id, msName, newMsVersion, newMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
+	site1Ms.add(new Microservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
+	site1Ms.add(new Microservice(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
-	site2Ms.add(new Microservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(new Microservice(newMsSite2Id, msName, newMsVersion, newMsPath,
-		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
+	site2Ms.add(new Microservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
+	site2Ms.add(new Microservice(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
 	Architecture midArchitecture2 = new Architecture();
-	midArchitecture2.addPaaSSite(site1, new ArchitectureSite(site1Ms));
-	midArchitecture2.addPaaSSite(site2, new ArchitectureSite(site2Ms));
+	midArchitecture2.addSite(site1, site1Ms);
+	midArchitecture2.addSite(site2, site2Ms);
 	return midArchitecture2;
     }
 
     private final static Architecture midArchitecture3() {
 	Architecture midArchitecture3 = new Architecture();
-	midArchitecture3
-		.addPaaSSite(site1,
-			new ArchitectureSite(Collections.singleton(new Microservice(newMsSite1Id, msName,
-				newMsVersion, newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes,
-				msServices, memory, disk))));
-	midArchitecture3
-		.addPaaSSite(site2,
-			new ArchitectureSite(Collections.singleton(new Microservice(newMsSite2Id, msName,
-				newMsVersion, newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes,
-				msServices, memory, disk))));
+	midArchitecture3.addSite(site1, Collections.singleton(new Microservice(newMsSite1Id, msName, newMsVersion,
+		newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
+	midArchitecture3.addSite(site2, Collections.singleton(new Microservice(newMsSite2Id, msName, newMsVersion,
+		newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
 	return midArchitecture3;
     }
 

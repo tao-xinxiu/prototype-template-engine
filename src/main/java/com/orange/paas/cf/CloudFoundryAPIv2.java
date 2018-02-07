@@ -14,10 +14,9 @@ import org.slf4j.LoggerFactory;
 import com.orange.Main;
 import com.orange.model.*;
 import com.orange.model.architecture.Microservice;
-import com.orange.model.architecture.ArchitectureSite;
 import com.orange.model.architecture.MicroserviceState;
 import com.orange.model.architecture.Route;
-import com.orange.model.architecture.cf.CFMicroserviceArchitecture;
+import com.orange.model.architecture.cf.CFMicroservice;
 import com.orange.model.architecture.cf.CFMicroserviceDesiredState;
 import com.orange.model.architecture.cf.CFMicroserviceState;
 import com.orange.model.workflow.Step;
@@ -29,42 +28,40 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 
     private CloudFoundryOperations operations;
 
-    public CloudFoundryAPIv2(PaaSSite site, OperationConfig operationConfig) {
+    public CloudFoundryAPIv2(PaaSSiteAccess site, OperationConfig operationConfig) {
 	super(site, operationConfig);
 	this.logger = LoggerFactory.getLogger(String.format("%s(%s)", getClass(), site.getName()));
 	this.operations = Main.getCloudFoundryOperations(site, operationConfig);
     }
 
     @Override
-    public ArchitectureSite get() {
+    public Set<Microservice> get() {
 	logger.info("Start getting the current architecture ...");
-	return new ArchitectureSite(operations.listSpaceApps().parallelStream()
-		.map(info -> new Microservice(info.getId(), parseName(info.getName()),
-			parseVersion(info.getName()), parsePath(info), parseState(info), info.getInstances(),
-			parseEnv(info), parseRoutes(info), parseServices(info), info.getMemory() + "M",
-			info.getDiskQuota() + "M"))
-		.collect(Collectors.toSet()));
+	return operations.listSpaceApps().parallelStream()
+		.map(info -> new Microservice(info.getId(), parseName(info.getName()), parseVersion(info.getName()),
+			parsePath(info), parseState(info), info.getInstances(), parseEnv(info), parseRoutes(info),
+			parseServices(info), info.getMemory() + "M", info.getDiskQuota() + "M"))
+		.collect(Collectors.toSet());
     }
 
-    public ArchitectureSite stabilizeSiteArchitecture() {
+    public Set<Microservice> getStabilizedMicroservices() {
 	logger.info("Start getting the current architecture and stabilize it ...");
-	return new ArchitectureSite(operations.listSpaceApps().parallelStream()
-		.map(info -> new Microservice(info.getId(), parseName(info.getName()),
-			parseVersion(info.getName()), parsePath(info), stabilizeState(info), info.getInstances(),
-			parseEnv(info), parseRoutes(info), parseServices(info), info.getMemory() + "M",
-			info.getDiskQuota() + "M"))
-		.collect(Collectors.toSet()));
+	return operations.listSpaceApps().parallelStream()
+		.map(info -> new Microservice(info.getId(), parseName(info.getName()), parseVersion(info.getName()),
+			parsePath(info), stabilizeState(info), info.getInstances(), parseEnv(info), parseRoutes(info),
+			parseServices(info), info.getMemory() + "M", info.getDiskQuota() + "M"))
+		.collect(Collectors.toSet());
     }
 
     @Override
     public Step add(Microservice microservice) {
-	CFMicroserviceArchitecture desiredMicroservice = new CFMicroserviceArchitecture(microservice);
+	CFMicroservice desiredMicroservice = new CFMicroservice(microservice);
 	return new Step(String.format("add microservice %s", desiredMicroservice)) {
 	    @Override
 	    public void exec() {
 		String msId = operations.create(desiredMicroservice.getName(), desiredMicroservice.getNbProcesses(),
 			desiredMicroservice.getEnv());
-		CFMicroserviceArchitecture currentMicroservice = new CFMicroserviceArchitecture(msId,
+		CFMicroservice currentMicroservice = new CFMicroservice(msId,
 			desiredMicroservice.getName(), null, CFMicroserviceState.CREATED,
 			desiredMicroservice.getNbProcesses(), desiredMicroservice.getEnv(), new HashSet<>(),
 			new HashSet<>());
@@ -89,8 +86,8 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 
     @Override
     public Step modify(Microservice currentMicroservice, Microservice desiredMicroservice) {
-	CFMicroserviceArchitecture currentCFMicroservice = new CFMicroserviceArchitecture(currentMicroservice);
-	CFMicroserviceArchitecture desiredCFMicroservice = new CFMicroserviceArchitecture(desiredMicroservice);
+	CFMicroservice currentCFMicroservice = new CFMicroservice(currentMicroservice);
+	CFMicroservice desiredCFMicroservice = new CFMicroservice(desiredMicroservice);
 	return new SiteStep(
 		String.format("update microservice from %s to %s", currentCFMicroservice, desiredCFMicroservice)) {
 	    @Override
