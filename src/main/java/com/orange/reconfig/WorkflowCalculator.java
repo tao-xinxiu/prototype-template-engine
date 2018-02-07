@@ -24,26 +24,26 @@ public class WorkflowCalculator {
     }
 
     public Workflow getReconfigureWorkflow() {
-	Workflow updateSites = new ParallelWorkflow("parallel update sites");
+	Workflow reconfigure = new ParallelWorkflow("parallel update sites");
 	for (PaaSSite site : desiredArchitecture.listPaaSSites()) {
-	    Workflow updateSite = config.isParallelUpdateMicroservices()
+	    Workflow reconfigSite = config.isParallelUpdateMicroservices()
 		    ? new ParallelWorkflow(String.format("parallel update site %s entities", site.getName()))
 		    : new SerialWorkflow(String.format("serial update site %s entities", site.getName()));
 	    SiteComparator comparator = new SiteComparator(currentArchitecture.getArchitectureSite(site.getName()),
 		    desiredArchitecture.getArchitectureSite(site.getName()));
 	    PaaSAPI directory = new CloudFoundryAPIv2(site, config);
-	    for (ArchitectureMicroservice microservice : comparator.getAddedMicroservice()) {
-		updateSite.addStep(directory.add(microservice));
+	    for (ArchitectureMicroservice addedMicroservice : comparator.getAddedMicroservices()) {
+		reconfigSite.addStep(directory.add(addedMicroservice));
 	    }
-	    for (ArchitectureMicroservice microservice : comparator.getRemovedMicroservice()) {
-		updateSite.addStep(directory.remove(microservice));
+	    for (ArchitectureMicroservice removedMicroservice : comparator.getRemovedMicroservices()) {
+		reconfigSite.addStep(directory.remove(removedMicroservice));
 	    }
-	    for (Entry<ArchitectureMicroservice, ArchitectureMicroservice> updatedmicroservice : comparator
-		    .getUpdatedMicroservice().entrySet()) {
-		updateSite.addStep(directory.update(updatedmicroservice.getKey(), updatedmicroservice.getValue()));
+	    for (Entry<ArchitectureMicroservice, ArchitectureMicroservice> modifiedMicroservice : comparator
+		    .getModifiedMicroservice().entrySet()) {
+		reconfigSite.addStep(directory.modify(modifiedMicroservice.getKey(), modifiedMicroservice.getValue()));
 	    }
-	    updateSites.addStep(updateSite);
+	    reconfigure.addStep(reconfigSite);
 	}
-	return updateSites;
+	return reconfigure;
     }
 }

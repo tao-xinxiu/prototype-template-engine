@@ -11,10 +11,11 @@ import com.orange.util.SetUtil;
 
 public class SiteComparator {
     // microservices in desiredArchitecture but not in currentArchitecture
-    private Set<ArchitectureMicroservice> addedMicroservice = new HashSet<>();
+    private Set<ArchitectureMicroservice> addedMicroservices = new HashSet<>();
     // microservices in currentArchitecture but not in desiredArchitecture
-    private Set<ArchitectureMicroservice> removedMicroservice = new HashSet<>();
-    private Map<ArchitectureMicroservice, ArchitectureMicroservice> updatedMicroservice = new HashMap<>();
+    private Set<ArchitectureMicroservice> removedMicroservices = new HashSet<>();
+    // microservices different in currentArchitecture and desiredArchitecture
+    private Map<ArchitectureMicroservice, ArchitectureMicroservice> modifiedMicroservices = new HashMap<>();
 
     public SiteComparator(ArchitectureSite currentArchitecture, ArchitectureSite desiredArchitecture) {
 	Set<String> desiredMicroserviceIds = new HashSet<>();
@@ -30,11 +31,11 @@ public class SiteComparator {
 				String.format("The path of the new microservice [%s, %s] is not specified.",
 					desiredMicroservice.getName(), desiredMicroservice.getVersion()));
 		    }
-		    addedMicroservice.add(desiredMicroservice);
+		    addedMicroservices.add(desiredMicroservice);
 		} else {
 		    desiredMicroservice.setGuid(currentMicroservice.getGuid());
 		    if (!currentMicroservice.equals(desiredMicroservice)) {
-			updatedMicroservice.put(currentMicroservice, desiredMicroservice);
+			modifiedMicroservices.put(currentMicroservice, desiredMicroservice);
 		    }
 		    desiredMicroserviceIds.add(desiredMicroservice.getGuid());
 		}
@@ -49,23 +50,23 @@ public class SiteComparator {
 				    desiredMicroservice.getGuid()));
 		}
 		if (!currentMicroservice.equals(desiredMicroservice)) {
-		    updatedMicroservice.put(currentMicroservice, desiredMicroservice);
+		    modifiedMicroservices.put(currentMicroservice, desiredMicroservice);
 		}
 	    }
 	}
-	removedMicroservice = SetUtil.search(currentArchitecture.getArchitectureMicroservices(),
+	removedMicroservices = SetUtil.search(currentArchitecture.getArchitectureMicroservices(),
 		currentMicroservice -> !desiredMicroserviceIds.contains(currentMicroservice.getGuid()));
     }
 
-    public Set<ArchitectureMicroservice> getAddedMicroservice() {
-	return addedMicroservice;
+    public Set<ArchitectureMicroservice> getAddedMicroservices() {
+	return addedMicroservices;
     }
 
-    public Set<ArchitectureMicroservice> getRemovedMicroservice() {
-	return removedMicroservice;
+    public Set<ArchitectureMicroservice> getRemovedMicroservices() {
+	return removedMicroservices;
     }
 
-    public Map<ArchitectureMicroservice, ArchitectureMicroservice> getUpdatedMicroservice() {
-	return updatedMicroservice;
+    public Map<ArchitectureMicroservice, ArchitectureMicroservice> getModifiedMicroservice() {
+	return modifiedMicroservices;
     }
 }

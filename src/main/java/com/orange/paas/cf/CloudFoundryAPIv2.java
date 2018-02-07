@@ -36,7 +36,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     @Override
-    public ArchitectureSite getSiteArchitecture() {
+    public ArchitectureSite get() {
 	logger.info("Start getting the current architecture ...");
 	return new ArchitectureSite(operations.listSpaceApps().parallelStream()
 		.map(info -> new ArchitectureMicroservice(info.getId(), parseName(info.getName()),
@@ -88,7 +88,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     @Override
-    public Step update(ArchitectureMicroservice currentMicroservice, ArchitectureMicroservice desiredMicroservice) {
+    public Step modify(ArchitectureMicroservice currentMicroservice, ArchitectureMicroservice desiredMicroservice) {
 	CFMicroserviceArchitecture currentCFMicroservice = new CFMicroserviceArchitecture(currentMicroservice);
 	CFMicroserviceArchitecture desiredCFMicroservice = new CFMicroserviceArchitecture(desiredMicroservice);
 	return new SiteStep(

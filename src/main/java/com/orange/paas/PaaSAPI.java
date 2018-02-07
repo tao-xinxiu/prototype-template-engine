@@ -14,12 +14,12 @@ public abstract class PaaSAPI {
 	this.operationConfig = operationConfig;
     }
 
-    public abstract ArchitectureSite getSiteArchitecture();
+    public abstract ArchitectureSite get();
 
     public abstract Step add(ArchitectureMicroservice microservice);
 
     public abstract Step remove(ArchitectureMicroservice microservice);
 
-    public abstract Step update(ArchitectureMicroservice currentMicroservice,
+    public abstract Step modify(ArchitectureMicroservice currentMicroservice,
 	    ArchitectureMicroservice desiredMicroservice);
 }

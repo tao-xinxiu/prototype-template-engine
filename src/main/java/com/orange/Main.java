@@ -51,7 +51,7 @@ public class Main {
 	Map<String, PaaSSite> sites = managingSites.stream()
 		.collect(Collectors.toMap(site -> site.getName(), site -> site));
 	Map<String, ArchitectureSite> architectureSites = managingSites.parallelStream().collect(Collectors.toMap(
-		site -> site.getName(), site -> new CloudFoundryAPIv2(site, operationConfig).getSiteArchitecture()));
+		site -> site.getName(), site -> new CloudFoundryAPIv2(site, operationConfig).get()));
 	Architecture currentArchitecture = new Architecture(sites, architectureSites);
 	logger.info("Got current architecture: {} ", currentArchitecture);
 	return currentArchitecture;
