@@ -5,24 +5,24 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.ArchitectureSite;
 import com.orange.util.SetUtil;
 
 public class SiteComparator {
     // microservices in desiredArchitecture but not in currentArchitecture
-    private Set<ArchitectureMicroservice> addedMicroservices = new HashSet<>();
+    private Set<Microservice> addedMicroservices = new HashSet<>();
     // microservices in currentArchitecture but not in desiredArchitecture
-    private Set<ArchitectureMicroservice> removedMicroservices = new HashSet<>();
+    private Set<Microservice> removedMicroservices = new HashSet<>();
     // microservices different in currentArchitecture and desiredArchitecture
-    private Map<ArchitectureMicroservice, ArchitectureMicroservice> modifiedMicroservices = new HashMap<>();
+    private Map<Microservice, Microservice> modifiedMicroservices = new HashMap<>();
 
     public SiteComparator(ArchitectureSite currentArchitecture, ArchitectureSite desiredArchitecture) {
 	Set<String> desiredMicroserviceIds = new HashSet<>();
-	for (ArchitectureMicroservice desiredMicroservice : desiredArchitecture.getArchitectureMicroservices()) {
+	for (Microservice desiredMicroservice : desiredArchitecture.getMicroservices()) {
 	    if (desiredMicroservice.getGuid() == null) {
-		ArchitectureMicroservice currentMicroservice = SetUtil.getUniqueMicroservice(
-			currentArchitecture.getArchitectureMicroservices(),
+		Microservice currentMicroservice = SetUtil.getUniqueMicroservice(
+			currentArchitecture.getMicroservices(),
 			ms -> ms.getName().equals(desiredMicroservice.getName())
 				&& ms.getVersion().equals(desiredMicroservice.getVersion()));
 		if (currentMicroservice == null) {
@@ -41,8 +41,8 @@ public class SiteComparator {
 		}
 	    } else {
 		desiredMicroserviceIds.add(desiredMicroservice.getGuid());
-		ArchitectureMicroservice currentMicroservice = SetUtil.getUniqueMicroservice(
-			currentArchitecture.getArchitectureMicroservices(),
+		Microservice currentMicroservice = SetUtil.getUniqueMicroservice(
+			currentArchitecture.getMicroservices(),
 			ms -> ms.getGuid().equals(desiredMicroservice.getGuid()));
 		if (currentMicroservice == null) {
 		    throw new IllegalStateException(
@@ -54,19 +54,19 @@ public class SiteComparator {
 		}
 	    }
 	}
-	removedMicroservices = SetUtil.search(currentArchitecture.getArchitectureMicroservices(),
+	removedMicroservices = SetUtil.search(currentArchitecture.getMicroservices(),
 		currentMicroservice -> !desiredMicroserviceIds.contains(currentMicroservice.getGuid()));
     }
 
-    public Set<ArchitectureMicroservice> getAddedMicroservices() {
+    public Set<Microservice> getAddedMicroservices() {
 	return addedMicroservices;
     }
 
-    public Set<ArchitectureMicroservice> getRemovedMicroservices() {
+    public Set<Microservice> getRemovedMicroservices() {
 	return removedMicroservices;
     }
 
-    public Map<ArchitectureMicroservice, ArchitectureMicroservice> getModifiedMicroservice() {
+    public Map<Microservice, Microservice> getModifiedMicroservice() {
 	return modifiedMicroservices;
     }
 }

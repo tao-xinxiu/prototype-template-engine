@@ -1,7 +1,7 @@
 package com.orange.paas;
 
 import com.orange.model.*;
-import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.ArchitectureSite;
 import com.orange.model.workflow.Step;
 
@@ -16,10 +16,10 @@ public abstract class PaaSAPI {
 
     public abstract ArchitectureSite get();
 
-    public abstract Step add(ArchitectureMicroservice microservice);
+    public abstract Step add(Microservice microservice);
 
-    public abstract Step remove(ArchitectureMicroservice microservice);
+    public abstract Step remove(Microservice microservice);
 
-    public abstract Step modify(ArchitectureMicroservice currentMicroservice,
-	    ArchitectureMicroservice desiredMicroservice);
+    public abstract Step modify(Microservice currentMicroservice,
+	    Microservice desiredMicroservice);
 }

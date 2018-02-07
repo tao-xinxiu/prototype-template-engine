@@ -56,8 +56,8 @@ public class Architecture {
 	return architectureSites.get(siteName);
     }
 
-    public Set<ArchitectureMicroservice> getSiteMicroservices(String siteName) {
-	return getArchitectureSite(siteName).getArchitectureMicroservices();
+    public Set<Microservice> getSiteMicroservices(String siteName) {
+	return getArchitectureSite(siteName).getMicroservices();
     }
 
     public Architecture getSubArchitecture(Set<String> siteNames) {
@@ -140,12 +140,12 @@ public class Architecture {
 	    return false;
 	}
 	for (String site : listSitesName()) {
-	    Set<ArchitectureMicroservice> desiredMicroservices = finalArchitecture.getSiteMicroservices(site);
-	    Set<ArchitectureMicroservice> microservices = getSiteMicroservices(site);
+	    Set<Microservice> desiredMicroservices = finalArchitecture.getSiteMicroservices(site);
+	    Set<Microservice> microservices = getSiteMicroservices(site);
 	    if (microservices.size() != desiredMicroservices.size()) {
 		return false;
 	    }
-	    for (ArchitectureMicroservice desiredMicroservice : desiredMicroservices) {
+	    for (Microservice desiredMicroservice : desiredMicroservices) {
 		if (microservices.stream().noneMatch(ms -> ms.isInstantiation(desiredMicroservice))) {
 		    return false;
 		}

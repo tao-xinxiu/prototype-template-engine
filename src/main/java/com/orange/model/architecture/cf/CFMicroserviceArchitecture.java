@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.Route;
 
 public class CFMicroserviceArchitecture {
@@ -31,7 +31,7 @@ public class CFMicroserviceArchitecture {
 	this.services = services;
     }
 
-    public CFMicroserviceArchitecture(ArchitectureMicroservice microservice) {
+    public CFMicroserviceArchitecture(Microservice microservice) {
 	this.guid = microservice.getGuid();
 	this.name = microservice.getName() + "_" + microservice.getVersion();
 	this.path = microservice.getPath();

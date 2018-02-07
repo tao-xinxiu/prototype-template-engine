@@ -13,7 +13,7 @@ import com.orange.model.StrategyConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.StrategySiteConfig;
 import com.orange.model.architecture.Architecture;
-import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.ArchitectureSite;
 import com.orange.model.architecture.MicroserviceState;
 import com.orange.model.architecture.Route;
@@ -102,19 +102,19 @@ public class BlueGreenPkgUpdateStrategyTest {
 	Architecture initArchitecture = new Architecture();
 	initArchitecture
 		.addPaaSSite(site1,
-			new ArchitectureSite(Collections.singleton(new ArchitectureMicroservice(oldMsSite1Id, msName,
+			new ArchitectureSite(Collections.singleton(new Microservice(oldMsSite1Id, msName,
 				oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes,
 				msServices, memory, disk))));
 	initArchitecture
 		.addPaaSSite(site2,
-			new ArchitectureSite(Collections.singleton(new ArchitectureMicroservice(oldMsSite2Id, msName,
+			new ArchitectureSite(Collections.singleton(new Microservice(oldMsSite2Id, msName,
 				oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes,
 				msServices, memory, disk))));
 	return initArchitecture;
     }
 
     private final static Architecture finalArchitecture() {
-	ArchitectureMicroservice newMs = new ArchitectureMicroservice(null, msName, null, newMsPath,
+	Microservice newMs = new Microservice(null, msName, null, newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk);
 	Architecture finalArchitecture = new Architecture();
 	finalArchitecture.addPaaSSite(site1, new ArchitectureSite(Collections.singleton(newMs)));
@@ -123,15 +123,15 @@ public class BlueGreenPkgUpdateStrategyTest {
     }
 
     private final static Architecture midArchitecture1() {
-	Set<ArchitectureMicroservice> site1Ms = new HashSet<>();
-	site1Ms.add(new ArchitectureMicroservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
+	Set<Microservice> site1Ms = new HashSet<>();
+	site1Ms.add(new Microservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(new ArchitectureMicroservice(null, msName, config.getUpdatingVersion(), newMsPath,
+	site1Ms.add(new Microservice(null, msName, config.getUpdatingVersion(), newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
-	Set<ArchitectureMicroservice> site2Ms = new HashSet<>();
-	site2Ms.add(new ArchitectureMicroservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath,
+	Set<Microservice> site2Ms = new HashSet<>();
+	site2Ms.add(new Microservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(new ArchitectureMicroservice(null, msName, config.getUpdatingVersion(), newMsPath,
+	site2Ms.add(new Microservice(null, msName, config.getUpdatingVersion(), newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
 	Architecture midArchitecture1 = new Architecture();
 	midArchitecture1.addPaaSSite(site1, new ArchitectureSite(site1Ms));
@@ -140,15 +140,15 @@ public class BlueGreenPkgUpdateStrategyTest {
     }
 
     private final static Architecture midArchitecture1Instantiated() {
-	Set<ArchitectureMicroservice> site1Ms = new HashSet<>();
-	site1Ms.add(new ArchitectureMicroservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
+	Set<Microservice> site1Ms = new HashSet<>();
+	site1Ms.add(new Microservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(new ArchitectureMicroservice(newMsSite1Id, msName, newMsVersion, newMsPath,
+	site1Ms.add(new Microservice(newMsSite1Id, msName, newMsVersion, newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
-	Set<ArchitectureMicroservice> site2Ms = new HashSet<>();
-	site2Ms.add(new ArchitectureMicroservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath,
+	Set<Microservice> site2Ms = new HashSet<>();
+	site2Ms.add(new Microservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(new ArchitectureMicroservice(newMsSite2Id, msName, newMsVersion, newMsPath,
+	site2Ms.add(new Microservice(newMsSite2Id, msName, newMsVersion, newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
 	Architecture instantiatedArchitecture1 = new Architecture();
 	instantiatedArchitecture1.addPaaSSite(site1, new ArchitectureSite(site1Ms));
@@ -157,15 +157,15 @@ public class BlueGreenPkgUpdateStrategyTest {
     }
 
     private final static Architecture midArchitecture2() {
-	Set<ArchitectureMicroservice> site1Ms = new HashSet<>();
-	site1Ms.add(new ArchitectureMicroservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
+	Set<Microservice> site1Ms = new HashSet<>();
+	site1Ms.add(new Microservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(new ArchitectureMicroservice(newMsSite1Id, msName, newMsVersion, newMsPath,
+	site1Ms.add(new Microservice(newMsSite1Id, msName, newMsVersion, newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	Set<ArchitectureMicroservice> site2Ms = new HashSet<>();
-	site2Ms.add(new ArchitectureMicroservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath,
+	Set<Microservice> site2Ms = new HashSet<>();
+	site2Ms.add(new Microservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(new ArchitectureMicroservice(newMsSite2Id, msName, newMsVersion, newMsPath,
+	site2Ms.add(new Microservice(newMsSite2Id, msName, newMsVersion, newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
 	Architecture midArchitecture2 = new Architecture();
 	midArchitecture2.addPaaSSite(site1, new ArchitectureSite(site1Ms));
@@ -177,12 +177,12 @@ public class BlueGreenPkgUpdateStrategyTest {
 	Architecture midArchitecture3 = new Architecture();
 	midArchitecture3
 		.addPaaSSite(site1,
-			new ArchitectureSite(Collections.singleton(new ArchitectureMicroservice(newMsSite1Id, msName,
+			new ArchitectureSite(Collections.singleton(new Microservice(newMsSite1Id, msName,
 				newMsVersion, newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes,
 				msServices, memory, disk))));
 	midArchitecture3
 		.addPaaSSite(site2,
-			new ArchitectureSite(Collections.singleton(new ArchitectureMicroservice(newMsSite2Id, msName,
+			new ArchitectureSite(Collections.singleton(new Microservice(newMsSite2Id, msName,
 				newMsVersion, newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes,
 				msServices, memory, disk))));
 	return midArchitecture3;

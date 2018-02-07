@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
-import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.MicroserviceState;
 import com.orange.util.SetUtil;
 import com.orange.util.VersionGenerator;
@@ -32,10 +32,10 @@ public class StrategyLibrary {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		Set<ArchitectureMicroservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
-		Iterator<ArchitectureMicroservice> iterator = nextMicroservices.iterator();
+		Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
+		Iterator<Microservice> iterator = nextMicroservices.iterator();
 		while (iterator.hasNext()) {
-		    ArchitectureMicroservice microservice = iterator.next();
+		    Microservice microservice = iterator.next();
 		    if (SetUtil.noneMatch(finalArchitecture.getSiteMicroservices(site),
 			    desiredMs -> microservice.isInstantiation(desiredMs))) {
 			iterator.remove();
@@ -60,11 +60,11 @@ public class StrategyLibrary {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		Set<ArchitectureMicroservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
-		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+		Set<Microservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
+		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(currentMicroservices,
 			    ms -> ms.getName().equals(desiredMicroservice.getName()))) {
-			ArchitectureMicroservice newMicroservice = new ArchitectureMicroservice(desiredMicroservice);
+			Microservice newMicroservice = new Microservice(desiredMicroservice);
 			newMicroservice.setGuid(null);
 			Set<String> usedVersions = SetUtil.collectVersions(
 				SetUtil.searchByName(currentMicroservices, desiredMicroservice.getName()));
@@ -89,8 +89,8 @@ public class StrategyLibrary {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
 		Set<String> desiredMsName = SetUtil.collectNames(finalArchitecture.getSiteMicroservices(site));
-		Set<ArchitectureMicroservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
-		for (ArchitectureMicroservice currentMicroservice : currentMicroservices) {
+		Set<Microservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
+		for (Microservice currentMicroservice : currentMicroservices) {
 		    if (!desiredMsName.contains(currentMicroservice.getName())) {
 			currentMicroservices.remove(currentMicroservice);
 			logger.info("Removed an old microservice: {} ", currentMicroservice);
@@ -117,8 +117,8 @@ public class StrategyLibrary {
 	    public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 		Architecture nextArchitecture = new Architecture(finalArchitecture);
 		for (String site : finalArchitecture.listSitesName()) {
-		    for (ArchitectureMicroservice nextMicroservice : nextArchitecture.getSiteMicroservices(site)) {
-			Set<ArchitectureMicroservice> currentMicroservices = SetUtil.searchByName(
+		    for (Microservice nextMicroservice : nextArchitecture.getSiteMicroservices(site)) {
+			Set<Microservice> currentMicroservices = SetUtil.searchByName(
 				currentArchitecture.getSiteMicroservices(site), nextMicroservice.getName());
 			if (currentMicroservices.size() == 0) {
 			    // Add non-exist microservice
@@ -131,7 +131,7 @@ public class StrategyLibrary {
 			} else {
 			    // update from most similar microservice (i.e.
 			    // prefer path and env equals if exist)
-			    ArchitectureMicroservice currentMicroservice = SetUtil.getOneMicroservice(
+			    Microservice currentMicroservice = SetUtil.getOneMicroservice(
 				    currentMicroservices, ms -> ms.getPath().equals(nextMicroservice.getPath())
 					    && ms.getEnv().equals(nextMicroservice.getEnv()));
 			    if (currentMicroservice == null) {
@@ -161,11 +161,11 @@ public class StrategyLibrary {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    Set<ArchitectureMicroservice> nextMicroservices = SetUtil
+		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+		    Set<Microservice> nextMicroservices = SetUtil
 			    .searchByName(nextArchitecture.getSiteMicroservices(site), desiredMicroservice.getName());
 		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
-			ArchitectureMicroservice nextMs = SetUtil.getOneMicroservice(nextMicroservices,
+			Microservice nextMs = SetUtil.getOneMicroservice(nextMicroservices,
 				ms -> ms.getVersion().equals(desiredVersion(desiredMicroservice))
 					&& ms.getPath().equals(desiredMicroservice.getPath())
 					&& ms.getEnv().equals(desiredMicroservice.getEnv())
@@ -187,7 +187,7 @@ public class StrategyLibrary {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    nextArchitecture.getArchitectureSites().values().stream()
-		    .forEach(s -> s.getArchitectureMicroservices().clear());
+		    .forEach(s -> s.getMicroservices().clear());
 	    return nextArchitecture;
 	}
     };
@@ -197,7 +197,7 @@ public class StrategyLibrary {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		Set<ArchitectureMicroservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
+		Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
 		if (nextMicroservices.isEmpty()) {
 		    nextMicroservices.addAll(finalArchitecture.getSiteMicroservices(site));
 		}
@@ -211,8 +211,8 @@ public class StrategyLibrary {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(
+		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+		    Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
 			    nextArchitecture.getSiteMicroservices(site), desiredMicroservice.getName(),
 			    desiredVersion(desiredMicroservice));
 		    if (nextMicroservice.getNbProcesses() != desiredMicroservice.getNbProcesses()) {
@@ -231,8 +231,8 @@ public class StrategyLibrary {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(
+		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+		    Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
 			    nextArchitecture.getSiteMicroservices(site), desiredMicroservice.getName(),
 			    desiredVersion(desiredMicroservice));
 		    if (nextMicroservice.getNbProcesses() <= desiredMicroservice.getNbProcesses()) {
@@ -254,8 +254,8 @@ public class StrategyLibrary {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(
+		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+		    Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
 			    nextArchitecture.getSiteMicroservices(site), desiredMicroservice.getName(),
 			    desiredVersion(desiredMicroservice));
 		    if (nextMicroservice.getMemory().equals(desiredMicroservice.getMemory())) {
@@ -281,8 +281,8 @@ public class StrategyLibrary {
 	    for (String site : finalArchitecture.listSitesName()) {
 		// based on the assumption that path is set to "" in case of
 		// null, during getCurrentArchitecture
-		Set<ArchitectureMicroservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
-		Set<ArchitectureMicroservice> nonUpdatableMicroservice = SetUtil.search(nextMicroservices,
+		Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
+		Set<Microservice> nonUpdatableMicroservice = SetUtil.search(nextMicroservices,
 			ms -> "".equals(ms.getPath()) || ms.getState().equals(MicroserviceState.CREATED));
 		if (!nonUpdatableMicroservice.isEmpty()) {
 		    logger.info("clean up not updatable microservices: {}", nonUpdatableMicroservice);
@@ -293,12 +293,12 @@ public class StrategyLibrary {
 	}
     };
 
-    public String desiredVersion(ArchitectureMicroservice desiredMicroservice) {
+    public String desiredVersion(Microservice desiredMicroservice) {
 	return desiredMicroservice.getVersion() == null ? config.getUpdatingVersion()
 		: desiredMicroservice.getVersion();
     }
 
-    public Set<String> tmpRoute(String site, ArchitectureMicroservice microservice) {
+    public Set<String> tmpRoute(String site, Microservice microservice) {
 	return Collections.singleton(config.getSiteConfig(site).getTmpRoute(microservice.getName()));
     }
 }

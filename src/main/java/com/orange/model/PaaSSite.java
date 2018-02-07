@@ -2,7 +2,7 @@ package com.orange.model;
 
 public class PaaSSite {
     private String name;
-    private String type = "CloudFoundry";
+    private String type; // ex. "CloudFoundry", "Heroku"
     private String api;
     private String user;
     private String pwd;

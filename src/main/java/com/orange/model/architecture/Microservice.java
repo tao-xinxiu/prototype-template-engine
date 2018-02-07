@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ArchitectureMicroservice {
+public class Microservice {
     private String guid;
     private String name;
     // disallow "_" in version, delimiter between name and version in PaaS
@@ -21,10 +21,10 @@ public class ArchitectureMicroservice {
     private String memory;
     private String disk;
 
-    public ArchitectureMicroservice() {
+    public Microservice() {
     }
 
-    public ArchitectureMicroservice(String guid, String name, String version, String path, MicroserviceState state,
+    public Microservice(String guid, String name, String version, String path, MicroserviceState state,
 	    int nbProcesses, Map<String, String> env, Set<Route> routes, Set<String> services, String memory,
 	    String disk) {
 	this.guid = guid;
@@ -40,7 +40,7 @@ public class ArchitectureMicroservice {
 	this.disk = disk;
     }
 
-    public ArchitectureMicroservice(ArchitectureMicroservice other) {
+    public Microservice(Microservice other) {
 	guid = other.guid;
 	name = other.name;
 	version = other.version;
@@ -148,9 +148,9 @@ public class ArchitectureMicroservice {
 
     @Override
     public String toString() {
-	return "ArchitectureMicroservice [guid=" + guid + ", name=" + name + ", version=" + version + ", path=" + path
-		+ ", state=" + state + ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes
-		+ ", services=" + services + ", memory=" + memory + ", disk=" + disk + "]";
+	return "Microservice [guid=" + guid + ", name=" + name + ", version=" + version + ", path=" + path + ", state="
+		+ state + ", nbProcesses=" + nbProcesses + ", env=" + env + ", routes=" + routes + ", services="
+		+ services + ", memory=" + memory + ", disk=" + disk + "]";
     }
 
     @Override
@@ -179,7 +179,7 @@ public class ArchitectureMicroservice {
 	    return false;
 	if (getClass() != obj.getClass())
 	    return false;
-	ArchitectureMicroservice other = (ArchitectureMicroservice) obj;
+	Microservice other = (Microservice) obj;
 	if (disk == null) {
 	    if (other.disk != null)
 		return false;
@@ -238,7 +238,7 @@ public class ArchitectureMicroservice {
      * @param desiredMicroservice
      * @return
      */
-    public boolean isInstantiation(ArchitectureMicroservice desiredMicroservice) {
+    public boolean isInstantiation(Microservice desiredMicroservice) {
 	if (desiredMicroservice == null) {
 	    return false;
 	}

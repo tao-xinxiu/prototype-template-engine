@@ -4,43 +4,43 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ArchitectureSite {
-    private Set<ArchitectureMicroservice> architectureMicroservices = new HashSet<>();
-    // TODO add architectureServices
+    private Set<Microservice> microservices = new HashSet<>();
+    // TODO add architectureServices for managing external services
 
     public ArchitectureSite() {
     }
 
-    public ArchitectureSite(Set<ArchitectureMicroservice> architectureMicroservices) {
-	this.architectureMicroservices = architectureMicroservices;
+    public ArchitectureSite(Set<Microservice> microservices) {
+	this.microservices = microservices;
     }
 
     public ArchitectureSite(ArchitectureSite other) {
-	for (ArchitectureMicroservice architectureMicroservice : other.architectureMicroservices) {
-	    this.architectureMicroservices.add(new ArchitectureMicroservice(architectureMicroservice));
+	for (Microservice microservice : other.microservices) {
+	    this.microservices.add(new Microservice(microservice));
 	}
     }
 
-    public Set<ArchitectureMicroservice> getArchitectureMicroservices() {
-	return architectureMicroservices;
+    public Set<Microservice> getMicroservices() {
+	return microservices;
     }
 
-    public void setArchitectureMicroservices(Set<ArchitectureMicroservice> architectureMicroservices) {
-	this.architectureMicroservices = architectureMicroservices;
+    public void setMicroservices(Set<Microservice> microservices) {
+	this.microservices = microservices;
     }
 
-    public void addArchitectureMicroservice(ArchitectureMicroservice architectureMicroservice) {
-	this.architectureMicroservices.add(architectureMicroservice);
+    public void addMicroservice(Microservice microservice) {
+	this.microservices.add(microservice);
     }
 
-    public void addArchitectureMicoservices(Set<ArchitectureMicroservice> architectureMicroservices) {
-	this.architectureMicroservices.addAll(architectureMicroservices);
+    public void addMicoservices(Set<Microservice> microservices) {
+	this.microservices.addAll(microservices);
     }
 
     @Override
     public int hashCode() {
 	final int prime = 31;
 	int result = 1;
-	result = prime * result + ((architectureMicroservices == null) ? 0 : architectureMicroservices.hashCode());
+	result = prime * result + ((microservices == null) ? 0 : microservices.hashCode());
 	return result;
     }
 
@@ -53,16 +53,17 @@ public class ArchitectureSite {
 	if (getClass() != obj.getClass())
 	    return false;
 	ArchitectureSite other = (ArchitectureSite) obj;
-	if (architectureMicroservices == null) {
-	    if (other.architectureMicroservices != null)
+	if (microservices == null) {
+	    if (other.microservices != null)
 		return false;
-	} else if (!architectureMicroservices.equals(other.architectureMicroservices))
+	} else if (!microservices.equals(other.microservices))
 	    return false;
 	return true;
     }
 
     @Override
     public String toString() {
-	return "ArchitectureSite [architectureMicroservices=" + architectureMicroservices + "]";
+	return "ArchitectureSite [microservices=" + microservices + "]";
     }
+
 }

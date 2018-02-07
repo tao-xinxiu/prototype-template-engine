@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
-import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.Microservice;
 import com.orange.strategy.Strategy;
 import com.orange.util.SetUtil;
 
@@ -32,15 +32,15 @@ public class InplaceStrategy extends Strategy {
     @Override
     public boolean valid(Architecture currentArchitecture, Architecture finalArchitecture) {
 	for (String site : finalArchitecture.listSitesName()) {
-	    Set<ArchitectureMicroservice> notVersionedMicroservices = SetUtil
+	    Set<Microservice> notVersionedMicroservices = SetUtil
 		    .search(finalArchitecture.getSiteMicroservices(site), m -> m.getVersion() == null);
 	    if (!SetUtil.uniqueByName(notVersionedMicroservices)) {
 		logger.error(
 			"InplaceStrategy disallows the case that multi not versioned deployment of one microservices in finalArchitecture.");
 		return false;
 	    }
-	    for (ArchitectureMicroservice notVersionedMicroservice : notVersionedMicroservices) {
-		Set<ArchitectureMicroservice> currentMicroservices = SetUtil.searchByName(
+	    for (Microservice notVersionedMicroservice : notVersionedMicroservices) {
+		Set<Microservice> currentMicroservices = SetUtil.searchByName(
 			currentArchitecture.getSiteMicroservices(site), notVersionedMicroservice.getName());
 		if (!SetUtil.uniqueByName(currentMicroservices)) {
 		    logger.error(

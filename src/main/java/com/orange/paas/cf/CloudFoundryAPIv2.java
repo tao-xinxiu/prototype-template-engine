@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import com.orange.Main;
 import com.orange.model.*;
-import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.ArchitectureSite;
 import com.orange.model.architecture.MicroserviceState;
 import com.orange.model.architecture.Route;
@@ -39,7 +39,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     public ArchitectureSite get() {
 	logger.info("Start getting the current architecture ...");
 	return new ArchitectureSite(operations.listSpaceApps().parallelStream()
-		.map(info -> new ArchitectureMicroservice(info.getId(), parseName(info.getName()),
+		.map(info -> new Microservice(info.getId(), parseName(info.getName()),
 			parseVersion(info.getName()), parsePath(info), parseState(info), info.getInstances(),
 			parseEnv(info), parseRoutes(info), parseServices(info), info.getMemory() + "M",
 			info.getDiskQuota() + "M"))
@@ -49,7 +49,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     public ArchitectureSite stabilizeSiteArchitecture() {
 	logger.info("Start getting the current architecture and stabilize it ...");
 	return new ArchitectureSite(operations.listSpaceApps().parallelStream()
-		.map(info -> new ArchitectureMicroservice(info.getId(), parseName(info.getName()),
+		.map(info -> new Microservice(info.getId(), parseName(info.getName()),
 			parseVersion(info.getName()), parsePath(info), stabilizeState(info), info.getInstances(),
 			parseEnv(info), parseRoutes(info), parseServices(info), info.getMemory() + "M",
 			info.getDiskQuota() + "M"))
@@ -57,7 +57,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     @Override
-    public Step add(ArchitectureMicroservice microservice) {
+    public Step add(Microservice microservice) {
 	CFMicroserviceArchitecture desiredMicroservice = new CFMicroserviceArchitecture(microservice);
 	return new Step(String.format("add microservice %s", desiredMicroservice)) {
 	    @Override
@@ -77,7 +77,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     @Override
-    public Step remove(ArchitectureMicroservice microservice) {
+    public Step remove(Microservice microservice) {
 	return new SiteStep(String.format("remove microservice [%s]", microservice.getGuid())) {
 	    @Override
 	    public void exec() {
@@ -88,7 +88,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     @Override
-    public Step modify(ArchitectureMicroservice currentMicroservice, ArchitectureMicroservice desiredMicroservice) {
+    public Step modify(Microservice currentMicroservice, Microservice desiredMicroservice) {
 	CFMicroserviceArchitecture currentCFMicroservice = new CFMicroserviceArchitecture(currentMicroservice);
 	CFMicroserviceArchitecture desiredCFMicroservice = new CFMicroserviceArchitecture(desiredMicroservice);
 	return new SiteStep(

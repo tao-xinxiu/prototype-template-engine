@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
-import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.Microservice;
 import com.orange.strategy.TagUpdatingVersionStrategy;
 import com.orange.strategy.Transition;
 import com.orange.util.SetUtil;
@@ -34,18 +34,18 @@ public class BlueGreenPkgUpdateStrategy extends TagUpdatingVersionStrategy {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.search(currentArchitecture.getSiteMicroservices(site),
 			    ms -> ms.getName().equals(desiredMicroservice.getName())
 				    && ms.getPath().equals(desiredMicroservice.getPath()))
 			    .isEmpty()) {
-			ArchitectureMicroservice newMicroservice = new ArchitectureMicroservice(desiredMicroservice);
+			Microservice newMicroservice = new Microservice(desiredMicroservice);
 			newMicroservice.setGuid(null);
 			newMicroservice.setRoutes(library.tmpRoute(site, desiredMicroservice));
 			if (newMicroservice.getVersion() == null) {
 			    newMicroservice.setVersion(config.getUpdatingVersion());
 			}
-			nextArchitecture.getArchitectureSite(site).addArchitectureMicroservice(newMicroservice);
+			nextArchitecture.getArchitectureSite(site).addMicroservice(newMicroservice);
 			logger.info("Added a new microservice: {} ", newMicroservice);
 		    }
 		}
@@ -63,11 +63,11 @@ public class BlueGreenPkgUpdateStrategy extends TagUpdatingVersionStrategy {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
 			    ms -> ms.isInstantiation(desiredMicroservice))) {
-			Set<ArchitectureMicroservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
-			ArchitectureMicroservice nextMicroservice = SetUtil.getOneMicroservice(nextMicroservices,
+			Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
+			Microservice nextMicroservice = SetUtil.getOneMicroservice(nextMicroservices,
 				ms -> ms.getName().equals(desiredMicroservice.getName())
 					&& ms.getPath().equals(desiredMicroservice.getPath()));
 			nextMicroservice.setRoutes(desiredMicroservice.getRoutes());

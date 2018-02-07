@@ -6,36 +6,36 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.MicroserviceState;
 
 public class SetUtil {
-    public static Set<ArchitectureMicroservice> deepCopy(Set<ArchitectureMicroservice> microservices) {
-	return microservices.stream().map(ArchitectureMicroservice::new).collect(Collectors.toSet());
+    public static Set<Microservice> deepCopy(Set<Microservice> microservices) {
+	return microservices.stream().map(Microservice::new).collect(Collectors.toSet());
     }
 
-    public static Set<ArchitectureMicroservice> searchByName(Set<ArchitectureMicroservice> microservices, String name) {
+    public static Set<Microservice> searchByName(Set<Microservice> microservices, String name) {
 	return search(microservices, ms -> ms.getName().equals(name));
     }
 
-    public static Set<ArchitectureMicroservice> searchByState(Set<ArchitectureMicroservice> microservices,
+    public static Set<Microservice> searchByState(Set<Microservice> microservices,
 	    MicroserviceState state) {
 	return search(microservices, ms -> ms.getState() == state);
     }
 
-    public static Set<ArchitectureMicroservice> search(Set<ArchitectureMicroservice> microservices,
-	    Predicate<ArchitectureMicroservice> predicate) {
+    public static Set<Microservice> search(Set<Microservice> microservices,
+	    Predicate<Microservice> predicate) {
 	return microservices.stream().filter(predicate).collect(Collectors.toSet());
     }
 
-    public static boolean noneMatch(Set<ArchitectureMicroservice> microservices,
-	    Predicate<ArchitectureMicroservice> predicate) {
+    public static boolean noneMatch(Set<Microservice> microservices,
+	    Predicate<Microservice> predicate) {
 	return microservices.stream().noneMatch(predicate);
     }
 
-    public static ArchitectureMicroservice getUniqueMicroservice(Set<ArchitectureMicroservice> microservices,
-	    Predicate<ArchitectureMicroservice> predicate) {
-	Set<ArchitectureMicroservice> result = search(microservices, predicate);
+    public static Microservice getUniqueMicroservice(Set<Microservice> microservices,
+	    Predicate<Microservice> predicate) {
+	Set<Microservice> result = search(microservices, predicate);
 	switch (result.size()) {
 	case 0:
 	    return null;
@@ -47,14 +47,14 @@ public class SetUtil {
 	}
     }
 
-    public static ArchitectureMicroservice getUniqueMicroservice(Set<ArchitectureMicroservice> microservices,
+    public static Microservice getUniqueMicroservice(Set<Microservice> microservices,
 	    String name, String version) {
 	return getUniqueMicroservice(microservices, ms -> ms.getName().equals(name) && ms.getVersion().equals(version));
     }
 
-    public static ArchitectureMicroservice getOneMicroservice(Set<ArchitectureMicroservice> microservices,
-	    Predicate<ArchitectureMicroservice> predicate) {
-	Set<ArchitectureMicroservice> result = search(microservices, predicate);
+    public static Microservice getOneMicroservice(Set<Microservice> microservices,
+	    Predicate<Microservice> predicate) {
+	Set<Microservice> result = search(microservices, predicate);
 	switch (result.size()) {
 	case 0:
 	    return null;
@@ -63,17 +63,17 @@ public class SetUtil {
 	}
     }
 
-    public static Set<String> collectVersions(Set<ArchitectureMicroservice> microservices) {
+    public static Set<String> collectVersions(Set<Microservice> microservices) {
 	return microservices.stream().map(ms -> ms.getVersion()).collect(Collectors.toSet());
     }
 
-    public static Set<String> collectNames(Set<ArchitectureMicroservice> microservices) {
+    public static Set<String> collectNames(Set<Microservice> microservices) {
 	return microservices.stream().map(ms -> ms.getName()).collect(Collectors.toSet());
     }
 
-    public static boolean uniqueByName(Set<ArchitectureMicroservice> microservices) {
+    public static boolean uniqueByName(Set<Microservice> microservices) {
 	Set<String> names = new HashSet<>();
-	for (ArchitectureMicroservice ms : microservices) {
+	for (Microservice ms : microservices) {
 	    if (!names.add(ms.getName())) {
 		return false;
 	    }
@@ -82,9 +82,9 @@ public class SetUtil {
     }
 
     // verify whether microservices have unique path and env
-    public static boolean uniqueByPathEnv(Set<ArchitectureMicroservice> microservices) {
+    public static boolean uniqueByPathEnv(Set<Microservice> microservices) {
 	Set<PathEnv> appeared = new HashSet<>();
-	for (ArchitectureMicroservice ms : microservices) {
+	for (Microservice ms : microservices) {
 	    if (!appeared.add(new PathEnv(ms.getPath(), ms.getEnv()))) {
 		return false;
 	    }

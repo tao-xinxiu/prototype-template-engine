@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
-import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.MicroserviceState;
 import com.orange.strategy.Transition;
 import com.orange.util.SetUtil;
@@ -26,11 +26,11 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
     @Override
     public boolean valid(Architecture currentArchitecture, Architecture finalArchitecture) {
 	for (String site : finalArchitecture.listSitesName()) {
-	    for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+	    for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		if (desiredMicroservice.getState() != MicroserviceState.RUNNING) {
 		    return false;
 		}
-		Set<ArchitectureMicroservice> currentMicroservices = SetUtil
+		Set<Microservice> currentMicroservices = SetUtil
 			.searchByName(currentArchitecture.getSiteMicroservices(site), desiredMicroservice.getName());
 		if (!SetUtil.uniqueByPathEnv(currentMicroservices)) {
 		    return false;
@@ -49,15 +49,15 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    Set<ArchitectureMicroservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
-		    Set<ArchitectureMicroservice> relatedMicroservices = SetUtil.search(nextMicroservices,
+		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+		    Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
+		    Set<Microservice> relatedMicroservices = SetUtil.search(nextMicroservices,
 			    ms -> ms.getName().equals(desiredMicroservice.getName())
 				    && ms.getState().equals(desiredMicroservice.getState())
 				    && ms.getRoutes().equals(desiredMicroservice.getRoutes()));
 		    if (relatedMicroservices.stream().mapToInt(ms -> ms.getNbProcesses()).sum() == desiredMicroservice
 			    .getNbProcesses()) {
-			ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(relatedMicroservices,
+			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(relatedMicroservices,
 				ms -> !ms.getVersion().equals(library.desiredVersion(desiredMicroservice)));
 			boolean canaryNotCreated = SetUtil.noneMatch(relatedMicroservices,
 				ms -> ms.getVersion().equals(library.desiredVersion(desiredMicroservice)));
@@ -85,10 +85,10 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (ArchitectureMicroservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    Set<ArchitectureMicroservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
+		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+		    Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
 		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
-			ArchitectureMicroservice nextMicroservice = SetUtil.getUniqueMicroservice(nextMicroservices,
+			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(nextMicroservices,
 				ms -> ms.getName().equals(desiredMicroservice.getName())
 					&& ms.getVersion().equals(library.desiredVersion(desiredMicroservice)));
 			int nextNbr = nextMicroservice.getNbProcesses() + config.getCanaryIncrease();

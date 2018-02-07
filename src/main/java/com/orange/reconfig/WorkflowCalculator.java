@@ -5,7 +5,7 @@ import java.util.Map.Entry;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSite;
 import com.orange.model.architecture.Architecture;
-import com.orange.model.architecture.ArchitectureMicroservice;
+import com.orange.model.architecture.Microservice;
 import com.orange.model.workflow.ParallelWorkflow;
 import com.orange.model.workflow.SerialWorkflow;
 import com.orange.model.workflow.Workflow;
@@ -32,13 +32,13 @@ public class WorkflowCalculator {
 	    SiteComparator comparator = new SiteComparator(currentArchitecture.getArchitectureSite(site.getName()),
 		    desiredArchitecture.getArchitectureSite(site.getName()));
 	    PaaSAPI directory = new CloudFoundryAPIv2(site, config);
-	    for (ArchitectureMicroservice addedMicroservice : comparator.getAddedMicroservices()) {
+	    for (Microservice addedMicroservice : comparator.getAddedMicroservices()) {
 		reconfigSite.addStep(directory.add(addedMicroservice));
 	    }
-	    for (ArchitectureMicroservice removedMicroservice : comparator.getRemovedMicroservices()) {
+	    for (Microservice removedMicroservice : comparator.getRemovedMicroservices()) {
 		reconfigSite.addStep(directory.remove(removedMicroservice));
 	    }
-	    for (Entry<ArchitectureMicroservice, ArchitectureMicroservice> modifiedMicroservice : comparator
+	    for (Entry<Microservice, Microservice> modifiedMicroservice : comparator
 		    .getModifiedMicroservice().entrySet()) {
 		reconfigSite.addStep(directory.modify(modifiedMicroservice.getKey(), modifiedMicroservice.getValue()));
 	    }

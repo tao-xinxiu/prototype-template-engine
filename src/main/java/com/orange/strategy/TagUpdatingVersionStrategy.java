@@ -10,10 +10,10 @@ public abstract class TagUpdatingVersionStrategy extends Strategy {
 	}
     }
 
-//    @Override
-//    protected boolean isInstantiation(ArchitectureMicroservice currentMicroservice,
-//	    ArchitectureMicroservice desiredMicroservice) {
-//	return super.isInstantiation(currentMicroservice, desiredMicroservice)
-//		&& !currentMicroservice.getVersion().equals(config.getUpdatingVersion());
-//    }
+    // @Override
+    // protected boolean isInstantiation(Microservice currentMicroservice,
+    // Microservice desiredMicroservice) {
+    // return super.isInstantiation(currentMicroservice, desiredMicroservice)
+    // && !currentMicroservice.getVersion().equals(config.getUpdatingVersion());
+    // }
 }
