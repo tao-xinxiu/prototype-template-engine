@@ -38,10 +38,8 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		Set<Microservice> currentMicroservices = nextArchitecture
-			.getSiteMicroservices(site);
-		for (Microservice desiredMicroservice : finalArchitecture
-			.getSiteMicroservices(site)) {
+		Set<Microservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
+		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(currentMicroservices, ms -> ms.getName().equals(desiredMicroservice.getName())
 			    && ms.getVersion().equals(library.desiredVersion(desiredMicroservice)))) {
 			Microservice newMicroservice = new Microservice(desiredMicroservice);
@@ -50,9 +48,9 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 			if (newMicroservice.getVersion() == null) {
 			    newMicroservice.setVersion(config.getUpdatingVersion());
 			}
-			nextArchitecture.getArchitectureSite(site).addMicroservice(newMicroservice);
-			logger.info("Added a new microservice: {} ", newMicroservice);
-			continue;
+			nextArchitecture.getSite(site).addMicroservice(newMicroservice);
+			logger.info("Added a new microservice deployment: {} ", newMicroservice);
+			// continue;
 		    }
 		}
 	    }
@@ -70,8 +68,7 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (Microservice desiredMicroservice : finalArchitecture
-			.getSiteMicroservices(site)) {
+		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
 			    ms -> ms.getName().equals(desiredMicroservice.getName())
 				    && ms.getVersion().equals(library.desiredVersion(desiredMicroservice))

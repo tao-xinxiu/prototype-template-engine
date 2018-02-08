@@ -45,7 +45,7 @@ public class BlueGreenPkgUpdateStrategy extends TagUpdatingVersionStrategy {
 			if (newMicroservice.getVersion() == null) {
 			    newMicroservice.setVersion(config.getUpdatingVersion());
 			}
-			nextArchitecture.getArchitectureSite(site).addMicroservice(newMicroservice);
+			nextArchitecture.getSite(site).addMicroservice(newMicroservice);
 			logger.info("Added a new microservice: {} ", newMicroservice);
 		    }
 		}

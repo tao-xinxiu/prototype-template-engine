@@ -29,8 +29,8 @@ public class WorkflowCalculator {
 	    Workflow reconfigSite = config.isParallelUpdateMicroservices()
 		    ? new ParallelWorkflow(String.format("parallel update site %s entities", site.getName()))
 		    : new SerialWorkflow(String.format("serial update site %s entities", site.getName()));
-	    SiteComparator comparator = new SiteComparator(currentArchitecture.getArchitectureSite(site.getName()),
-		    desiredArchitecture.getArchitectureSite(site.getName()));
+	    SiteComparator comparator = new SiteComparator(currentArchitecture.getSite(site.getName()),
+		    desiredArchitecture.getSite(site.getName()));
 	    PaaSAPI directory = new CloudFoundryAPIv2(site, config);
 	    for (Microservice addedMicroservice : comparator.getAddedMicroservices()) {
 		reconfigSite.addStep(directory.add(addedMicroservice));

@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 import com.orange.model.StrategyConfig;
 
-public class InplaceTestStrategy extends InplaceStrategy {
+public class InplaceTestStrategy extends StraightStrategy {
 
     public InplaceTestStrategy(StrategyConfig config) {
 	super(config);

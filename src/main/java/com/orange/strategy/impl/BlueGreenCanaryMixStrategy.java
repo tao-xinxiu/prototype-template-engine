@@ -48,7 +48,7 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 			}
 			newMicroservice.setRoutes(library.tmpRoute(site, desiredMicroservice));
 			newMicroservice.setNbProcesses(config.getCanaryNbr());
-			nextArchitecture.getArchitectureSite(site).addMicroservice(newMicroservice);
+			nextArchitecture.getSite(site).addMicroservice(newMicroservice);
 			logger.info("Added a new microservice: {} ", newMicroservice);
 			continue;
 		    }

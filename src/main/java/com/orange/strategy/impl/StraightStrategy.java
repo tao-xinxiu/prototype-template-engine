@@ -12,10 +12,10 @@ import com.orange.model.architecture.Microservice;
 import com.orange.strategy.Strategy;
 import com.orange.util.SetUtil;
 
-public class InplaceStrategy extends Strategy {
-    private static final Logger logger = LoggerFactory.getLogger(InplaceStrategy.class);
+public class StraightStrategy extends Strategy {
+    private static final Logger logger = LoggerFactory.getLogger(StraightStrategy.class);
 
-    public InplaceStrategy(StrategyConfig config) {
+    public StraightStrategy(StrategyConfig config) {
 	super(config);
 	transitions = Arrays.asList(library.directTransit(false));
     }

@@ -55,12 +55,8 @@ public class Architecture {
 //	this.sites = architectureSites;
 //    }
 
-    public Site getArchitectureSite(String siteName) {
-	return sites.get(siteName);
-    }
-
     public Set<Microservice> getSiteMicroservices(String siteName) {
-	return getArchitectureSite(siteName).getMicroservices();
+	return getSite(siteName).getMicroservices();
     }
 
     public Architecture getSubArchitecture(Set<String> siteNames) {

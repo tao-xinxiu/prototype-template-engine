@@ -15,6 +15,9 @@ public class StrategyConfig {
     private int canaryIncrease = 1;
     private Map<String, StrategySiteConfig> siteConfigs = new HashMap<>();
     private String updatingVersion = "UPDATING";
+    private int groupSize = 0; // limit number of microservices being
+			       // simultaneously deployed per site, 0 means no
+			       // limit
 
     public StrategyConfig() {
     }
@@ -79,6 +82,14 @@ public class StrategyConfig {
 	this.updatingVersion = updatingVersion;
     }
 
+    public int getGroupSize() {
+	return groupSize;
+    }
+
+    public void setGroupSize(int groupSize) {
+	this.groupSize = groupSize;
+    }
+
     public void validSitesOrder(Set<String> completeSites) {
 	if (sitesOrder.isEmpty()) {
 	    throw new IllegalStateException(
@@ -99,6 +110,7 @@ public class StrategyConfig {
     public String toString() {
 	return "StrategyConfig [parallelAllSites=" + parallelAllSites + ", sitesOrder=" + sitesOrder + ", canaryNbr="
 		+ canaryNbr + ", canaryIncrease=" + canaryIncrease + ", siteConfigs=" + siteConfigs
-		+ ", updatingVersion=" + updatingVersion + "]";
+		+ ", updatingVersion=" + updatingVersion + ", groupSize=" + groupSize + "]";
     }
+
 }
