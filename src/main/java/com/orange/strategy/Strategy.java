@@ -15,6 +15,8 @@ public abstract class Strategy {
 
     protected List<Transition> transitions = new ArrayList<Transition>();
 
+    // decide the cases that the strategy can deal with. can also be used to
+    // enfore some deployment displine.
     public abstract boolean valid(Architecture currentArchitecture, Architecture finalArchitecture);
     // public abstract List<Transition> transitions();
 

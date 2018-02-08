@@ -24,28 +24,28 @@ done
 To perform a more prudent updating process, the user could invoke manually `next` and `push` command, so that it could always preview the next architecture before delivering it. This usage mode is often used during the implementation and testing of new custom strategy.
 
 ## Model
-An [architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/state/Architecture.java) is composed by the multiple PaaS sites, each site contains a set of [microservices architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/state/ArchitectureMicroservice.java).
+An [architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java) is composed by the multiple PaaS sites, each site contains a set of [microservices architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Microservice.java).
 
 ## API
 ### pull current architecture
 The endpoint get the current architecture of all managing PaaS sites.  
 request: PUT /pull  
-body: Collection<[PaaSSite](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/PaaSSite.java)> managingSites 
+body: Collection<[PaaSSiteAccess](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/PaaSSiteAccess.java)> managingSites 
 
 ### push a desired architecture
 The endpoint evolve the specified sites from their current architecture to the desired architecture.  
 request: POST /push  
-body: [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/state/Architecture.java) desiredArchitecture
+body: [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java) desiredArchitecture
 
 ### calculate next desired architecture
 The endpoint calculate the next desired architecture based on configured strategy.  
 request: POST /next  
-body: [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/state/Architecture.java) finalArchitecture
+body: [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java) finalArchitecture
 
 ### verify current architecture
 The endpoint verify whether the current architecture is the instantiation of a desired architecture  
 request: POST /is_instantiation  
-body:  [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/state/Architecture.java) desiredArchitecture 
+body:  [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java) desiredArchitecture 
 
 ### set strategy configuration
 request: PUT /set_strategy_config  
@@ -64,14 +64,18 @@ In the framework, user control the updating process by choosing a provided or cu
 
 ### provided strategy
 The following strategies is provided:
-- [BlueGreen](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/BlueGreenStrategy.java)
-- [Canary](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/CanaryStrategy.java)
-- [BlueGreen Canary Mix](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/BlueGreenCanaryMixStrategy.java)
-- [Inplace](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/InplaceStrategy.java)
-- [Inplace with test](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/InplaceTestStrategy.java)
-- [Clean up then redeploy](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/CleanRedeployStrategy.java)
-- [Add then Remove](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/AddRemoveStrategy.java)
-- [Remove then Add](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/RemoveAddStrategy.java)
+- [BlueGreen](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/BlueGreenStrategy.java)
+- [Canary](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/CanaryStrategy.java)
+- [BlueGreen Canary Mix](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/BlueGreenCanaryMixStrategy.java)
+- [BlueGreen by group](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/BlueGreenGroupStrategy.java)
+- [Straight](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/StraightStrategy.java)
+- [Inplace update with test](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/InplaceTestStrategy.java)
+- [Deploy](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/DeployStrategy.java)
+- [Clean up then redeploy](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/CleanRedeployStrategy.java)
+- [Add then Remove](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/AddRemoveStrategy.java)
+- [Remove then Add](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/RemoveAddStrategy.java)
+
+To perform the strategy sites by sites, you can simply specify `parallelAllSites` as `false` and set `sitesOrder` as the order of sites to update (e.x., `[["site1"], ["site2", "site3"], ["site4", "site5"]]`)
 
 To choose the proper strategy, you could check their comparison in the following table. It shows the influence of applying different strategies for updating the code of a microservice.
 
@@ -86,4 +90,4 @@ To choose the proper strategy, you could check their comparison in the following
 In the table, the property `resource consumption` is shown by the number of instances. `N` means desired number of instances of the microservice. The property `available instances` means the number of instances in running. It is used to demonstrate more clearly `performance degradation`, as more instances available mean less performance degradation.
 
 ### custom strategy
-The user could implement its proper strategy by implement [Strategy interface](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/Strategy.java). The key of the implementation of a strategy is to specify a sequence of [transitions](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/Transit.java). The `transitions` defined in [strategy library](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/nextstate/strategy/StrategyLibrary.java) could be used to compose a new strategy.
+The user could implement its proper strategy by implement [Strategy interface](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/Strategy.java). The key of the implementation of a strategy is to specify a sequence of [transitions](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/Transition.java). The `transitions` defined in [strategy library](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/StrategyLibrary.java) could be used to compose a new strategy.
