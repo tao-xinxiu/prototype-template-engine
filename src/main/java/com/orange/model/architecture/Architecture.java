@@ -12,9 +12,8 @@ public class Architecture {
     // private Map<String, PaaSSiteAccess> sites = new HashMap<>();
     private Map<String, Site> sites = new HashMap<>();
 
-    public Architecture(Map<String, Site> architectureSites) {
-	this.sites = architectureSites;
-	assert valid();
+    public Architecture(Map<String, Site> sites) {
+	this.sites = sites;
     }
 
     public Architecture() {
@@ -29,31 +28,23 @@ public class Architecture {
     public void addSite(String siteName, Site site) {
 	sites.put(siteName, site);
     }
-    
+
     public void addSite(PaaSSiteAccess siteAccess, Set<Microservice> microservices) {
 	assert siteAccess != null && microservices != null;
 	sites.put(siteAccess.getName(), new Site(siteAccess, microservices));
     }
-    
+
     public Site getSite(String siteName) {
 	return sites.get(siteName);
     }
 
-//    public Map<String, PaaSSiteAccess> getSites() {
-//	return sites;
-//    }
-//
-//    public void setSites(Map<String, PaaSSiteAccess> sites) {
-//	this.sites = sites;
-//    }
-
-    public Map<String, Site> getArchitectureSites() {
+    public Map<String, Site> getSites() {
 	return sites;
     }
-//
-//    public void setArchitectureSites(Map<String, ArchitectureSite> architectureSites) {
-//	this.sites = architectureSites;
-//    }
+
+    public void setSites(Map<String, Site> sites) {
+	this.sites = sites;
+    }
 
     public Set<Microservice> getSiteMicroservices(String siteName) {
 	return getSite(siteName).getMicroservices();
@@ -79,21 +70,10 @@ public class Architecture {
 	return sites.values().stream().map(s -> s.getSiteAccess()).collect(Collectors.toSet());
     }
 
-    public boolean valid() {
-	if (sites == null) {
-	    return sites == null;
-	} else if (sites.keySet() == null) {
-	    return sites.keySet() == null;
-	} else {
-	    return sites.keySet().equals(sites.keySet());
-	}
-    }
-
     @Override
     public int hashCode() {
 	final int prime = 31;
 	int result = 1;
-	result = prime * result + ((sites == null) ? 0 : sites.hashCode());
 	result = prime * result + ((sites == null) ? 0 : sites.hashCode());
 	return result;
     }
@@ -112,17 +92,12 @@ public class Architecture {
 		return false;
 	} else if (!sites.equals(other.sites))
 	    return false;
-	if (sites == null) {
-	    if (other.sites != null)
-		return false;
-	} else if (!sites.equals(other.sites))
-	    return false;
 	return true;
     }
 
     @Override
     public String toString() {
-	return "Architecture [sites=" + sites + ", architectureSites=" + sites + "]";
+	return "Architecture [sites=" + sites + "]";
     }
 
     /**
@@ -152,4 +127,5 @@ public class Architecture {
 	}
 	return true;
     }
+
 }

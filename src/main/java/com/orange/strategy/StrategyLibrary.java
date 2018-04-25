@@ -186,7 +186,7 @@ public class StrategyLibrary {
 	@Override
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
-	    nextArchitecture.getArchitectureSites().values().stream()
+	    nextArchitecture.getSites().values().stream()
 		    .forEach(s -> s.getMicroservices().clear());
 	    return nextArchitecture;
 	}

@@ -40,7 +40,7 @@ public class Main {
     // storePath and NextArchitectureCalculator(depending on strategy &
     // StrategyConfig) are supposed to be specific to a user
     public static final String storePath = "./store/";
-    private static final String strategyPackage = "com.orange.strategy.impl";
+    private static final String strategyPackage = "com.orange.strategy.impl.";
     private static NextArchitectureCalculator nextArchitectureCalculator;
     private static OperationConfig operationConfig = new OperationConfig();
     // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();

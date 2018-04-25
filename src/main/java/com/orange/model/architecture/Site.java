@@ -51,6 +51,7 @@ public class Site {
 	final int prime = 31;
 	int result = 1;
 	result = prime * result + ((microservices == null) ? 0 : microservices.hashCode());
+	result = prime * result + ((siteAccess == null) ? 0 : siteAccess.hashCode());
 	return result;
     }
 
@@ -68,12 +69,16 @@ public class Site {
 		return false;
 	} else if (!microservices.equals(other.microservices))
 	    return false;
+	if (siteAccess == null) {
+	    if (other.siteAccess != null)
+		return false;
+	} else if (!siteAccess.equals(other.siteAccess))
+	    return false;
 	return true;
     }
 
     @Override
     public String toString() {
-	return "ArchitectureSite [microservices=" + microservices + "]";
+	return "Site [siteAccess=" + siteAccess + ", microservices=" + microservices + "]";
     }
-
 }

@@ -230,8 +230,7 @@ public class CloudFoundryOperations {
      * @param currentMicroservice
      * @param desiredMicroservice
      */
-    public void updateStateIfNeed(CFMicroservice currentMicroservice,
-	    CFMicroservice desiredMicroservice) {
+    public void updateStateIfNeed(CFMicroservice currentMicroservice, CFMicroservice desiredMicroservice) {
 	if (currentMicroservice.getState() == desiredMicroservice.getState()) {
 	    return;
 	}
@@ -430,6 +429,9 @@ public class CloudFoundryOperations {
 
     private void createAndMapAppRoute(String appId, Route route) {
 	String domainId = getDomainId(route.getDomain());
+	if (domainId == null) {
+	    throw new IllegalStateException(String.format("Can't find the domain [%s].", route.getDomain()));
+	}
 	String routeId = getRouteId(route.getHostname(), domainId);
 	if (routeId == null) {
 	    routeId = createRoute(route.getHostname(), domainId);
