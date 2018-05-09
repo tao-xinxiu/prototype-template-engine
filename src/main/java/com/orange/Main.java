@@ -91,9 +91,6 @@ public class Main {
 
     @RequestMapping(value = "/is_instantiation", method = RequestMethod.POST)
     public boolean isInstantiation(@RequestBody Architecture desiredArchitecture) {
-	if (nextArchitectureCalculator == null) {
-	    throw new IllegalStateException("Strategy config not yet set.");
-	}
 	Architecture currentArchitecture = getCurrentArchitecture(desiredArchitecture.listPaaSSites());
 	return currentArchitecture.isInstantiation(desiredArchitecture);
     }

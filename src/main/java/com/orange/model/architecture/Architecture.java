@@ -110,9 +110,6 @@ public class Architecture {
 	if (finalArchitecture == null) {
 	    return false;
 	}
-	if (!sites.equals(finalArchitecture.sites)) {
-	    return false;
-	}
 	for (String site : listSitesName()) {
 	    Set<Microservice> desiredMicroservices = finalArchitecture.getSiteMicroservices(site);
 	    Set<Microservice> microservices = getSiteMicroservices(site);
