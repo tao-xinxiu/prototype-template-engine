@@ -6,8 +6,6 @@ import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -44,7 +42,7 @@ public class Main {
     private static NextArchitectureCalculator nextArchitectureCalculator;
     private static OperationConfig operationConfig = new OperationConfig();
     // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
-    private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
+//    private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
 
     @RequestMapping(value = "/pull", method = RequestMethod.PUT)
     public @ResponseBody Architecture getCurrentArchitecture(@RequestBody Collection<PaaSSiteAccess> managingSites) {
@@ -144,11 +142,12 @@ public class Main {
     }
 
     public static CloudFoundryOperations getCloudFoundryOperations(PaaSSiteAccess site, OperationConfig config) {
-	CloudFoundryOperations ops = connectedSites.get(site.getName());
-	if (ops == null) {
-	    ops = new CloudFoundryOperations(site, config);
-	    connectedSites.put(site.getName(), ops);
-	}
+//	CloudFoundryOperations ops = connectedSites.get(site.getName());
+//	if (ops == null) {
+//	    ops = new CloudFoundryOperations(site, config);
+//	    connectedSites.put(site.getName(), ops);
+//	}
+	CloudFoundryOperations ops = new CloudFoundryOperations(site, config);
 	return ops;
     }
 
