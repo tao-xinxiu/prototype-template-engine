@@ -15,6 +15,7 @@ public class Wait {
     }
 
     public void waitUntil(Predicate<String> predicate, String predicateText, String parameter) {
+	logger.info("start " + predicateText);
 	int waitedSec = 0;
 	while (!predicate.test(parameter)) {
 	    try {

@@ -74,6 +74,7 @@ public class CloudFoundryOperations {
     private String spaceId;
     private OperationConfig opConfig;
     private Duration timeout;
+    private int healthCheckTimeout = 180;
 
     public CloudFoundryOperations(PaaSSiteAccess site, OperationConfig opConfig) {
 	this.site = site;
@@ -127,7 +128,7 @@ public class CloudFoundryOperations {
      */
     public String create(String name, int nbProcesses, Map<String, String> env) {
 	CreateApplicationRequest request = CreateApplicationRequest.builder().name(name).spaceId(spaceId)
-		.instances(nbProcesses).environmentJsons(env).build();
+		.instances(nbProcesses).environmentJsons(env).healthCheckTimeout(healthCheckTimeout).build();
 	CreateApplicationResponse response = retry(
 		() -> cloudFoundryClient.applicationsV2().create(request).block(timeout));
 	String id = response.getMetadata().getId();
