@@ -25,7 +25,7 @@ public class Wait {
 	    }
 	    waitedSec += backoffSec;
 	    if (waitedSec >= timeoutSec) {
-		throw new IllegalStateException("Timeout during waiting " + predicateText);
+		throw new IllegalStateException("After " + waitedSec + ", Timeout during waiting " + predicateText);
 	    }
 	}
 	logger.info(predicateText + " finished.");
