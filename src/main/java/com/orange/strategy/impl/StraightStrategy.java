@@ -19,6 +19,11 @@ public class StraightStrategy extends Strategy {
 	super(config);
 	transitions = Arrays.asList(library.directTransit(false));
     }
+    
+    @Override
+    public boolean valid(Architecture currentArchitecture, Architecture finalArchitecture) {
+	return true;
+    }
 
     /**
      * This strategy disallows two cases: 1) finalArchitecture contains any
@@ -29,8 +34,7 @@ public class StraightStrategy extends Strategy {
      * Because in these cases, the strategy can't decide the final microservice
      * correspond to which current microservice deployment.
      */
-    @Override
-    public boolean valid(Architecture currentArchitecture, Architecture finalArchitecture) {
+    public boolean StrictValid(Architecture currentArchitecture, Architecture finalArchitecture) {
 	for (String site : finalArchitecture.listSitesName()) {
 	    Set<Microservice> notVersionedMicroservices = SetUtil
 		    .search(finalArchitecture.getSiteMicroservices(site), m -> m.getVersion() == null);
