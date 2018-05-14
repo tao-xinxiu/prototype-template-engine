@@ -18,8 +18,8 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 
     public BlueGreenCanaryMixStrategy(StrategyConfig config) {
 	super(config);
-	transitions = Arrays.asList(addCanaryTransit, updateExceptInstancesRoutesTransit, updateRouteTransit, rolloutTransit,
-		library.removeUndesiredTransit);
+	transitions = Arrays.asList(addCanaryTransit, updateExceptInstancesRoutesTransit, updateRouteTransit,
+		rolloutTransit, library.removeUndesiredTransit);
     }
 
     @Override
@@ -41,15 +41,24 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 			    ms -> ms.getName().equals(desiredMicroservice.getName())
 				    && ms.getPath().equals(desiredMicroservice.getPath())
 				    && ms.getEnv().equals(desiredMicroservice.getEnv()))) {
-			Microservice newMicroservice = new Microservice(desiredMicroservice);
-			newMicroservice.setGuid(null);
-			if (newMicroservice.getVersion() == null) {
-			    newMicroservice.setVersion(config.getUpdatingVersion());
+			Microservice updatingMs = SetUtil.getUniqueMicroservice(currentMicroservices,
+				desiredMicroservice.getName(), config.getUpdatingVersion());
+			if (updatingMs != null) {
+			    Microservice newMicroservice = new Microservice(desiredMicroservice); // copy all properties except id, version
+			    newMicroservice.setGuid(updatingMs.getGuid());
+			    newMicroservice.setVersion(updatingMs.getVersion());
+			    updatingMs = newMicroservice;
+			} else {
+			    Microservice newMicroservice = new Microservice(desiredMicroservice);
+			    newMicroservice.setGuid(null);
+			    if (newMicroservice.getVersion() == null) {
+				newMicroservice.setVersion(config.getUpdatingVersion());
+			    }
+			    newMicroservice.setRoutes(library.tmpRoute(site, desiredMicroservice));
+			    newMicroservice.setNbProcesses(config.getCanaryNbr());
+			    nextArchitecture.getSite(site).addMicroservice(newMicroservice);
+			    logger.info("Added a new microservice: {} ", newMicroservice);
 			}
-			newMicroservice.setRoutes(library.tmpRoute(site, desiredMicroservice));
-			newMicroservice.setNbProcesses(config.getCanaryNbr());
-			nextArchitecture.getSite(site).addMicroservice(newMicroservice);
-			logger.info("Added a new microservice: {} ", newMicroservice);
 			continue;
 		    }
 		}
