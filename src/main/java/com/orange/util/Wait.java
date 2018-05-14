@@ -16,16 +16,18 @@ public class Wait {
 
     public void waitUntil(Predicate<String> predicate, String predicateText, String parameter) {
 	logger.info("start " + predicateText);
-	int waitedSec = 0;
+	// int waitedSec = 0;
+	long endTime = System.currentTimeMillis() + timeoutSec * 1000;
 	while (!predicate.test(parameter)) {
 	    try {
 		Thread.sleep(1000 * backoffSec);
 	    } catch (InterruptedException e) {
 		throw new IllegalStateException(e);
 	    }
-	    waitedSec += backoffSec;
-	    if (waitedSec >= timeoutSec) {
-		throw new IllegalStateException("After " + waitedSec + ", Timeout during waiting " + predicateText);
+	    // waitedSec += backoffSec;
+	    // if (waitedSec >= timeoutSec) {
+	    if (System.currentTimeMillis() >= endTime) {
+		throw new IllegalStateException("After " + timeoutSec + "s, Timeout during waiting " + predicateText);
 	    }
 	}
 	logger.info(predicateText + " finished.");
