@@ -20,34 +20,32 @@ public class SiteComparator {
     public SiteComparator(Site currentArchitecture, Site desiredArchitecture) {
 	Set<String> desiredMicroserviceIds = new HashSet<>();
 	for (Microservice desiredMicroservice : desiredArchitecture.getMicroservices()) {
-	    if (desiredMicroservice.getGuid() == null) {
-		Microservice currentMicroservice = SetUtil.getUniqueMicroservice(
-			currentArchitecture.getMicroservices(),
-			ms -> ms.getName().equals(desiredMicroservice.getName())
-				&& ms.getVersion().equals(desiredMicroservice.getVersion()));
+	    if (desiredMicroservice.get("guid") == null) {
+		Microservice currentMicroservice = SetUtil.getUniqueMicroservice(currentArchitecture.getMicroservices(),
+			ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+				&& ms.get("version").equals(desiredMicroservice.get("version")));
 		if (currentMicroservice == null) {
-		    if (desiredMicroservice.getPath() == null) {
+		    if (desiredMicroservice.get("path") == null) {
 			throw new IllegalStateException(
 				String.format("The path of the new microservice [%s, %s] is not specified.",
-					desiredMicroservice.getName(), desiredMicroservice.getVersion()));
+					desiredMicroservice.get("name"), desiredMicroservice.get("version")));
 		    }
 		    addedMicroservices.add(desiredMicroservice);
 		} else {
-		    desiredMicroservice.setGuid(currentMicroservice.getGuid());
+		    desiredMicroservice.set("guid", currentMicroservice.get("guid"));
 		    if (!currentMicroservice.equals(desiredMicroservice)) {
 			modifiedMicroservices.put(currentMicroservice, desiredMicroservice);
 		    }
-		    desiredMicroserviceIds.add(desiredMicroservice.getGuid());
+		    desiredMicroserviceIds.add((String) desiredMicroservice.get("guid"));
 		}
 	    } else {
-		desiredMicroserviceIds.add(desiredMicroservice.getGuid());
-		Microservice currentMicroservice = SetUtil.getUniqueMicroservice(
-			currentArchitecture.getMicroservices(),
-			ms -> ms.getGuid().equals(desiredMicroservice.getGuid()));
+		desiredMicroserviceIds.add((String) desiredMicroservice.get("guid"));
+		Microservice currentMicroservice = SetUtil.getUniqueMicroservice(currentArchitecture.getMicroservices(),
+			ms -> ms.get("guid").equals(desiredMicroservice.get("guid")));
 		if (currentMicroservice == null) {
 		    throw new IllegalStateException(
 			    String.format("Desired microservice guid [%s] is not present in the current architecture.",
-				    desiredMicroservice.getGuid()));
+				    desiredMicroservice.get("guid")));
 		}
 		if (!currentMicroservice.equals(desiredMicroservice)) {
 		    modifiedMicroservices.put(currentMicroservice, desiredMicroservice);
@@ -55,7 +53,7 @@ public class SiteComparator {
 	    }
 	}
 	removedMicroservices = SetUtil.search(currentArchitecture.getMicroservices(),
-		currentMicroservice -> !desiredMicroserviceIds.contains(currentMicroservice.getGuid()));
+		currentMicroservice -> !desiredMicroserviceIds.contains(currentMicroservice.get("guid")));
     }
 
     public Set<Microservice> getAddedMicroservices() {

@@ -38,24 +38,29 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 		Set<Microservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
 		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(currentMicroservices,
-			    ms -> ms.getName().equals(desiredMicroservice.getName())
-				    && ms.getPath().equals(desiredMicroservice.getPath())
-				    && ms.getEnv().equals(desiredMicroservice.getEnv()))) {
+			    ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+				    && ms.get("path").equals(desiredMicroservice.get("path"))
+				    && ms.get("env").equals(desiredMicroservice.get("env")))) {
 			Microservice updatingMs = SetUtil.getUniqueMicroservice(currentMicroservices,
-				desiredMicroservice.getName(), config.getUpdatingVersion());
+				(String) desiredMicroservice.get("name"), config.getUpdatingVersion());
 			if (updatingMs != null) {
-			    Microservice newMicroservice = new Microservice(desiredMicroservice); // copy all properties except id, version
-			    newMicroservice.setGuid(updatingMs.getGuid());
-			    newMicroservice.setVersion(updatingMs.getVersion());
+			    Microservice newMicroservice = new Microservice(desiredMicroservice); // copy
+												  // all
+												  // properties
+												  // except
+												  // id,
+												  // version
+			    newMicroservice.set("guid", updatingMs.get("guid"));
+			    newMicroservice.set("version", updatingMs.get("version"));
 			    updatingMs = newMicroservice;
 			} else {
 			    Microservice newMicroservice = new Microservice(desiredMicroservice);
-			    newMicroservice.setGuid(null);
-			    if (newMicroservice.getVersion() == null) {
-				newMicroservice.setVersion(config.getUpdatingVersion());
+			    newMicroservice.set("guid", null);
+			    if (newMicroservice.get("version") == null) {
+				newMicroservice.set("version", config.getUpdatingVersion());
 			    }
-			    newMicroservice.setRoutes(library.tmpRoute(site, desiredMicroservice));
-			    newMicroservice.setNbProcesses(config.getCanaryNbr());
+			    newMicroservice.set("routes", library.tmpRoute(site, desiredMicroservice));
+			    newMicroservice.set("nbProcesses", config.getCanaryNbr());
 			    nextArchitecture.getSite(site).addMicroservice(newMicroservice);
 			    logger.info("Added a new microservice: {} ", newMicroservice);
 			}
@@ -79,23 +84,23 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 	    for (String site : finalArchitecture.listSitesName()) {
 		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
-			    ms -> ms.getName().equals(desiredMicroservice.getName())
-				    && ms.getVersion().equals(config.getUpdatingVersion())
-				    && ms.getPath().equals(desiredMicroservice.getPath())
-				    && ms.getEnv().equals(desiredMicroservice.getEnv())
-				    && ms.getServices().equals(desiredMicroservice.getServices())
-				    && ms.getState().equals(desiredMicroservice.getState()))) {
+			    ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+				    && ms.get("version").equals(config.getUpdatingVersion())
+				    && ms.get("path").equals(desiredMicroservice.get("path"))
+				    && ms.get("env").equals(desiredMicroservice.get("env"))
+				    && ms.get("services").equals(desiredMicroservice.get("services"))
+				    && ms.get("state").equals(desiredMicroservice.get("state")))) {
 			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
 				nextArchitecture.getSiteMicroservices(site),
-				ms -> ms.getName().equals(desiredMicroservice.getName())
-					&& ms.getVersion().equals(config.getUpdatingVersion()));
-			nextMicroservice.setPath(desiredMicroservice.getPath());
-			nextMicroservice.setEnv(desiredMicroservice.getEnv());
-			nextMicroservice.setServices(desiredMicroservice.getServices());
-			nextMicroservice.setState(desiredMicroservice.getState());
-			nextMicroservice.setRoutes(library.tmpRoute(site, desiredMicroservice));
-			logger.info("Updated microservice [{}_{}] to {} ", nextMicroservice.getName(),
-				nextMicroservice.getVersion(), nextMicroservice);
+				ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+					&& ms.get("version").equals(config.getUpdatingVersion()));
+			nextMicroservice.set("path", desiredMicroservice.get("path"));
+			nextMicroservice.set("env", desiredMicroservice.get("env"));
+			nextMicroservice.set("services", desiredMicroservice.get("services"));
+			nextMicroservice.set("state", desiredMicroservice.get("state"));
+			nextMicroservice.set("routes", library.tmpRoute(site, desiredMicroservice));
+			logger.info("Updated microservice [{}_{}] to {} ", nextMicroservice.get("name"),
+				nextMicroservice.get("version"), nextMicroservice);
 		    }
 		}
 	    }
@@ -114,20 +119,20 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 	    for (String site : finalArchitecture.listSitesName()) {
 		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
-			    ms -> ms.getName().equals(desiredMicroservice.getName())
-				    && ms.getVersion().equals(config.getUpdatingVersion())
-				    && ms.getPath().equals(desiredMicroservice.getPath())
-				    && ms.getEnv().equals(desiredMicroservice.getEnv())
-				    && ms.getServices().equals(desiredMicroservice.getServices())
-				    && ms.getState().equals(desiredMicroservice.getState())
-				    && ms.getRoutes().equals(desiredMicroservice.getRoutes()))) {
+			    ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+				    && ms.get("version").equals(config.getUpdatingVersion())
+				    && ms.get("path").equals(desiredMicroservice.get("path"))
+				    && ms.get("env").equals(desiredMicroservice.get("env"))
+				    && ms.get("services").equals(desiredMicroservice.get("services"))
+				    && ms.get("state").equals(desiredMicroservice.get("state"))
+				    && ms.get("routes").equals(desiredMicroservice.get("routes")))) {
 			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
 				nextArchitecture.getSiteMicroservices(site),
-				ms -> ms.getName().equals(desiredMicroservice.getName())
-					&& ms.getVersion().equals(config.getUpdatingVersion()));
-			nextMicroservice.setRoutes(desiredMicroservice.getRoutes());
-			logger.info("Updated microservice [{}_{}] route to {} ", nextMicroservice.getName(),
-				nextMicroservice.getVersion(), nextMicroservice.getRoutes());
+				ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+					&& ms.get("version").equals(config.getUpdatingVersion()));
+			nextMicroservice.set("routes", desiredMicroservice.get("routes"));
+			logger.info("Updated microservice [{}_{}] route to {} ", nextMicroservice.get("name"),
+				nextMicroservice.get("version"), nextMicroservice.get("routes"));
 		    }
 		}
 	    }
@@ -147,19 +152,19 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 		    Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
 		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
 			for (Microservice nextMicroservice : SetUtil.searchByName(nextMicroservices,
-				desiredMicroservice.getName())) {
-			    if (nextMicroservice.getVersion().equals(library.desiredVersion(desiredMicroservice))) {
-				int nextNbr = nextMicroservice.getNbProcesses() + config.getCanaryIncrease();
-				if (nextNbr > desiredMicroservice.getNbProcesses()) {
-				    nextNbr = desiredMicroservice.getNbProcesses();
+				(String) desiredMicroservice.get("name"))) {
+			    if (nextMicroservice.get("version").equals(library.desiredVersion(desiredMicroservice))) {
+				int nextNbr = (int) nextMicroservice.get("nbProcesses") + config.getCanaryIncrease();
+				if (nextNbr > (int) desiredMicroservice.get("nbProcesses")) {
+				    nextNbr = (int) desiredMicroservice.get("nbProcesses");
 				}
-				nextMicroservice.setNbProcesses(nextNbr);
+				nextMicroservice.set("nbProcesses", nextNbr);
 			    } else {
-				int nextNbr = nextMicroservice.getNbProcesses() - config.getCanaryIncrease();
+				int nextNbr = (int) nextMicroservice.get("nbProcesses") - config.getCanaryIncrease();
 				if (nextNbr < 1) {
 				    nextNbr = 1;
 				}
-				nextMicroservice.setNbProcesses(nextNbr);
+				nextMicroservice.set("nbProcesses", nextNbr);
 			    }
 			}
 		    }

@@ -8,7 +8,7 @@ import com.orange.model.PaaSSiteAccess;
 public class Site {
     private PaaSSiteAccess siteAccess;
     private Set<Microservice> microservices = new HashSet<>();
-    // TODO add architectureServices for managing external services
+    // TODO- add architectureServices for managing external services
 
     public Site() {
     }

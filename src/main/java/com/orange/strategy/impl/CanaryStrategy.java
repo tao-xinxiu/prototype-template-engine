@@ -27,11 +27,11 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
     public boolean valid(Architecture currentArchitecture, Architecture finalArchitecture) {
 	for (String site : finalArchitecture.listSitesName()) {
 	    for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		if (desiredMicroservice.getState() != MicroserviceState.RUNNING) {
+		if (desiredMicroservice.get("state") != MicroserviceState.RUNNING) {
 		    return false;
 		}
-		Set<Microservice> currentMicroservices = SetUtil
-			.searchByName(currentArchitecture.getSiteMicroservices(site), desiredMicroservice.getName());
+		Set<Microservice> currentMicroservices = SetUtil.searchByName(
+			currentArchitecture.getSiteMicroservices(site), (String) desiredMicroservice.get("name"));
 		if (!SetUtil.uniqueByPathEnv(currentMicroservices)) {
 		    return false;
 		}
@@ -52,19 +52,19 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
 		    Set<Microservice> relatedMicroservices = SetUtil.search(nextMicroservices,
-			    ms -> ms.getName().equals(desiredMicroservice.getName())
-				    && ms.getState().equals(desiredMicroservice.getState())
-				    && ms.getRoutes().equals(desiredMicroservice.getRoutes()));
-		    if (relatedMicroservices.stream().mapToInt(ms -> ms.getNbProcesses()).sum() == desiredMicroservice
-			    .getNbProcesses()) {
+			    ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+				    && ms.get("state").equals(desiredMicroservice.get("state"))
+				    && ms.get("routes").equals(desiredMicroservice.get("routes")));
+		    if (relatedMicroservices.stream().mapToInt(ms -> (int) ms.get("nbProcesses"))
+			    .sum() == (int) desiredMicroservice.get("nbProcesses")) {
 			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(relatedMicroservices,
-				ms -> !ms.getVersion().equals(library.desiredVersion(desiredMicroservice)));
+				ms -> !ms.get("version").equals(library.desiredVersion(desiredMicroservice)));
 			boolean canaryNotCreated = SetUtil.noneMatch(relatedMicroservices,
-				ms -> ms.getVersion().equals(library.desiredVersion(desiredMicroservice)));
+				ms -> ms.get("version").equals(library.desiredVersion(desiredMicroservice)));
 			int scaleDownNb = canaryNotCreated ? config.getCanaryNbr() : config.getCanaryIncrease();
-			int nextNbr = nextMicroservice.getNbProcesses() - scaleDownNb;
+			int nextNbr = (int) nextMicroservice.get("nbProcesses") - scaleDownNb;
 			if (nextNbr >= 1) {
-			    nextMicroservice.setNbProcesses(nextNbr);
+			    nextMicroservice.set("nbProcesses", nextNbr);
 			    logger.info("rolled out microservice {}", nextMicroservice);
 			} else {
 			    nextMicroservices.remove(nextMicroservice);
@@ -89,13 +89,13 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 		    Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
 		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
 			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(nextMicroservices,
-				ms -> ms.getName().equals(desiredMicroservice.getName())
-					&& ms.getVersion().equals(library.desiredVersion(desiredMicroservice)));
-			int nextNbr = nextMicroservice.getNbProcesses() + config.getCanaryIncrease();
-			if (nextNbr > desiredMicroservice.getNbProcesses()) {
-			    nextNbr = desiredMicroservice.getNbProcesses();
+				ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+					&& ms.get("version").equals(library.desiredVersion(desiredMicroservice)));
+			int nextNbr = (int) nextMicroservice.get("nbProcesses") + config.getCanaryIncrease();
+			if (nextNbr > (int) desiredMicroservice.get("nbProcesses")) {
+			    nextNbr = (int) desiredMicroservice.get("nbProcesses");
 			}
-			nextMicroservice.setNbProcesses(nextNbr);
+			nextMicroservice.set("nbProcesses", nextNbr);
 		    }
 		}
 	    }

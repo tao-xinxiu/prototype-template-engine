@@ -15,21 +15,18 @@ public class SetUtil {
     }
 
     public static Set<Microservice> searchByName(Set<Microservice> microservices, String name) {
-	return search(microservices, ms -> ms.getName().equals(name));
+	return search(microservices, ms -> ms.get("name").equals(name));
     }
 
-    public static Set<Microservice> searchByState(Set<Microservice> microservices,
-	    MicroserviceState state) {
-	return search(microservices, ms -> ms.getState() == state);
+    public static Set<Microservice> searchByState(Set<Microservice> microservices, MicroserviceState state) {
+	return search(microservices, ms -> ms.get("state") == state);
     }
 
-    public static Set<Microservice> search(Set<Microservice> microservices,
-	    Predicate<Microservice> predicate) {
+    public static Set<Microservice> search(Set<Microservice> microservices, Predicate<Microservice> predicate) {
 	return microservices.stream().filter(predicate).collect(Collectors.toSet());
     }
 
-    public static boolean noneMatch(Set<Microservice> microservices,
-	    Predicate<Microservice> predicate) {
+    public static boolean noneMatch(Set<Microservice> microservices, Predicate<Microservice> predicate) {
 	return microservices.stream().noneMatch(predicate);
     }
 
@@ -47,13 +44,12 @@ public class SetUtil {
 	}
     }
 
-    public static Microservice getUniqueMicroservice(Set<Microservice> microservices,
-	    String name, String version) {
-	return getUniqueMicroservice(microservices, ms -> ms.getName().equals(name) && ms.getVersion().equals(version));
+    public static Microservice getUniqueMicroservice(Set<Microservice> microservices, String name, String version) {
+	return getUniqueMicroservice(microservices,
+		ms -> ms.get("name").equals(name) && ms.get("version").equals(version));
     }
 
-    public static Microservice getOneMicroservice(Set<Microservice> microservices,
-	    Predicate<Microservice> predicate) {
+    public static Microservice getOneMicroservice(Set<Microservice> microservices, Predicate<Microservice> predicate) {
 	Set<Microservice> result = search(microservices, predicate);
 	switch (result.size()) {
 	case 0:
@@ -64,17 +60,17 @@ public class SetUtil {
     }
 
     public static Set<String> collectVersions(Set<Microservice> microservices) {
-	return microservices.stream().map(ms -> ms.getVersion()).collect(Collectors.toSet());
+	return microservices.stream().map(ms -> (String) ms.get("version")).collect(Collectors.toSet());
     }
 
     public static Set<String> collectNames(Set<Microservice> microservices) {
-	return microservices.stream().map(ms -> ms.getName()).collect(Collectors.toSet());
+	return microservices.stream().map(ms -> (String) ms.get("name")).collect(Collectors.toSet());
     }
 
     public static boolean uniqueByName(Set<Microservice> microservices) {
 	Set<String> names = new HashSet<>();
 	for (Microservice ms : microservices) {
-	    if (!names.add(ms.getName())) {
+	    if (!names.add((String) ms.get("name"))) {
 		return false;
 	    }
 	}
@@ -82,10 +78,11 @@ public class SetUtil {
     }
 
     // verify whether microservices have unique path and env
+    @SuppressWarnings("unchecked")
     public static boolean uniqueByPathEnv(Set<Microservice> microservices) {
 	Set<PathEnv> appeared = new HashSet<>();
 	for (Microservice ms : microservices) {
-	    if (!appeared.add(new PathEnv(ms.getPath(), ms.getEnv()))) {
+	    if (!appeared.add(new PathEnv((String) ms.get("path"), (Map<String, String>) ms.get("env")))) {
 		return false;
 	    }
 	}

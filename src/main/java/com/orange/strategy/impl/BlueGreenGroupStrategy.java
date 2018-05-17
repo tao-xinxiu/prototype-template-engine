@@ -35,14 +35,14 @@ public class BlueGreenGroupStrategy extends BlueGreenStrategy {
 		int deployingNumber = 0;
 		Set<Microservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
 		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    if (SetUtil.noneMatch(currentMicroservices, ms -> ms.getName().equals(desiredMicroservice.getName())
-			    && ms.getVersion().equals(library.desiredVersion(desiredMicroservice)))) {
+		    if (SetUtil.noneMatch(currentMicroservices, ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+			    && ms.get("version").equals(library.desiredVersion(desiredMicroservice)))) {
 			deployingNumber++;
 			Microservice newMicroservice = new Microservice(desiredMicroservice);
-			newMicroservice.setGuid(null);
-			newMicroservice.setRoutes(library.tmpRoute(site, desiredMicroservice));
-			if (newMicroservice.getVersion() == null) {
-			    newMicroservice.setVersion(config.getUpdatingVersion());
+			newMicroservice.set("guid", null);
+			newMicroservice.set("routes", library.tmpRoute(site, desiredMicroservice));
+			if (newMicroservice.get("version") == null) {
+			    newMicroservice.set("version", config.getUpdatingVersion());
 			}
 			nextArchitecture.getSite(site).addMicroservice(newMicroservice);
 			logger.info("Added a new microservice deployment: {} ", newMicroservice);

@@ -38,7 +38,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     public Set<Microservice> get() {
 	logger.info("Start getting the current architecture ...");
 	return operations.listSpaceApps().parallelStream()
-		.map(info -> new Microservice(info.getId(), parseName(info.getName()), parseVersion(info.getName()),
+		.map(info -> init(info.getId(), parseName(info.getName()), parseVersion(info.getName()),
 			parsePath(info), parseState(info), info.getInstances(), parseEnv(info), parseRoutes(info),
 			parseServices(info), info.getMemory() + "M", info.getDiskQuota() + "M"))
 		.collect(Collectors.toSet());
@@ -47,7 +47,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     public Set<Microservice> getStabilizedMicroservices() {
 	logger.info("Start getting the current architecture and stabilize it ...");
 	return operations.listSpaceApps().parallelStream()
-		.map(info -> new Microservice(info.getId(), parseName(info.getName()), parseVersion(info.getName()),
+		.map(info -> init(info.getId(), parseName(info.getName()), parseVersion(info.getName()),
 			parsePath(info), stabilizeState(info), info.getInstances(), parseEnv(info), parseRoutes(info),
 			parseServices(info), info.getMemory() + "M", info.getDiskQuota() + "M"))
 		.collect(Collectors.toSet());
@@ -57,17 +57,19 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     public Step add(Microservice microservice) {
 	CFMicroservice desiredMicroservice = new CFMicroservice(microservice);
 	return new Step(String.format("add microservice %s", desiredMicroservice)) {
+	    @SuppressWarnings("unchecked")
 	    @Override
 	    public void exec() {
-		String msId = operations.create(desiredMicroservice.getName(), desiredMicroservice.getNbProcesses(),
-			desiredMicroservice.getEnv());
-		CFMicroservice currentMicroservice = new CFMicroservice(msId,
-			desiredMicroservice.getName(), null, CFMicroserviceState.CREATED,
-			desiredMicroservice.getNbProcesses(), desiredMicroservice.getEnv(), new HashSet<>(),
-			new HashSet<>());
-		operations.updateRoutesIfNeed(msId, currentMicroservice.getRoutes(), desiredMicroservice.getRoutes());
-		operations.updateServicesIfNeed(msId, currentMicroservice.getServices(),
-			desiredMicroservice.getServices());
+		String msId = operations.create((String) desiredMicroservice.get("name"),
+			(int) desiredMicroservice.get("nbProcesses"),
+			(Map<String, String>) desiredMicroservice.get("env"));
+		CFMicroservice currentMicroservice = initCFMs(msId, (String) desiredMicroservice.get("name"), null,
+			CFMicroserviceState.CREATED, (int) desiredMicroservice.get("nbProcesses"),
+			(Map<String, String>) desiredMicroservice.get("env"), new HashSet<>(), new HashSet<>());
+		operations.updateRoutesIfNeed(msId, (Set<Route>) currentMicroservice.get("routes"),
+			(Set<Route>) desiredMicroservice.get("routes"));
+		operations.updateServicesIfNeed(msId, (Set<String>) currentMicroservice.get("services"),
+			(Set<String>) desiredMicroservice.get("services"));
 		operations.updateStateIfNeed(currentMicroservice, desiredMicroservice);
 	    }
 	};
@@ -75,11 +77,13 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 
     @Override
     public Step remove(Microservice microservice) {
-	return new SiteStep(String.format("remove microservice [%s]", microservice.getGuid())) {
+	return new SiteStep(String.format("remove microservice [%s]", microservice.get("guid"))) {
+	    @SuppressWarnings("unchecked")
 	    @Override
 	    public void exec() {
-		operations.updateServicesIfNeed(microservice.getGuid(), microservice.getServices(), new HashSet<>());
-		operations.delete(microservice.getGuid());
+		operations.updateServicesIfNeed((String) microservice.get("guid"),
+			(Set<String>) microservice.get("services"), new HashSet<>());
+		operations.delete((String) microservice.get("guid"));
 	    }
 	};
     }
@@ -90,34 +94,38 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	CFMicroservice desiredCFMicroservice = new CFMicroservice(desiredMicroservice);
 	return new SiteStep(
 		String.format("update microservice from %s to %s", currentCFMicroservice, desiredCFMicroservice)) {
+	    @SuppressWarnings("unchecked")
 	    @Override
 	    public void exec() {
-		String msId = currentCFMicroservice.getGuid();
-		operations.updateRoutesIfNeed(msId, currentCFMicroservice.getRoutes(),
-			desiredCFMicroservice.getRoutes());
-		operations.updateNameIfNeed(msId, currentCFMicroservice.getName(), desiredCFMicroservice.getName());
-		if (desiredCFMicroservice.getState() != CFMicroserviceState.CREATED
-			&& desiredCFMicroservice.getPath() != null
-			&& !desiredCFMicroservice.getPath().equals(currentCFMicroservice.getPath())) {
-		    operations.updatePath(msId, desiredCFMicroservice.getPath(), currentCFMicroservice.getEnv());
-		    currentCFMicroservice.setState(CFMicroserviceState.UPLOADED);
+		String msId = (String) currentCFMicroservice.get("guid");
+		operations.updateRoutesIfNeed(msId, (Set<Route>) currentCFMicroservice.get("routes"),
+			(Set<Route>) desiredCFMicroservice.get("routes"));
+		operations.updateNameIfNeed(msId, (String) currentCFMicroservice.get("name"),
+			(String) desiredCFMicroservice.get("name"));
+		if (desiredCFMicroservice.get("state") != CFMicroserviceState.CREATED
+			&& desiredCFMicroservice.get("path") != null
+			&& !desiredCFMicroservice.get("path").equals(currentCFMicroservice.get("path"))) {
+		    operations.updatePath(msId, (String) desiredCFMicroservice.get("path"),
+			    (Map<String, String>) currentCFMicroservice.get("env"));
+		    currentCFMicroservice.set("state", CFMicroserviceState.UPLOADED);
+
 		}
 		boolean needRestage = false;
-		if (!currentCFMicroservice.getServices().equals(desiredMicroservice.getServices())) {
-		    operations.updateServicesIfNeed(msId, currentCFMicroservice.getServices(),
-			    desiredCFMicroservice.getServices());
+		if (!currentCFMicroservice.get("services").equals(desiredMicroservice.get("services"))) {
+		    operations.updateServicesIfNeed(msId, (Set<String>) currentCFMicroservice.get("services"),
+			    (Set<String>) desiredCFMicroservice.get("services"));
 		    needRestage = true;
 		}
-		if (!currentCFMicroservice.getEnv().equals(desiredCFMicroservice.getEnv())) {
-		    operations.updateEnv(msId, desiredCFMicroservice.getEnv());
+		if (!currentCFMicroservice.get("env").equals(desiredCFMicroservice.get("env"))) {
+		    operations.updateEnv(msId, (Map<String, String>) desiredCFMicroservice.get("env"));
 		    needRestage = true;
 		}
-		if (needRestage && stagedMicroservice(currentCFMicroservice.getState())) {
-		    operations.restage(currentCFMicroservice.getGuid());
-		    currentCFMicroservice.setState(CFMicroserviceState.staging);
+		if (needRestage && stagedMicroservice((CFMicroserviceState) currentCFMicroservice.get("state"))) {
+		    operations.restage((String) currentCFMicroservice.get("guid"));
+		    currentCFMicroservice.set("state", CFMicroserviceState.staging);
 		}
-		operations.updateNbProcessesIfNeed(msId, currentCFMicroservice.getNbProcesses(),
-			desiredCFMicroservice.getNbProcesses());
+		operations.updateNbProcessesIfNeed(msId, (int) currentCFMicroservice.get("nbProcesses"),
+			(int) desiredCFMicroservice.get("nbProcesses"));
 		operations.updateStateIfNeed(currentCFMicroservice, desiredCFMicroservice);
 	    }
 	};
@@ -134,8 +142,8 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
      * Get microservice name from Cloud Foundry microservice name
      * 
      * @param name
-     *            CF microservice instance unique name, mapped to microservice
-     *            model as "name_version"
+     *            CF microservice instance unique name, mapped to microservice model
+     *            as "name_version"
      * @return
      */
     private String parseName(String name) {
@@ -151,8 +159,8 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
      * Get microservice version from Cloud Foundry microservice name
      * 
      * @param name
-     *            CF microservice instance unique name, mapped to microservice
-     *            model as "name_version"
+     *            CF microservice instance unique name, mapped to microservice model
+     *            as "name_version"
      * @return
      */
     private String parseVersion(String name) {
@@ -183,9 +191,8 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     /**
-     * get microservice current state and stabilize it (i.e. If exists
-     * microservice not running, change its desired state to STOPPED to attain
-     * an stable state)
+     * get microservice current state and stabilize it (i.e. If exists microservice
+     * not running, change its desired state to STOPPED to attain an stable state)
      * 
      * @param info
      * @return
@@ -232,6 +239,38 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 
     private Set<String> parseServices(SpaceApplicationSummary info) {
 	return new HashSet<>(info.getServiceNames());
+    }
+
+    private Microservice init(String guid, String name, String version, String path, MicroserviceState state,
+	    int nbProcesses, Map<String, String> env, Set<Route> routes, Set<String> services, String memory,
+	    String disk) {
+	Map<String, Object> attributes = new HashMap<>();
+	attributes.put("guid", guid);
+	attributes.put("name", name);
+	attributes.put("version", version);
+	attributes.put("path", path);
+	attributes.put("state", state);
+	attributes.put("nbProcesses", nbProcesses);
+	attributes.put("env", env);
+	attributes.put("routes", routes);
+	attributes.put("services", services);
+	attributes.put("memory", memory);
+	attributes.put("disk", disk);
+	return new Microservice(attributes);
+    }
+
+    private CFMicroservice initCFMs(String guid, String name, String path, CFMicroserviceState state, int nbProcesses,
+	    Map<String, String> env, Set<Route> routes, Set<String> services) {
+	Map<String, Object> attributes = new HashMap<>();
+	attributes.put("guid", guid);
+	attributes.put("name", name);
+	attributes.put("path", path);
+	attributes.put("state", state);
+	attributes.put("nbProcesses", nbProcesses);
+	attributes.put("env", env);
+	attributes.put("routes", routes);
+	attributes.put("services", services);
+	return new CFMicroservice(attributes);
     }
 
     abstract class SiteStep extends Step {

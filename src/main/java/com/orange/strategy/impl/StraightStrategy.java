@@ -19,7 +19,7 @@ public class StraightStrategy extends Strategy {
 	super(config);
 	transitions = Arrays.asList(library.directTransit(false));
     }
-    
+
     @Override
     public boolean valid(Architecture currentArchitecture, Architecture finalArchitecture) {
 	return true;
@@ -36,8 +36,8 @@ public class StraightStrategy extends Strategy {
      */
     public boolean StrictValid(Architecture currentArchitecture, Architecture finalArchitecture) {
 	for (String site : finalArchitecture.listSitesName()) {
-	    Set<Microservice> notVersionedMicroservices = SetUtil
-		    .search(finalArchitecture.getSiteMicroservices(site), m -> m.getVersion() == null);
+	    Set<Microservice> notVersionedMicroservices = SetUtil.search(finalArchitecture.getSiteMicroservices(site),
+		    m -> m.get("version") == null);
 	    if (!SetUtil.uniqueByName(notVersionedMicroservices)) {
 		logger.error(
 			"InplaceStrategy disallows the case that multi not versioned deployment of one microservices in finalArchitecture.");
@@ -45,7 +45,7 @@ public class StraightStrategy extends Strategy {
 	    }
 	    for (Microservice notVersionedMicroservice : notVersionedMicroservices) {
 		Set<Microservice> currentMicroservices = SetUtil.searchByName(
-			currentArchitecture.getSiteMicroservices(site), notVersionedMicroservice.getName());
+			currentArchitecture.getSiteMicroservices(site), (String) notVersionedMicroservice.get("name"));
 		if (!SetUtil.uniqueByName(currentMicroservices)) {
 		    logger.error(
 			    "InplaceStrategy disallows the case that multi currently deployed microservices correspond to an unversioned microservice in finalArchitecture.");

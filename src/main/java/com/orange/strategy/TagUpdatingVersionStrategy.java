@@ -14,6 +14,6 @@ public abstract class TagUpdatingVersionStrategy extends Strategy {
     // protected boolean isInstantiation(Microservice currentMicroservice,
     // Microservice desiredMicroservice) {
     // return super.isInstantiation(currentMicroservice, desiredMicroservice)
-    // && !currentMicroservice.getVersion().equals(config.getUpdatingVersion());
+    // && !currentMicroservice.get("version").equals(config.getUpdatingVersion());
     // }
 }

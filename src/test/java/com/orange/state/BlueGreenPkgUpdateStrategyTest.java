@@ -101,16 +101,16 @@ public class BlueGreenPkgUpdateStrategyTest {
 
     private final static Architecture initArchitecture() {
 	Architecture initArchitecture = new Architecture();
-	initArchitecture.addSite(site1, Collections.singleton(new Microservice(oldMsSite1Id, msName, oldMsVersion,
-		oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
-	initArchitecture.addSite(site2, Collections.singleton(new Microservice(oldMsSite2Id, msName, oldMsVersion,
-		oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
+	initArchitecture.addSite(site1, Collections.singleton(init(oldMsSite1Id, msName, oldMsVersion, oldMsPath,
+		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
+	initArchitecture.addSite(site2, Collections.singleton(init(oldMsSite2Id, msName, oldMsVersion, oldMsPath,
+		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
 	return initArchitecture;
     }
 
     private final static Architecture finalArchitecture() {
-	Microservice newMs = new Microservice(null, msName, null, newMsPath, MicroserviceState.RUNNING, msNbProcesses,
-		msEnv, msRoutes, msServices, memory, disk);
+	Microservice newMs = init(null, msName, null, newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv,
+		msRoutes, msServices, memory, disk);
 	Architecture finalArchitecture = new Architecture();
 	finalArchitecture.addSite(site1, Collections.singleton(newMs));
 	finalArchitecture.addSite(site2, Collections.singleton(newMs));
@@ -119,15 +119,15 @@ public class BlueGreenPkgUpdateStrategyTest {
 
     private final static Architecture midArchitecture1() {
 	Set<Microservice> site1Ms = new HashSet<>();
-	site1Ms.add(new Microservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(new Microservice(null, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
+	site1Ms.add(init(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv,
+		msRoutes, msServices, memory, disk));
+	site1Ms.add(init(null, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING, msNbProcesses,
+		msEnv, msTmpRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
-	site2Ms.add(new Microservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(new Microservice(null, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
+	site2Ms.add(init(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv,
+		msRoutes, msServices, memory, disk));
+	site2Ms.add(init(null, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING, msNbProcesses,
+		msEnv, msTmpRoutes, msServices, memory, disk));
 	Architecture midArchitecture1 = new Architecture();
 	midArchitecture1.addSite(site1, site1Ms);
 	midArchitecture1.addSite(site2, site2Ms);
@@ -136,15 +136,15 @@ public class BlueGreenPkgUpdateStrategyTest {
 
     private final static Architecture midArchitecture1Instantiated() {
 	Set<Microservice> site1Ms = new HashSet<>();
-	site1Ms.add(new Microservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(new Microservice(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
+	site1Ms.add(init(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv,
+		msRoutes, msServices, memory, disk));
+	site1Ms.add(init(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv,
+		msTmpRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
-	site2Ms.add(new Microservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(new Microservice(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msTmpRoutes, msServices, memory, disk));
+	site2Ms.add(init(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv,
+		msRoutes, msServices, memory, disk));
+	site2Ms.add(init(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv,
+		msTmpRoutes, msServices, memory, disk));
 	Architecture instantiatedArchitecture1 = new Architecture();
 	instantiatedArchitecture1.addSite(site1, site1Ms);
 	instantiatedArchitecture1.addSite(site2, site2Ms);
@@ -153,15 +153,15 @@ public class BlueGreenPkgUpdateStrategyTest {
 
     private final static Architecture midArchitecture2() {
 	Set<Microservice> site1Ms = new HashSet<>();
-	site1Ms.add(new Microservice(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(new Microservice(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
+	site1Ms.add(init(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv,
+		msRoutes, msServices, memory, disk));
+	site1Ms.add(init(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv,
+		msRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
-	site2Ms.add(new Microservice(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(new Microservice(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
+	site2Ms.add(init(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv,
+		msRoutes, msServices, memory, disk));
+	site2Ms.add(init(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv,
+		msRoutes, msServices, memory, disk));
 	Architecture midArchitecture2 = new Architecture();
 	midArchitecture2.addSite(site1, site1Ms);
 	midArchitecture2.addSite(site2, site2Ms);
@@ -170,11 +170,28 @@ public class BlueGreenPkgUpdateStrategyTest {
 
     private final static Architecture midArchitecture3() {
 	Architecture midArchitecture3 = new Architecture();
-	midArchitecture3.addSite(site1, Collections.singleton(new Microservice(newMsSite1Id, msName, newMsVersion,
-		newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
-	midArchitecture3.addSite(site2, Collections.singleton(new Microservice(newMsSite2Id, msName, newMsVersion,
-		newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
+	midArchitecture3.addSite(site1, Collections.singleton(init(newMsSite1Id, msName, newMsVersion, newMsPath,
+		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
+	midArchitecture3.addSite(site2, Collections.singleton(init(newMsSite2Id, msName, newMsVersion, newMsPath,
+		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
 	return midArchitecture3;
     }
 
+    private static Microservice init(String guid, String name, String version, String path, MicroserviceState state,
+	    int nbProcesses, Map<String, String> env, Set<Route> routes, Set<String> services, String memory,
+	    String disk) {
+	Map<String, Object> attributes = new HashMap<>();
+	attributes.put("guid", guid);
+	attributes.put("name", name);
+	attributes.put("version", version);
+	attributes.put("path", path);
+	attributes.put("state", state);
+	attributes.put("nbProcesses", nbProcesses);
+	attributes.put("env", env);
+	attributes.put("routes", routes);
+	attributes.put("services", services);
+	attributes.put("memory", memory);
+	attributes.put("disk", disk);
+	return new Microservice(attributes);
+    }
 }

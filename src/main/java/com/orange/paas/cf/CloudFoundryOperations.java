@@ -59,6 +59,7 @@ import com.orange.model.PaaSSiteAccess;
 import com.orange.model.architecture.Route;
 import com.orange.model.architecture.cf.CFMicroservice;
 import com.orange.model.architecture.cf.CFMicroserviceDesiredState;
+import com.orange.model.architecture.cf.CFMicroserviceState;
 import com.orange.util.RetryFunction;
 import com.orange.util.Wait;
 
@@ -231,16 +232,18 @@ public class CloudFoundryOperations {
      * @param currentMicroservice
      * @param desiredMicroservice
      */
+    @SuppressWarnings("unchecked")
     public void updateStateIfNeed(CFMicroservice currentMicroservice, CFMicroservice desiredMicroservice) {
-	if (currentMicroservice.getState() == desiredMicroservice.getState()) {
+	if (currentMicroservice.get("state") == desiredMicroservice.get("state")) {
 	    return;
 	}
-	String msId = currentMicroservice.getGuid();
-	switch (desiredMicroservice.getState()) {
+	String msId = (String) currentMicroservice.get("guid");
+	switch ((CFMicroserviceState) desiredMicroservice.get("state")) {
 	case RUNNING:
-	    switch (currentMicroservice.getState()) {
+	    switch ((CFMicroserviceState) currentMicroservice.get("state")) {
 	    case CREATED:
-		updatePath(msId, desiredMicroservice.getPath(), currentMicroservice.getEnv());
+		updatePath(msId, (String) desiredMicroservice.get("path"),
+			(Map<String, String>) currentMicroservice.get("env"));
 	    case UPLOADED:
 	    case STAGED:
 		start(msId);
@@ -257,13 +260,14 @@ public class CloudFoundryOperations {
 	    default:
 		throw new IllegalStateException(
 			String.format("Unsupported microservice [%s] to update state from [%s] to [%s]", msId,
-				currentMicroservice.getState(), desiredMicroservice.getState()));
+				currentMicroservice.get("state"), desiredMicroservice.get("state")));
 	    }
 	    break;
 	case STAGED:
-	    switch (currentMicroservice.getState()) {
+	    switch ((CFMicroserviceState) currentMicroservice.get("state")) {
 	    case CREATED:
-		updatePath(msId, desiredMicroservice.getPath(), currentMicroservice.getEnv());
+		updatePath(msId, (String) desiredMicroservice.get("path"),
+			(Map<String, String>) currentMicroservice.get("env"));
 	    case UPLOADED:
 		start(msId);
 	    case staging:
@@ -280,13 +284,14 @@ public class CloudFoundryOperations {
 	    default:
 		throw new IllegalStateException(
 			String.format("Unsupported microservice [%s] to update state from [%s] to [%s]", msId,
-				currentMicroservice.getState(), desiredMicroservice.getState()));
+				currentMicroservice.get("state"), desiredMicroservice.get("state")));
 	    }
 	    break;
 	case UPLOADED:
-	    switch (currentMicroservice.getState()) {
+	    switch ((CFMicroserviceState) currentMicroservice.get("state")) {
 	    case CREATED:
-		updatePath(msId, desiredMicroservice.getPath(), currentMicroservice.getEnv());
+		updatePath(msId, (String) desiredMicroservice.get("path"),
+			(Map<String, String>) currentMicroservice.get("env"));
 		break;
 	    case FAILED:
 		restage(msId);
@@ -295,12 +300,12 @@ public class CloudFoundryOperations {
 	    default:
 		throw new IllegalStateException(
 			String.format("Unsupported microservice [%s] to update state from [%s] to [%s]", msId,
-				currentMicroservice.getState(), desiredMicroservice.getState()));
+				currentMicroservice.get("state"), desiredMicroservice.get("state")));
 	    }
 	    break;
 	default:
 	    throw new IllegalStateException(
-		    String.format("Unsupported desired state [%s]", desiredMicroservice.getState()));
+		    String.format("Unsupported desired state [%s]", desiredMicroservice.get("state")));
 	}
     }
 

@@ -36,14 +36,14 @@ public class BlueGreenPkgUpdateStrategy extends TagUpdatingVersionStrategy {
 	    for (String site : finalArchitecture.listSitesName()) {
 		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.search(currentArchitecture.getSiteMicroservices(site),
-			    ms -> ms.getName().equals(desiredMicroservice.getName())
-				    && ms.getPath().equals(desiredMicroservice.getPath()))
+			    ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+				    && ms.get("path").equals(desiredMicroservice.get("path")))
 			    .isEmpty()) {
 			Microservice newMicroservice = new Microservice(desiredMicroservice);
-			newMicroservice.setGuid(null);
-			newMicroservice.setRoutes(library.tmpRoute(site, desiredMicroservice));
-			if (newMicroservice.getVersion() == null) {
-			    newMicroservice.setVersion(config.getUpdatingVersion());
+			newMicroservice.set("guid", null);
+			newMicroservice.set("routes", library.tmpRoute(site, desiredMicroservice));
+			if (newMicroservice.get("version") == null) {
+			    newMicroservice.set("version", config.getUpdatingVersion());
 			}
 			nextArchitecture.getSite(site).addMicroservice(newMicroservice);
 			logger.info("Added a new microservice: {} ", newMicroservice);
@@ -68,15 +68,15 @@ public class BlueGreenPkgUpdateStrategy extends TagUpdatingVersionStrategy {
 			    ms -> ms.isInstantiation(desiredMicroservice))) {
 			Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
 			Microservice nextMicroservice = SetUtil.getOneMicroservice(nextMicroservices,
-				ms -> ms.getName().equals(desiredMicroservice.getName())
-					&& ms.getPath().equals(desiredMicroservice.getPath()));
-			nextMicroservice.setRoutes(desiredMicroservice.getRoutes());
-			nextMicroservice.setEnv(desiredMicroservice.getEnv());
-			nextMicroservice.setNbProcesses(desiredMicroservice.getNbProcesses());
-			nextMicroservice.setServices(desiredMicroservice.getServices());
-			nextMicroservice.setState(desiredMicroservice.getState());
-			logger.info("Updated microservice [{}_{}] to {} ", nextMicroservice.getName(),
-				nextMicroservice.getVersion(), nextMicroservice);
+				ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+					&& ms.get("path").equals(desiredMicroservice.get("path")));
+			nextMicroservice.set("routes", desiredMicroservice.get("routes"));
+			nextMicroservice.set("env", desiredMicroservice.get("env"));
+			nextMicroservice.set("nbProcesses", desiredMicroservice.get("nbProcesses"));
+			nextMicroservice.set("services", desiredMicroservice.get("services"));
+			nextMicroservice.set("state", desiredMicroservice.get("state"));
+			logger.info("Updated microservice [{}_{}] to {} ", nextMicroservice.get("name"),
+				nextMicroservice.get("version"), nextMicroservice);
 		    }
 		}
 	    }
