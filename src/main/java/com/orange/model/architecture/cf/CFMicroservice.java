@@ -1,7 +1,7 @@
 package com.orange.model.architecture.cf;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.orange.model.architecture.Microservice;
@@ -16,7 +16,7 @@ public class CFMicroservice extends Microservice {
 	set("state", CFMicroserviceState.valueOf(microservice.get("state").toString()));
 	set("nbProcesses", microservice.get("nbProcesses"));
 	set("env", microservice.get("env"));
-	set("routes", ((List<String>) microservice.get("routes")).stream().map(Route::new).collect(Collectors.toSet()));
+	set("routes", ((Set<String>) microservice.get("routes")).stream().map(Route::new).collect(Collectors.toSet()));
 	set("services", microservice.get("services"));
     }
 
