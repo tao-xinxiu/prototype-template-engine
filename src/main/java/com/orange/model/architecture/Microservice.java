@@ -1,10 +1,15 @@
 package com.orange.model.architecture;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class Microservice {
-    private Map<String, Object> attributes = new HashMap<>();
+    protected Map<String, Object> attributes = new HashMap<>();
 
     public Microservice() {
     }
@@ -21,7 +26,13 @@ public class Microservice {
 	return attributes;
     }
 
+    @SuppressWarnings("unchecked")
     public void setAttributes(Map<String, Object> attributes) {
+	for (Entry<String, Object> attribute : attributes.entrySet()) {
+	    if (attribute.getValue() instanceof Collection<?>) {
+		attribute.setValue(new HashSet<String>((Collection<String>) attribute.getValue()));
+	    }
+	}
 	this.attributes = attributes;
     }
 
@@ -49,14 +60,12 @@ public class Microservice {
 	if (desiredMicroservice.get("version") != null && !desiredMicroservice.get("version").equals(get("version"))) {
 	    return false;
 	}
-	if (!get("name").equals(desiredMicroservice.get("name")) || !get("path").equals(desiredMicroservice.get("path"))
-		|| !get("state").equals(desiredMicroservice.get("state"))
-		|| get("nbProcesses") != desiredMicroservice.get("nbProcesses")
-		|| !get("env").equals(desiredMicroservice.get("env"))
-		|| !get("routes").equals(desiredMicroservice.get("routes"))
-		|| !get("memory").equals(desiredMicroservice.get("memory"))
-		|| !get("disk").equals(desiredMicroservice.get("disk"))) {
-	    return false;
+	List<String> compareKeys = Arrays.asList("name", "path", "state", "nbProcesses", "env", "routes", "services",
+		"memory", "disk");
+	for (String key : compareKeys) {
+	    if (!attributes.get(key).equals(desiredMicroservice.get(key))) {
+		return false;
+	    }
 	}
 	return true;
     }
