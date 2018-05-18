@@ -15,7 +15,6 @@ import com.orange.model.StrategySiteConfig;
 import com.orange.model.architecture.Architecture;
 import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.MicroserviceState;
-import com.orange.model.architecture.Route;
 import com.orange.strategy.Strategy;
 import com.orange.strategy.impl.BlueGreenPkgUpdateStrategy;
 
@@ -28,9 +27,9 @@ public class BlueGreenPkgUpdateStrategyTest {
     private static final int msNbProcesses = 3;
     private static final String domain = "orange.com";
     private static final Map<String, String> msEnv = new HashMap<>(Collections.singletonMap("foo", "bar"));
-    private static final Set<Route> msRoutes = Collections.singleton(new Route("test", domain));
-    private static final Set<Route> msTmpRoutes = Collections
-	    .singleton(new Route(msName + StrategySiteConfig.getDefaulttmproutehostsuffix(), domain));
+    private static final Set<String> msRoutes = Collections.singleton("test." + domain);
+    private static final Set<String> msTmpRoutes = Collections
+	    .singleton(msName + StrategySiteConfig.getDefaulttmproutehostsuffix() + "." + domain);
     private static final String oldMsSite1Id = "oldMs-guid-site1";
     private static final String oldMsSite2Id = "oldMs-guid-site2";
     private static final String newMsSite1Id = "newMs-guid-site1";
@@ -172,7 +171,7 @@ public class BlueGreenPkgUpdateStrategyTest {
     }
 
     private static Microservice init(String guid, String name, String version, String path, MicroserviceState state,
-	    int nbProcesses, Map<String, String> env, Set<Route> routes, Set<String> services, String memory,
+	    int nbProcesses, Map<String, String> env, Set<String> routes, Set<String> services, String memory,
 	    String disk) {
 	Map<String, Object> attributes = new HashMap<>();
 	attributes.put("guid", guid);

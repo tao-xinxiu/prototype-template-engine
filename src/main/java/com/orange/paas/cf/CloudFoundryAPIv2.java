@@ -15,10 +15,10 @@ import com.orange.Main;
 import com.orange.model.*;
 import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.MicroserviceState;
-import com.orange.model.architecture.Route;
 import com.orange.model.architecture.cf.CFMicroservice;
 import com.orange.model.architecture.cf.CFMicroserviceDesiredState;
 import com.orange.model.architecture.cf.CFMicroserviceState;
+import com.orange.model.architecture.cf.Route;
 import com.orange.model.workflow.Step;
 import com.orange.paas.PaaSAPI;
 

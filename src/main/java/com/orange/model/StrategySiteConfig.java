@@ -1,7 +1,5 @@
 package com.orange.model;
 
-import com.orange.model.architecture.Route;
-
 public class StrategySiteConfig {
     private static final String defaultTmpRouteHostSuffix = "-tmp";
     private String tmpRouteHostSuffix = defaultTmpRouteHostSuffix;
@@ -34,8 +32,8 @@ public class StrategySiteConfig {
 	return defaultTmpRouteHostSuffix;
     }
 
-    public Route getTmpRoute(String microserviceName) {
-	return new Route(microserviceName + tmpRouteHostSuffix + "." + tmpRouteDomain);
+    public String getTmpRoute(String microserviceName) {
+	return microserviceName + tmpRouteHostSuffix + "." + tmpRouteDomain;
     }
 
     @Override

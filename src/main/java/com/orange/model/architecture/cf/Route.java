@@ -1,4 +1,4 @@
-package com.orange.model.architecture;
+package com.orange.model.architecture.cf;
 
 public class Route {
     private String hostname;

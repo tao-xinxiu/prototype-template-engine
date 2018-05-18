@@ -12,7 +12,6 @@ import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
 import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.MicroserviceState;
-import com.orange.model.architecture.Route;
 import com.orange.util.SetUtil;
 import com.orange.util.VersionGenerator;
 
@@ -54,8 +53,8 @@ public class StrategyLibrary {
     };
 
     /**
-     * next architecture: adding new micro-services (in finalArchitecture, not
-     * in currentArchitecture, identified by name)
+     * next architecture: adding new micro-services (in finalArchitecture, not in
+     * currentArchitecture, identified by name)
      */
     public Transition addNewTransit = new Transition() {
 	@Override
@@ -82,8 +81,8 @@ public class StrategyLibrary {
     };
 
     /**
-     * next architecture: remove old micro-services (in currentArchitecture, not
-     * in finalArchitecture, identified by name)
+     * next architecture: remove old micro-services (in currentArchitecture, not in
+     * finalArchitecture, identified by name)
      */
     public Transition removeOldTransit = new Transition() {
 	@Override
@@ -105,12 +104,12 @@ public class StrategyLibrary {
     };
 
     /**
-     * next architecture: direct in-place update current most similar
-     * microservice to desired
+     * next architecture: direct in-place update current most similar microservice
+     * to desired
      * 
      * @param tmpRoute
-     *            whether map new or path/env updated microservices to a
-     *            temporary route
+     *            whether map new or path/env updated microservices to a temporary
+     *            route
      * @return
      */
     public Transition directTransit(boolean tmpRoute) {
@@ -154,8 +153,8 @@ public class StrategyLibrary {
     }
 
     /**
-     * getting next architecture by updating desired microservice route and
-     * setting version
+     * getting next architecture by updating desired microservice route and setting
+     * version
      */
     public Transition updateRouteTransit = new Transition() {
 	// assume that it doesn't exist two microservices with same pkg and name
@@ -239,7 +238,8 @@ public class StrategyLibrary {
 		    if ((int) nextMicroservice.get("nbProcesses") <= (int) desiredMicroservice.get("nbProcesses")) {
 			int nextNbr = (int) nextMicroservice.get("nbProcesses") + config.getCanaryIncrease();
 			nextNbr = nextNbr > (int) desiredMicroservice.get("nbProcesses")
-				? (int) desiredMicroservice.get("nbProcesses") : nextNbr;
+				? (int) desiredMicroservice.get("nbProcesses")
+				: nextNbr;
 			nextMicroservice.set("nbProcesses", nextNbr);
 			logger.info("Updated microservice [{}_{}] nbProcesses to {} ", nextMicroservice.get("name"),
 				nextMicroservice.get("version"), nextNbr);
@@ -299,7 +299,7 @@ public class StrategyLibrary {
 		: (String) desiredMicroservice.get("version");
     }
 
-    public Set<Route> tmpRoute(String site, Microservice microservice) {
+    public Set<String> tmpRoute(String site, Microservice microservice) {
 	return Collections.singleton(config.getSiteConfig(site).getTmpRoute((String) microservice.get("name")));
     }
 }
