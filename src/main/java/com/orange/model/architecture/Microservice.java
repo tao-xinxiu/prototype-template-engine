@@ -5,19 +5,6 @@ import java.util.Map;
 
 public class Microservice {
     private Map<String, Object> attributes = new HashMap<>();
-    // private String guid;
-    // private String name;
-    // // disallow "_" in version, delimiter between name and version in PaaS
-    // // mapping as site unique micro-service name.
-    // private String version;
-    // private String path;
-    // private MicroserviceState state;
-    // private int nbProcesses;
-    // private Map<String, String> env = new HashMap<>();
-    // private Set<Route> routes = new HashSet<>();
-    // private Set<String> services = new HashSet<>();
-    // private String memory;
-    // private String disk;
 
     public Microservice() {
     }
@@ -45,19 +32,6 @@ public class Microservice {
     public void set(String key, Object value) {
 	attributes.put(key, value);
     }
-
-    // public Set<String> getRoutes() {
-    // return routes.stream().map(Route::toString).collect(Collectors.toSet());
-    // }
-    //
-    // public void setRoutes(Set<String> routes) {
-    // this.routes =
-    // routes.stream().map(Route::new).collect(Collectors.toSet());
-    // }
-    //
-    // public Set<Route> listRoutes() {
-    // return routes;
-    // }
 
     /**
      * return whether "this" is an instantiation of desiredMicroservice.
@@ -90,5 +64,30 @@ public class Microservice {
     @Override
     public String toString() {
 	return "Microservice [attributes=" + attributes + "]";
+    }
+
+    @Override
+    public int hashCode() {
+	final int prime = 31;
+	int result = 1;
+	result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+	return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+	if (this == obj)
+	    return true;
+	if (obj == null)
+	    return false;
+	if (getClass() != obj.getClass())
+	    return false;
+	Microservice other = (Microservice) obj;
+	if (attributes == null) {
+	    if (other.attributes != null)
+		return false;
+	} else if (!attributes.equals(other.attributes))
+	    return false;
+	return true;
     }
 }

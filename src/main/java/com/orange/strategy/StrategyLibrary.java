@@ -12,6 +12,7 @@ import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
 import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.MicroserviceState;
+import com.orange.model.architecture.Route;
 import com.orange.util.SetUtil;
 import com.orange.util.VersionGenerator;
 
@@ -298,7 +299,7 @@ public class StrategyLibrary {
 		: (String) desiredMicroservice.get("version");
     }
 
-    public Set<String> tmpRoute(String site, Microservice microservice) {
+    public Set<Route> tmpRoute(String site, Microservice microservice) {
 	return Collections.singleton(config.getSiteConfig(site).getTmpRoute((String) microservice.get("name")));
     }
 }

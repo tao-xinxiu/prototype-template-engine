@@ -55,10 +55,8 @@ public class BlueGreenPkgUpdateStrategyTest {
 	Strategy bgStrategy = new BlueGreenPkgUpdateStrategy(config);
 	Assert.assertFalse(initArchitecture.isInstantiation(finalArchitecture));
 	Assert.assertTrue(bgStrategy.valid(initArchitecture, finalArchitecture));
-	// Assert.assertTrue(bgStrategy.transits().get(0).condition(initArchitecture,
-	// finalArchitecture));
-	Assert.assertEquals(bgStrategy.getTransitions().get(0).next(initArchitecture, finalArchitecture),
-		midArchitecture1());
+	Assert.assertEquals(midArchitecture1(),
+		bgStrategy.getTransitions().get(0).next(initArchitecture, finalArchitecture));
     }
 
     @Test
@@ -67,10 +65,8 @@ public class BlueGreenPkgUpdateStrategyTest {
 	Architecture currentArchitecture = midArchitecture1Instantiated();
 	Assert.assertFalse(currentArchitecture.isInstantiation(finalArchitecture));
 	Assert.assertTrue(bgStrategy.valid(currentArchitecture, finalArchitecture));
-	// Assert.assertFalse(bgStrategy.transits().get(0).condition(currentArchitecture,
-	// finalArchitecture));
-	// Assert.assertTrue(bgStrategy.transits().get(1).condition(currentArchitecture,
-	// finalArchitecture));
+	Assert.assertEquals(currentArchitecture,
+		bgStrategy.getTransitions().get(0).next(currentArchitecture, finalArchitecture));
 	Assert.assertEquals(midArchitecture2(),
 		bgStrategy.getTransitions().get(1).next(currentArchitecture, finalArchitecture));
     }
@@ -81,12 +77,10 @@ public class BlueGreenPkgUpdateStrategyTest {
 	Architecture currentArchitecture = midArchitecture2();
 	Assert.assertFalse(currentArchitecture.isInstantiation(finalArchitecture));
 	Assert.assertTrue(bgStrategy.valid(currentArchitecture, finalArchitecture));
-	// Assert.assertFalse(bgStrategy.transits().get(0).condition(currentArchitecture,
-	// finalArchitecture));
-	// Assert.assertFalse(bgStrategy.transits().get(1).condition(currentArchitecture,
-	// finalArchitecture));
-	// Assert.assertTrue(bgStrategy.transits().get(2).condition(currentArchitecture,
-	// finalArchitecture));
+	Assert.assertEquals(currentArchitecture,
+		bgStrategy.getTransitions().get(0).next(currentArchitecture, finalArchitecture));
+	Assert.assertEquals(currentArchitecture,
+		bgStrategy.getTransitions().get(1).next(currentArchitecture, finalArchitecture));
 	Architecture midArchitecture3 = bgStrategy.getTransitions().get(2).next(currentArchitecture, finalArchitecture);
 	Assert.assertEquals(midArchitecture3(), midArchitecture3);
 	Assert.assertTrue(bgStrategy.valid(midArchitecture3, finalArchitecture));
