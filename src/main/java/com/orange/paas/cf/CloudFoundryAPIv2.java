@@ -227,8 +227,8 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	return env;
     }
 
-    private Set<Route> parseRoutes(SpaceApplicationSummary info) {
-	return info.getRoutes().stream().map(route -> new Route(route.getHost(), route.getDomain().getName()))
+    private Set<String> parseRoutes(SpaceApplicationSummary info) {
+	return info.getRoutes().stream().map(route -> route.getHost() + "." + route.getDomain().getName())
 		.collect(Collectors.toSet());
     }
 
@@ -242,7 +242,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     private Microservice init(String guid, String name, String version, String path, MicroserviceState state,
-	    int nbProcesses, Map<String, String> env, Set<Route> routes, Set<String> services, String memory,
+	    int nbProcesses, Map<String, String> env, Set<String> routes, Set<String> services, String memory,
 	    String disk) {
 	Map<String, Object> attributes = new HashMap<>();
 	attributes.put("guid", guid);
