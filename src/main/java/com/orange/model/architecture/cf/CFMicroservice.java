@@ -9,6 +9,7 @@ import com.orange.model.architecture.Microservice;
 public class CFMicroservice extends Microservice {
     @SuppressWarnings("unchecked")
     public CFMicroservice(Microservice microservice) {
+	super(microservice);
 	set("name", microservice.get("name") + "_" + microservice.get("version"));
 	set("state", CFMicroserviceState.valueOf(microservice.get("state").toString()));
 	set("routes", ((Set<String>) microservice.get("routes")).stream().map(Route::new).collect(Collectors.toSet()));

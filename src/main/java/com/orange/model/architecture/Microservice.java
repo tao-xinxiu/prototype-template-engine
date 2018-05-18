@@ -32,6 +32,9 @@ public class Microservice {
 	    if (attribute.getValue() instanceof Collection<?>) {
 		attribute.setValue(new HashSet<String>((Collection<String>) attribute.getValue()));
 	    }
+	    if (attribute.getKey().equals("state")) {
+		attribute.setValue(MicroserviceState.valueOf(attribute.getValue().toString()));
+	    }
 	}
 	this.attributes = attributes;
     }
