@@ -37,20 +37,19 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     @Override
     public Set<Microservice> get() {
 	logger.info("Start getting the current architecture ...");
-	return operations.listSpaceApps().parallelStream()
-		.map(info -> init(info.getId(), parseName(info.getName()), parseVersion(info.getName()),
-			parsePath(info), parseState(info), info.getInstances(), parseEnv(info), parseRoutes(info),
-			parseServices(info), info.getMemory() + "M", info.getDiskQuota() + "M"))
-		.collect(Collectors.toSet());
+	return operations.listSpaceApps().parallelStream().map(info -> parseMicroservice(info)).collect(Collectors.toSet());
     }
 
     public Set<Microservice> getStabilizedMicroservices() {
 	logger.info("Start getting the current architecture and stabilize it ...");
-	return operations.listSpaceApps().parallelStream()
-		.map(info -> init(info.getId(), parseName(info.getName()), parseVersion(info.getName()),
-			parsePath(info), stabilizeState(info), info.getInstances(), parseEnv(info), parseRoutes(info),
-			parseServices(info), info.getMemory() + "M", info.getDiskQuota() + "M"))
-		.collect(Collectors.toSet());
+	Set<Microservice> microservices = new HashSet<>();
+	for (SpaceApplicationSummary appSummary : operations.listSpaceApps()) {
+	    Microservice microservice = parseMicroservice(appSummary);
+	    microservice.set("state", stabilizeState(appSummary));
+	    microservices.add(microservice);
+	}
+
+	return microservices;
     }
 
     @Override
@@ -63,9 +62,16 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 		String msId = operations.create((String) desiredMicroservice.get("name"),
 			(int) desiredMicroservice.get("nbProcesses"),
 			(Map<String, String>) desiredMicroservice.get("env"));
-		CFMicroservice currentMicroservice = initCFMs(msId, (String) desiredMicroservice.get("name"), null,
-			CFMicroserviceState.CREATED, (int) desiredMicroservice.get("nbProcesses"),
-			(Map<String, String>) desiredMicroservice.get("env"), new HashSet<>(), new HashSet<>());
+		Map<String, Object> attributes = new HashMap<>();
+		attributes.put("guid", msId);
+		attributes.put("name", desiredMicroservice.get("name"));
+		attributes.put("path", null);
+		attributes.put("state", CFMicroserviceState.CREATED);
+		attributes.put("nbProcesses", desiredMicroservice.get("nbProcesses"));
+		attributes.put("env", desiredMicroservice.get("env"));
+		attributes.put("routes", new HashSet<>());
+		attributes.put("services", new HashSet<>());
+		CFMicroservice currentMicroservice = new CFMicroservice(attributes);
 		operations.updateRoutesIfNeed(msId, (Set<Route>) currentMicroservice.get("routes"),
 			(Set<Route>) desiredMicroservice.get("routes"));
 		operations.updateServicesIfNeed(msId, (Set<String>) currentMicroservice.get("services"),
@@ -129,7 +135,22 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 		operations.updateStateIfNeed(currentCFMicroservice, desiredCFMicroservice);
 	    }
 	};
+    }
 
+    private Microservice parseMicroservice(SpaceApplicationSummary info) {
+	Map<String, Object> attributes = new HashMap<>();
+	attributes.put("guid", info.getId());
+	attributes.put("name", parseName(info.getName()));
+	attributes.put("version", parseVersion(info.getName()));
+	attributes.put("path", parsePath(info));
+	attributes.put("state", parseState(info));
+	attributes.put("nbProcesses", info.getInstances());
+	attributes.put("env", parseEnv(info));
+	attributes.put("routes", parseRoutes(info));
+	attributes.put("services", parseServices(info));
+	attributes.put("memory", info.getMemory() + "M");
+	attributes.put("disk", info.getDiskQuota() + "M");
+	return new Microservice(attributes);
     }
 
     private boolean stagedMicroservice(CFMicroserviceState msState) {
@@ -239,38 +260,6 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 
     private Set<String> parseServices(SpaceApplicationSummary info) {
 	return new HashSet<>(info.getServiceNames());
-    }
-
-    private Microservice init(String guid, String name, String version, String path, MicroserviceState state,
-	    int nbProcesses, Map<String, String> env, Set<String> routes, Set<String> services, String memory,
-	    String disk) {
-	Map<String, Object> attributes = new HashMap<>();
-	attributes.put("guid", guid);
-	attributes.put("name", name);
-	attributes.put("version", version);
-	attributes.put("path", path);
-	attributes.put("state", state);
-	attributes.put("nbProcesses", nbProcesses);
-	attributes.put("env", env);
-	attributes.put("routes", routes);
-	attributes.put("services", services);
-	attributes.put("memory", memory);
-	attributes.put("disk", disk);
-	return new Microservice(attributes);
-    }
-
-    private CFMicroservice initCFMs(String guid, String name, String path, CFMicroserviceState state, int nbProcesses,
-	    Map<String, String> env, Set<Route> routes, Set<String> services) {
-	Map<String, Object> attributes = new HashMap<>();
-	attributes.put("guid", guid);
-	attributes.put("name", name);
-	attributes.put("path", path);
-	attributes.put("state", state);
-	attributes.put("nbProcesses", nbProcesses);
-	attributes.put("env", env);
-	attributes.put("routes", routes);
-	attributes.put("services", services);
-	return new CFMicroservice(attributes);
     }
 
     abstract class SiteStep extends Step {
