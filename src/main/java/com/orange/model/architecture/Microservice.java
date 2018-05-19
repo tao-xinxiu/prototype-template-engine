@@ -47,6 +47,33 @@ public class Microservice {
 	attributes.put(key, value);
     }
 
+    public boolean eqAttr(String key, Microservice other) {
+	if (other == null)
+	    return false;
+	if (attributes == null) {
+	    if (other.attributes != null)
+		return false;
+	} else if (attributes.get(key) == null) {
+	    if (other.attributes.get(key) != null) {
+		return false;
+	    }
+	} else if (!attributes.get(key).equals(other.attributes.get(key)))
+	    return false;
+	return true;
+    }
+
+    public boolean eqAttr(List<String> keys, Microservice obj) {
+	return keys.stream().allMatch(key -> eqAttr(key, obj));
+    }
+
+    public void copyAttr(String key, Microservice other) {
+	attributes.put(key, other.attributes.get(key));
+    }
+
+    public void copyAttr(List<String> keys, Microservice other) {
+	keys.stream().forEach(key -> copyAttr(key, other));
+    }
+
     /**
      * return whether "this" is an instantiation of desiredMicroservice.
      * 

@@ -38,20 +38,13 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 		Set<Microservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
 		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(currentMicroservices,
-			    ms -> ms.get("name").equals(desiredMicroservice.get("name"))
-				    && ms.get("path").equals(desiredMicroservice.get("path"))
-				    && ms.get("env").equals(desiredMicroservice.get("env")))) {
+			    ms -> ms.eqAttr(Arrays.asList("name", "path", "env"), desiredMicroservice))) {
 			Microservice updatingMs = SetUtil.getUniqueMicroservice(currentMicroservices,
 				(String) desiredMicroservice.get("name"), config.getUpdatingVersion());
 			if (updatingMs != null) {
-			    Microservice newMicroservice = new Microservice(desiredMicroservice); // copy
-												  // all
-												  // properties
-												  // except
-												  // id,
-												  // version
-			    newMicroservice.set("guid", updatingMs.get("guid"));
-			    newMicroservice.set("version", updatingMs.get("version"));
+			    // copy all properties except id, version
+			    Microservice newMicroservice = new Microservice(desiredMicroservice);
+			    newMicroservice.copyAttr(Arrays.asList("guid", "version"), updatingMs);
 			    updatingMs = newMicroservice;
 			} else {
 			    Microservice newMicroservice = new Microservice(desiredMicroservice);
@@ -73,8 +66,8 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
     };
 
     /**
-     * next architecture: update desired microservice properties except
-     * nbrProcesses and routes
+     * next architecture: update desired microservice properties except nbrProcesses
+     * and routes
      */
     protected Transition updateExceptInstancesRoutesTransit = new Transition() {
 	// assume that it doesn't exist two microservices with same pkg and name
@@ -82,23 +75,15 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
-			    ms -> ms.get("name").equals(desiredMicroservice.get("name"))
-				    && ms.get("version").equals(config.getUpdatingVersion())
-				    && ms.get("path").equals(desiredMicroservice.get("path"))
-				    && ms.get("env").equals(desiredMicroservice.get("env"))
-				    && ms.get("services").equals(desiredMicroservice.get("services"))
-				    && ms.get("state").equals(desiredMicroservice.get("state")))) {
+			    ms -> ms.eqAttr(Arrays.asList("name", "path", "env", "services", "state"), desiredMs)
+				    && ms.get("version").equals(config.getUpdatingVersion()))) {
 			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
-				nextArchitecture.getSiteMicroservices(site),
-				ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+				nextArchitecture.getSiteMicroservices(site), ms -> ms.eqAttr("name", desiredMs)
 					&& ms.get("version").equals(config.getUpdatingVersion()));
-			nextMicroservice.set("path", desiredMicroservice.get("path"));
-			nextMicroservice.set("env", desiredMicroservice.get("env"));
-			nextMicroservice.set("services", desiredMicroservice.get("services"));
-			nextMicroservice.set("state", desiredMicroservice.get("state"));
-			nextMicroservice.set("routes", library.tmpRoute(site, desiredMicroservice));
+			nextMicroservice.copyAttr(Arrays.asList("path", "env", "services", "state"), desiredMs);
+			nextMicroservice.set("routes", library.tmpRoute(site, desiredMs));
 			logger.info("Updated microservice [{}_{}] to {} ", nextMicroservice.get("name"),
 				nextMicroservice.get("version"), nextMicroservice);
 		    }
@@ -117,20 +102,14 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
-			    ms -> ms.get("name").equals(desiredMicroservice.get("name"))
-				    && ms.get("version").equals(config.getUpdatingVersion())
-				    && ms.get("path").equals(desiredMicroservice.get("path"))
-				    && ms.get("env").equals(desiredMicroservice.get("env"))
-				    && ms.get("services").equals(desiredMicroservice.get("services"))
-				    && ms.get("state").equals(desiredMicroservice.get("state"))
-				    && ms.get("routes").equals(desiredMicroservice.get("routes")))) {
+			    ms -> ms.eqAttr(Arrays.asList("name", "path", "env", "services", "state", "routes"),
+				    desiredMs) && ms.get("version").equals(config.getUpdatingVersion()))) {
 			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
-				nextArchitecture.getSiteMicroservices(site),
-				ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+				nextArchitecture.getSiteMicroservices(site), ms -> ms.eqAttr("name", desiredMs)
 					&& ms.get("version").equals(config.getUpdatingVersion()));
-			nextMicroservice.set("routes", desiredMicroservice.get("routes"));
+			nextMicroservice.copyAttr("routes", desiredMs);
 			logger.info("Updated microservice [{}_{}] route to {} ", nextMicroservice.get("name"),
 				nextMicroservice.get("version"), nextMicroservice.get("routes"));
 		    }
@@ -173,5 +152,4 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 	    return nextArchitecture;
 	}
     };
-
 }
