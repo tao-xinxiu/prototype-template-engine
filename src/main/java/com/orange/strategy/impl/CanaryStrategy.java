@@ -82,12 +82,8 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 		    Microservice nextMs = SetUtil.getUniqueMicroservice(nextArchitecture.getSiteMicroservices(site),
 			    ms -> ms.eqAttr("name", desiredMs)
 				    && ms.get("version").equals(library.desiredVersion(desiredMs)));
-		    // if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
-		    // ms -> ms.eqAttr(Arrays.asList("name", "path", "env", "services", "state"),
-		    // desiredMs))) {
 		    if (!nextMs.eqAttrExcept(Arrays.asList("guid", "version", "routes", "nbProcesses"), desiredMs)) {
 			nextMs.copyAttrExcept(Arrays.asList("guid", "version", "routes", "nbProcesses"), desiredMs);
-			// nextMs.copyAttr(Arrays.asList("path", "env", "services", "state"),desiredMs);
 			nextMs.set("routes", library.tmpRoute(site, desiredMs));
 			logger.info("Updated microservice [{}_{}] to {} ", nextMs.get("name"), nextMs.get("version"),
 				nextMs);
@@ -107,26 +103,24 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
+		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
 		    Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
 		    Set<Microservice> relatedMicroservices = SetUtil.search(nextMicroservices,
-			    ms -> ms.get("name").equals(desiredMicroservice.get("name"))
-				    && ms.get("state").equals(desiredMicroservice.get("state"))
-				    && ms.get("routes").equals(desiredMicroservice.get("routes")));
+			    ms -> ms.eqAttr(Arrays.asList("name", "state", "routes"), desiredMs));
 		    if (relatedMicroservices.stream().mapToInt(ms -> (int) ms.get("nbProcesses"))
-			    .sum() == (int) desiredMicroservice.get("nbProcesses")) {
-			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(relatedMicroservices,
-				ms -> !ms.get("version").equals(library.desiredVersion(desiredMicroservice)));
+			    .sum() == (int) desiredMs.get("nbProcesses")) {
+			Microservice nextMs = SetUtil.getUniqueMicroservice(relatedMicroservices,
+				ms -> !ms.get("version").equals(library.desiredVersion(desiredMs)));
 			boolean canaryNotCreated = SetUtil.noneMatch(relatedMicroservices,
-				ms -> ms.get("version").equals(library.desiredVersion(desiredMicroservice)));
+				ms -> ms.get("version").equals(library.desiredVersion(desiredMs)));
 			int scaleDownNb = canaryNotCreated ? config.getCanaryNbr() : config.getCanaryIncrease();
-			int nextNbr = (int) nextMicroservice.get("nbProcesses") - scaleDownNb;
+			int nextNbr = (int) nextMs.get("nbProcesses") - scaleDownNb;
 			if (nextNbr >= 1) {
-			    nextMicroservice.set("nbProcesses", nextNbr);
-			    logger.info("rolled out microservice {}", nextMicroservice);
+			    nextMs.set("nbProcesses", nextNbr);
+			    logger.info("rolled out microservice {}", nextMs);
 			} else {
-			    nextMicroservices.remove(nextMicroservice);
-			    logger.info("removed microservice {}", nextMicroservice);
+			    nextMicroservices.remove(nextMs);
+			    logger.info("removed microservice {}", nextMs);
 			}
 		    }
 		}
@@ -146,14 +140,15 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
 		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
-			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(nextMicroservices,
-				ms -> ms.get("name").equals(desiredMicroservice.get("name"))
+			Microservice nextMs = SetUtil.getUniqueMicroservice(nextMicroservices,
+				ms -> ms.eqAttr("name", desiredMicroservice)
 					&& ms.get("version").equals(library.desiredVersion(desiredMicroservice)));
-			int nextNbr = (int) nextMicroservice.get("nbProcesses") + config.getCanaryIncrease();
+			int nextNbr = (int) nextMs.get("nbProcesses") + config.getCanaryIncrease();
 			if (nextNbr > (int) desiredMicroservice.get("nbProcesses")) {
 			    nextNbr = (int) desiredMicroservice.get("nbProcesses");
 			}
-			nextMicroservice.set("nbProcesses", nextNbr);
+			nextMs.set("nbProcesses", nextNbr);
+			logger.info("scaled up microservice {}", nextMs);
 		    }
 		}
 	    }
