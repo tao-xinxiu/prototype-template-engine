@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -153,58 +154,40 @@ public class StrategyLibrary {
 	};
     }
 
+    public Transition updateRouteTransit(List<String> updatingKeys) {
+	return new Transition() {
+	    @Override
+	    public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+		Architecture nextArchitecture = new Architecture(currentArchitecture);
+		for (String site : finalArchitecture.listSitesName()) {
+		    for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
+			Set<Microservice> nextMss = nextArchitecture.getSiteMicroservices(site);
+			if (SetUtil.noneMatch(nextMss, ms -> ms.eqAttrExcept(updatingKeys, desiredMs)
+				&& ms.get("version").equals(desiredVersion(desiredMs)))) {
+			    Microservice nextMs = SetUtil.getUniqueMicroservice(nextMss, (String) desiredMs.get("name"),
+				    desiredVersion(desiredMs));
+			    nextMs.copyAttr("routes", desiredMs);
+			    logger.info("Updated microservice [{}_{}] route to {} ", nextMs.get("name"),
+				    nextMs.get("version"), nextMs.get("routes"));
+			}
+		    }
+		}
+		return nextArchitecture;
+	    }
+	};
+    }
+
     /**
      * getting next architecture by updating desired microservice route and setting
      * version
      */
-    public Transition updateRouteAtLastTransit = new Transition() {
-	// assume that it doesn't exist two microservices with same pkg and name
-	@Override
-	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
-	    Architecture nextArchitecture = new Architecture(currentArchitecture);
-	    for (String site : finalArchitecture.listSitesName()) {
-		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
-		    Set<Microservice> nextMss = SetUtil.searchByName(nextArchitecture.getSiteMicroservices(site),
-			    (String) desiredMs.get("name"));
-		    if (SetUtil.noneMatch(nextMss, ms -> ms.isInstantiation(desiredMs))) {
-			Microservice nextMs = SetUtil.getOneMicroservice(nextMss,
-				ms -> ms.eqAttr(Arrays.asList("path", "env", "nbProcesses", "services", "state"),
-					desiredMs) && ms.get("version").equals(desiredVersion(desiredMs)));
-			nextMs.set("routes", desiredMs.get("routes"));
-			logger.info("Updated microservice [{}_{}] route to {} ", nextMs.get("name"),
-				nextMs.get("version"), nextMs.get("routes"));
-		    }
-		}
-	    }
-	    return nextArchitecture;
-	}
-    };
+    public Transition updateRouteAtLastTransit = updateRouteTransit(Arrays.asList("guid", "version"));
 
     /**
      * next architecture: update desired microservice route
      */
-    public Transition updateRouteBeforeNbProcTransit = new Transition() {
-	// assume that it doesn't exist two microservices with same pkg and name
-	@Override
-	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
-	    Architecture nextArchitecture = new Architecture(currentArchitecture);
-	    for (String site : finalArchitecture.listSitesName()) {
-		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
-		    if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
-			    ms -> ms.eqAttrExcept(Arrays.asList("guid", "routes", "nbProcesses"), desiredMs)
-				    && ms.get("version").equals(config.getUpdatingVersion()))) {
-			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
-				nextArchitecture.getSiteMicroservices(site), ms -> ms.eqAttr("name", desiredMs)
-					&& ms.get("version").equals(config.getUpdatingVersion()));
-			nextMicroservice.copyAttr("routes", desiredMs);
-			logger.info("Updated microservice [{}_{}] route to {} ", nextMicroservice.get("name"),
-				nextMicroservice.get("version"), nextMicroservice.get("routes"));
-		    }
-		}
-	    }
-	    return nextArchitecture;
-	}
-    };
+    public Transition updateRouteBeforeNbProcTransit = updateRouteTransit(
+	    Arrays.asList("guid", "version", "nbProcesses"));
 
     public Transition cleanAllTransit = new Transition() {
 	@Override
