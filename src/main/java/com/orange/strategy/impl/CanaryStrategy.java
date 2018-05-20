@@ -10,18 +10,19 @@ import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
 import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.MicroserviceState;
+import com.orange.strategy.TagUpdatingVersionStrategy;
 import com.orange.strategy.Transition;
 import com.orange.util.SetUtil;
 import com.orange.util.VersionGenerator;
 
 // Strategy assume route not updated between Ainit and Af
-public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
+public class CanaryStrategy extends TagUpdatingVersionStrategy {
     private static final Logger logger = LoggerFactory.getLogger(CanaryStrategy.class);
 
     public CanaryStrategy(StrategyConfig config) {
 	super(config);
 	transitions = Arrays.asList(rolloutTransit, addCanaryTransit, updateExceptInstancesRoutesTransit,
-		updateRouteTransit, scaleupTransit, library.removeUndesiredTransit);
+		library.updateRouteBeforeNbProcTransit, scaleupTransit, library.removeUndesiredTransit);
     }
 
     @Override

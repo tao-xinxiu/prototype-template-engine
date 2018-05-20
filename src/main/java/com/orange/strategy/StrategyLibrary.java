@@ -157,7 +157,7 @@ public class StrategyLibrary {
      * getting next architecture by updating desired microservice route and setting
      * version
      */
-    public Transition updateRouteTransit = new Transition() {
+    public Transition updateRouteAtLastTransit = new Transition() {
 	// assume that it doesn't exist two microservices with same pkg and name
 	@Override
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
@@ -173,6 +173,32 @@ public class StrategyLibrary {
 			nextMs.set("routes", desiredMs.get("routes"));
 			logger.info("Updated microservice [{}_{}] route to {} ", nextMs.get("name"),
 				nextMs.get("version"), nextMs.get("routes"));
+		    }
+		}
+	    }
+	    return nextArchitecture;
+	}
+    };
+
+    /**
+     * next architecture: update desired microservice route
+     */
+    public Transition updateRouteBeforeNbProcTransit = new Transition() {
+	// assume that it doesn't exist two microservices with same pkg and name
+	@Override
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
+		    if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
+			    ms -> ms.eqAttrExcept(Arrays.asList("guid", "routes", "nbProcesses"), desiredMs)
+				    && ms.get("version").equals(config.getUpdatingVersion()))) {
+			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
+				nextArchitecture.getSiteMicroservices(site), ms -> ms.eqAttr("name", desiredMs)
+					&& ms.get("version").equals(config.getUpdatingVersion()));
+			nextMicroservice.copyAttr("routes", desiredMs);
+			logger.info("Updated microservice [{}_{}] route to {} ", nextMicroservice.get("name"),
+				nextMicroservice.get("version"), nextMicroservice.get("routes"));
 		    }
 		}
 	    }

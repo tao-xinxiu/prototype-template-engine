@@ -18,7 +18,7 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 
     public BlueGreenCanaryMixStrategy(StrategyConfig config) {
 	super(config);
-	transitions = Arrays.asList(addCanaryTransit, updateExceptInstancesRoutesTransit, updateRouteTransit,
+	transitions = Arrays.asList(addCanaryTransit, updateExceptInstancesRoutesTransit, library.updateRouteBeforeNbProcTransit,
 		rolloutTransit, library.removeUndesiredTransit);
     }
 
@@ -93,31 +93,7 @@ public class BlueGreenCanaryMixStrategy extends TagUpdatingVersionStrategy {
 	}
     };
 
-    /**
-     * next architecture: update desired microservice route
-     */
-    protected Transition updateRouteTransit = new Transition() {
-	// assume that it doesn't exist two microservices with same pkg and name
-	@Override
-	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
-	    Architecture nextArchitecture = new Architecture(currentArchitecture);
-	    for (String site : finalArchitecture.listSitesName()) {
-		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
-		    if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
-			    ms -> ms.eqAttr(Arrays.asList("name", "path", "env", "services", "state", "routes"),
-				    desiredMs) && ms.get("version").equals(config.getUpdatingVersion()))) {
-			Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
-				nextArchitecture.getSiteMicroservices(site), ms -> ms.eqAttr("name", desiredMs)
-					&& ms.get("version").equals(config.getUpdatingVersion()));
-			nextMicroservice.copyAttr("routes", desiredMs);
-			logger.info("Updated microservice [{}_{}] route to {} ", nextMicroservice.get("name"),
-				nextMicroservice.get("version"), nextMicroservice.get("routes"));
-		    }
-		}
-	    }
-	    return nextArchitecture;
-	}
-    };
+    
 
     /**
      * next architecture: scale up desired microservice and rollout old ones

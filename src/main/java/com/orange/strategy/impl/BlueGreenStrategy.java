@@ -18,7 +18,7 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 
     public BlueGreenStrategy(StrategyConfig config) {
 	super(config);
-	transitions = Arrays.asList(newPkgEnvTransit, updateExceptRouteTransit, library.updateRouteTransit,
+	transitions = Arrays.asList(newPkgEnvTransit, updateExceptRouteTransit, library.updateRouteAtLastTransit,
 		library.removeUndesiredTransit);
     }
 
