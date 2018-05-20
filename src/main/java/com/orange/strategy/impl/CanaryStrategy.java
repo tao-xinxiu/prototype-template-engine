@@ -12,6 +12,7 @@ import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.MicroserviceState;
 import com.orange.strategy.Transition;
 import com.orange.util.SetUtil;
+import com.orange.util.VersionGenerator;
 
 // Strategy assume route not updated between Ainit and Af
 public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
@@ -149,6 +150,12 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
 			}
 			nextMs.set("nbProcesses", nextNbr);
 			logger.info("scaled up microservice {}", nextMs);
+			if (nextMs.isInstantiation(desiredMicroservice)
+				&& nextMs.get("version").equals(config.getUpdatingVersion())) {
+			    nextMs.set("version", VersionGenerator.random(SetUtil.collectVersions(nextMicroservices)));
+			    logger.info("Change microservice [{}] version from [{}] to [{}]", nextMs.get("name"),
+				    config.getUpdatingVersion(), nextMs.get("version"));
+			}
 		    }
 		}
 	    }
