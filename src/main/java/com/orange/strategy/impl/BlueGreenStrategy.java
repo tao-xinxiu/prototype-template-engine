@@ -30,8 +30,8 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
     }
 
     /**
-     * next architecture: add microservice with new pkg and env. Tagging
-     * updating microservice with version "updating"
+     * next architecture: add microservice with new pkg and env. Tagging updating
+     * microservice with version "updating"
      */
     protected Transition newPkgEnvTransit = new Transition() {
 	@Override
@@ -39,19 +39,19 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
 		Set<Microservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
-		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    if (SetUtil.noneMatch(currentMicroservices, ms -> ms.get("name").equals(desiredMicroservice.get("name"))
-			    && ms.get("version").equals(library.desiredVersion(desiredMicroservice)))) {
-			Microservice newMicroservice = new Microservice(desiredMicroservice);
-			newMicroservice.set("guid", null);
-			newMicroservice.set("routes", library.tmpRoute(site, desiredMicroservice));
-			if (newMicroservice.get("version") == null) {
-			    newMicroservice.set("version", config.getUpdatingVersion());
-			}
-			nextArchitecture.getSite(site).addMicroservice(newMicroservice);
-			logger.info("Added a new microservice deployment: {} ", newMicroservice);
-			// continue;
+		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
+		    Microservice updatingMs = SetUtil.getUniqueMicroservice(currentMicroservices,
+			    (String) desiredMs.get("name"), config.getUpdatingVersion());
+		    if (updatingMs == null && SetUtil.noneMatch(currentMicroservices,
+			    ms -> ms.eqAttr(Arrays.asList("name", "path", "env"), desiredMs))) {
+			Microservice newMs = new Microservice(desiredMs);
+			newMs.set("guid", null);
+			newMs.set("version", library.desiredVersion(desiredMs));
+			newMs.set("routes", library.tmpRoute(site, desiredMs));
+			nextArchitecture.getSite(site).addMicroservice(newMs);
+			logger.info("Added a new microservice: {} ", newMs);
 		    }
+		    continue;
 		}
 	    }
 	    return nextArchitecture;
@@ -59,8 +59,8 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
     };
 
     /**
-     * getting next architecture by updating desired microservice properties
-     * (except route)
+     * getting next architecture by updating desired microservice properties (except
+     * route)
      */
     protected Transition updateExceptRouteTransit = new Transition() {
 	// assume that it doesn't exist two microservices with same pkg and name
@@ -68,27 +68,15 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
-			    ms -> ms.get("name").equals(desiredMicroservice.get("name"))
-				    && ms.get("version").equals(library.desiredVersion(desiredMicroservice))
-				    && ms.get("path").equals(desiredMicroservice.get("path"))
-				    && ms.get("env").equals(desiredMicroservice.get("env"))
-				    && ms.get("nbProcesses") == desiredMicroservice.get("nbProcesses")
-				    && ms.get("services").equals(desiredMicroservice.get("services"))
-				    && ms.get("state").equals(desiredMicroservice.get("state")))) {
-			Microservice nextMicroservice = SetUtil.getOneMicroservice(
-				nextArchitecture.getSiteMicroservices(site),
-				ms -> ms.get("name").equals(desiredMicroservice.get("name"))
-					&& ms.get("version").equals(library.desiredVersion(desiredMicroservice)));
-			nextMicroservice.set("path", desiredMicroservice.get("path"));
-			nextMicroservice.set("env", desiredMicroservice.get("env"));
-			nextMicroservice.set("nbProcesses", desiredMicroservice.get("nbProcesses"));
-			nextMicroservice.set("services", desiredMicroservice.get("services"));
-			nextMicroservice.set("state", desiredMicroservice.get("state"));
-			nextMicroservice.set("routes", library.tmpRoute(site, desiredMicroservice));
-			logger.info("Updated microservice [{}_{}] to {} ", nextMicroservice.get("name"),
-				nextMicroservice.get("version"), nextMicroservice);
+		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
+		    Microservice nextMs = SetUtil.getUniqueMicroservice(nextArchitecture.getSiteMicroservices(site),
+			    (String) desiredMs.get("name"), library.desiredVersion(desiredMs));
+		    // nextMs.eqAttr(Arrays.asList("name","path","env","nbProcesses","services","state"),desiredMs)
+		    if (!nextMs.eqAttrExcept(Arrays.asList("guid", "version", "routes"), desiredMs)) {
+			nextMs.copyAttrExcept(Arrays.asList("guid", "version", "routes"), desiredMs);
+			nextMs.set("routes", library.tmpRoute(site, desiredMs));
+			logger.info("Updated microservice [{}_{}] to {} ", nextMs.get("name"), nextMs.get("version"),
+				nextMs);
 		    }
 		}
 	    }

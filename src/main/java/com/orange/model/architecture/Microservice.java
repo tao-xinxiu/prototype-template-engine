@@ -1,5 +1,6 @@
 package com.orange.model.architecture;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -62,8 +63,14 @@ public class Microservice {
 	return true;
     }
 
-    public boolean eqAttr(List<String> keys, Microservice obj) {
-	return keys.stream().allMatch(key -> eqAttr(key, obj));
+    public boolean eqAttr(List<String> keys, Microservice other) {
+	return keys.stream().allMatch(key -> eqAttr(key, other));
+    }
+
+    public boolean eqAttrExcept(List<String> excludeKeys, Microservice other) {
+	List<String> eqKeys = new ArrayList<>(other.attributes.keySet());
+	eqKeys.removeAll(excludeKeys);
+	return eqKeys.stream().allMatch(key -> eqAttr(key, other));
     }
 
     public void copyAttr(String key, Microservice other) {
@@ -72,6 +79,18 @@ public class Microservice {
 
     public void copyAttr(List<String> keys, Microservice other) {
 	keys.stream().forEach(key -> copyAttr(key, other));
+    }
+
+    public void copyAttrExcept(String excludeKey, Microservice other) {
+	List<String> copyKeys = new ArrayList<>(other.attributes.keySet());
+	copyKeys.remove(excludeKey);
+	copyKeys.stream().forEach(key -> copyAttr(key, other));
+    }
+
+    public void copyAttrExcept(List<String> excludeKeys, Microservice other) {
+	List<String> copyKeys = new ArrayList<>(other.attributes.keySet());
+	copyKeys.removeAll(excludeKeys);
+	copyKeys.stream().forEach(key -> copyAttr(key, other));
     }
 
     /**

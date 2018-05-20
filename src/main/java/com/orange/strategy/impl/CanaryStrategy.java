@@ -41,8 +41,66 @@ public class CanaryStrategy extends BlueGreenCanaryMixStrategy {
     }
 
     /**
-     * next architecture: scale down non-desired microservice when the
-     * microservice routed running instances equals to desired instances
+     * next architecture: add canary microservice with new pkg and env
+     */
+    protected Transition addCanaryTransit = new Transition() {
+	@Override
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		Set<Microservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
+		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
+		    Microservice updatingMs = SetUtil.getUniqueMicroservice(currentMicroservices,
+			    (String) desiredMs.get("name"), config.getUpdatingVersion());
+		    if (updatingMs == null && SetUtil.noneMatch(currentMicroservices,
+			    ms -> ms.eqAttr(Arrays.asList("name", "path", "env"), desiredMs))) {
+			Microservice newMs = new Microservice(desiredMs);
+			newMs.set("guid", null);
+			newMs.set("version", library.desiredVersion(desiredMs));
+			newMs.set("routes", library.tmpRoute(site, desiredMs));
+			newMs.set("nbProcesses", config.getCanaryNbr());
+			nextArchitecture.getSite(site).addMicroservice(newMs);
+			logger.info("Added a new microservice: {} ", newMs);
+		    }
+		}
+	    }
+	    return nextArchitecture;
+	}
+    };
+
+    /**
+     * next architecture: update desired microservice properties except nbProcesses
+     * and routes
+     */
+    protected Transition updateExceptInstancesRoutesTransit = new Transition() {
+	// assume that it doesn't exist two microservices with same pkg and name
+	@Override
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
+		    Microservice nextMs = SetUtil.getUniqueMicroservice(nextArchitecture.getSiteMicroservices(site),
+			    ms -> ms.eqAttr("name", desiredMs)
+				    && ms.get("version").equals(library.desiredVersion(desiredMs)));
+		    // if (SetUtil.noneMatch(nextArchitecture.getSiteMicroservices(site),
+		    // ms -> ms.eqAttr(Arrays.asList("name", "path", "env", "services", "state"),
+		    // desiredMs))) {
+		    if (!nextMs.eqAttrExcept(Arrays.asList("guid", "version", "routes", "nbProcesses"), desiredMs)) {
+			nextMs.copyAttrExcept(Arrays.asList("guid", "version", "routes", "nbProcesses"), desiredMs);
+			// nextMs.copyAttr(Arrays.asList("path", "env", "services", "state"),desiredMs);
+			nextMs.set("routes", library.tmpRoute(site, desiredMs));
+			logger.info("Updated microservice [{}_{}] to {} ", nextMs.get("name"), nextMs.get("version"),
+				nextMs);
+		    }
+		}
+	    }
+	    return nextArchitecture;
+	}
+    };
+
+    /**
+     * next architecture: scale down non-desired microservice when the microservice
+     * routed running instances equals to desired instances
      */
     protected Transition rolloutTransit = new Transition() {
 	@Override

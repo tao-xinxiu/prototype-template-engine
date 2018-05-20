@@ -1,5 +1,6 @@
 package com.orange.strategy;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,34 +26,6 @@ public class StrategyLibrary {
     }
 
     /**
-     * next architecture: remove micro-services not in finalArchitecture
-     */
-    public Transition removeUndesiredTransit = new Transition() {
-	@Override
-	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
-	    Architecture nextArchitecture = new Architecture(currentArchitecture);
-	    for (String site : finalArchitecture.listSitesName()) {
-		Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
-		Iterator<Microservice> iterator = nextMicroservices.iterator();
-		while (iterator.hasNext()) {
-		    Microservice microservice = iterator.next();
-		    if (SetUtil.noneMatch(finalArchitecture.getSiteMicroservices(site),
-			    desiredMs -> microservice.isInstantiation(desiredMs))) {
-			iterator.remove();
-			logger.info("Removed microservice [{}]", microservice);
-		    } else if (microservice.get("version").equals(config.getUpdatingVersion())) {
-			microservice.set("version",
-				VersionGenerator.random(SetUtil.collectVersions(nextMicroservices)));
-			logger.info("Change microservice [{}] version from [{}] to [{}]", microservice.get("name"),
-				config.getUpdatingVersion(), microservice.get("version"));
-		    }
-		}
-	    }
-	    return nextArchitecture;
-	}
-    };
-
-    /**
      * next architecture: adding new micro-services (in finalArchitecture, not in
      * currentArchitecture, identified by name)
      */
@@ -73,6 +46,34 @@ public class StrategyLibrary {
 			currentMicroservices.add(newMicroservice);
 			logger.info("Added a new microservice: {} ", newMicroservice);
 			continue;
+		    }
+		}
+	    }
+	    return nextArchitecture;
+	}
+    };
+
+    /**
+     * next architecture: remove micro-services not in finalArchitecture
+     */
+    public Transition removeUndesiredTransit = new Transition() {
+	@Override
+	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
+	    Architecture nextArchitecture = new Architecture(currentArchitecture);
+	    for (String site : finalArchitecture.listSitesName()) {
+		Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
+		Iterator<Microservice> iterator = nextMicroservices.iterator();
+		while (iterator.hasNext()) {
+		    Microservice microservice = iterator.next();
+		    if (SetUtil.noneMatch(finalArchitecture.getSiteMicroservices(site),
+			    desiredMs -> microservice.isInstantiation(desiredMs))) {
+			iterator.remove();
+			logger.info("Removed microservice [{}]", microservice);
+		    } else if (microservice.get("version").equals(config.getUpdatingVersion())) {
+			microservice.set("version",
+				VersionGenerator.random(SetUtil.collectVersions(nextMicroservices)));
+			logger.info("Change microservice [{}] version from [{}] to [{}]", microservice.get("name"),
+				config.getUpdatingVersion(), microservice.get("version"));
 		    }
 		}
 	    }
@@ -162,18 +163,14 @@ public class StrategyLibrary {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    Set<Microservice> nextMicroservices = SetUtil.searchByName(
-			    nextArchitecture.getSiteMicroservices(site), (String) desiredMicroservice.get("name"));
-		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
-			Microservice nextMs = SetUtil.getOneMicroservice(nextMicroservices,
-				ms -> ms.get("version").equals(desiredVersion(desiredMicroservice))
-					&& ms.get("path").equals(desiredMicroservice.get("path"))
-					&& ms.get("env").equals(desiredMicroservice.get("env"))
-					&& ms.get("nbProcesses") == desiredMicroservice.get("nbProcesses")
-					&& ms.get("services").equals(desiredMicroservice.get("services"))
-					&& ms.get("state").equals(desiredMicroservice.get("state")));
-			nextMs.set("routes", desiredMicroservice.get("routes"));
+		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
+		    Set<Microservice> nextMss = SetUtil.searchByName(nextArchitecture.getSiteMicroservices(site),
+			    (String) desiredMs.get("name"));
+		    if (SetUtil.noneMatch(nextMss, ms -> ms.isInstantiation(desiredMs))) {
+			Microservice nextMs = SetUtil.getOneMicroservice(nextMss,
+				ms -> ms.eqAttr(Arrays.asList("path", "env", "nbProcesses", "services", "state"),
+					desiredMs) && ms.get("version").equals(desiredVersion(desiredMs)));
+			nextMs.set("routes", desiredMs.get("routes"));
 			logger.info("Updated microservice [{}_{}] route to {} ", nextMs.get("name"),
 				nextMs.get("version"), nextMs.get("routes"));
 		    }

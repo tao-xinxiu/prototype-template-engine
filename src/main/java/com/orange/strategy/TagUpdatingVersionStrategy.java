@@ -3,6 +3,7 @@ package com.orange.strategy;
 import com.orange.model.StrategyConfig;
 
 public abstract class TagUpdatingVersionStrategy extends Strategy {
+
     public TagUpdatingVersionStrategy(StrategyConfig config) {
 	super(config);
 	if (config.getUpdatingVersion() == null) {
