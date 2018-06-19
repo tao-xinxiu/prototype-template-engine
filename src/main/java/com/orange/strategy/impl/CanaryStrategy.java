@@ -22,7 +22,8 @@ public class CanaryStrategy extends TagUpdatingVersionStrategy {
     public CanaryStrategy(StrategyConfig config) {
 	super(config);
 	transitions = Arrays.asList(rolloutTransit, addCanaryTransit, updateExceptInstancesRoutesTransit,
-		library.updateRouteBeforeNbProcTransit, scaleupTransit, library.removeUndesiredTransit);
+		library.updateRouteTransit(Arrays.asList("guid", "version", "nbProcesses")), scaleupTransit,
+		library.removeUndesiredTransit);
     }
 
     @Override

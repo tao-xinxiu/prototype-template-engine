@@ -18,7 +18,8 @@ public class BlueGreenCanaryMixStrategy extends CanaryStrategy {
     public BlueGreenCanaryMixStrategy(StrategyConfig config) {
 	super(config);
 	transitions = Arrays.asList(addCanaryTransit, updateExceptInstancesRoutesTransit,
-		library.updateRouteBeforeNbProcTransit, scaleTransit, library.removeUndesiredTransit);
+		library.updateRouteTransit(Arrays.asList("guid", "version", "nbProcesses")), scaleTransit,
+		library.removeUndesiredTransit);
     }
 
     @Override

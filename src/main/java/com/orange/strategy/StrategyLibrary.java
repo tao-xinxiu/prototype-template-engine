@@ -1,6 +1,5 @@
 package com.orange.strategy;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -154,7 +153,14 @@ public class StrategyLibrary {
 	};
     }
 
-    public Transition updateRouteTransit(List<String> updatingKeys) {
+    /**
+     * update route to the desired in the condition that all the other properties
+     * except updateAfterKeys have been updated
+     * 
+     * @param updateAfterwardKeys
+     * @return
+     */
+    public Transition updateRouteTransit(List<String> updateAfterwardKeys) {
 	return new Transition() {
 	    @Override
 	    public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
@@ -162,7 +168,7 @@ public class StrategyLibrary {
 		for (String site : finalArchitecture.listSitesName()) {
 		    for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
 			Set<Microservice> nextMss = nextArchitecture.getSiteMicroservices(site);
-			if (SetUtil.noneMatch(nextMss, ms -> ms.eqAttrExcept(updatingKeys, desiredMs)
+			if (SetUtil.noneMatch(nextMss, ms -> ms.eqAttrExcept(updateAfterwardKeys, desiredMs)
 				&& ms.get("version").equals(desiredVersion(desiredMs)))) {
 			    Microservice nextMs = SetUtil.getUniqueMicroservice(nextMss, (String) desiredMs.get("name"),
 				    desiredVersion(desiredMs));
@@ -176,18 +182,6 @@ public class StrategyLibrary {
 	    }
 	};
     }
-
-    /**
-     * getting next architecture by updating desired microservice route and setting
-     * version
-     */
-    public Transition updateRouteAtLastTransit = updateRouteTransit(Arrays.asList("guid", "version"));
-
-    /**
-     * next architecture: update desired microservice route
-     */
-    public Transition updateRouteBeforeNbProcTransit = updateRouteTransit(
-	    Arrays.asList("guid", "version", "nbProcesses"));
 
     public Transition cleanAllTransit = new Transition() {
 	@Override
