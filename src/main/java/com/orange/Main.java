@@ -1,26 +1,18 @@
 package com.orange;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
@@ -33,8 +25,6 @@ import com.orange.paas.cf.CloudFoundryOperations;
 import com.orange.reconfig.WorkflowCalculator;
 import com.orange.strategy.NextArchitectureCalculator;
 
-@SpringBootApplication(exclude = { org.springframework.boot.autoconfigure.security.SecurityAutoConfiguration.class })
-@RestController
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     // storePath and NextArchitectureCalculator(depending on strategy &
@@ -46,8 +36,7 @@ public class Main {
     // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
     private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
 
-    @RequestMapping(value = "/pull", method = RequestMethod.PUT)
-    public @ResponseBody Architecture getCurrentArchitecture(@RequestBody Collection<PaaSSiteAccess> managingSites) {
+    public Architecture pull(Collection<PaaSSiteAccess> managingSites) {
 	Architecture currentArchitecture = new Architecture();
 	for (PaaSSiteAccess siteAccess : managingSites) {
 	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, operationConfig).get();
@@ -57,90 +46,37 @@ public class Main {
 	return currentArchitecture;
     }
 
-    @RequestMapping(value = "/push", method = RequestMethod.POST)
-    public @ResponseBody Architecture pushArchitecture(@RequestBody Architecture desiredArchitecture) {
-	Architecture currentArchitecture = getCurrentStableArchitecture(desiredArchitecture.listPaaSSites());
+    public Architecture push(Architecture desiredArchitecture) {
+	Architecture currentArchitecture = pullAndStabilize(desiredArchitecture.listPaaSSites());
 	Workflow reconfigureWorkflow = new WorkflowCalculator(currentArchitecture, desiredArchitecture, operationConfig)
 		.getReconfigureWorkflow();
 	reconfigureWorkflow.exec();
 	logger.info("Workflow {} finished!", reconfigureWorkflow);
-	return getCurrentArchitecture(desiredArchitecture.listPaaSSites());
+	return pull(desiredArchitecture.listPaaSSites());
     }
 
-    @RequestMapping(value = "/next", method = RequestMethod.POST)
-    public @ResponseBody Architecture nextArchitecture(@RequestBody Architecture finalArchitecture) {
+    public Architecture next(Architecture finalArchitecture) {
 	if (nextArchitectureCalculator == null) {
 	    throw new IllegalStateException("Strategy config not yet set.");
 	}
-	Architecture currentArchitecture = getCurrentStableArchitecture(finalArchitecture.listPaaSSites());
+	Architecture currentArchitecture = pullAndStabilize(finalArchitecture.listPaaSSites());
 	return nextArchitectureCalculator.nextArchitecture(currentArchitecture, finalArchitecture);
     }
 
-    @RequestMapping(value = "/set_strategy_config", method = RequestMethod.PUT)
-    public void setStrategyConfig(@RequestParam("strategy") String strategy, @RequestBody StrategyConfig config) {
+    public void setStrategyConfig(String strategy, StrategyConfig config) {
 	strategy = strategyPackage + strategy;
 	nextArchitectureCalculator = new NextArchitectureCalculator(strategy, config);
 	logger.info("Strategy set: [{}]. Update config set: [{}]", strategy, config);
     }
 
-    @RequestMapping(value = "/set_operation_config", method = RequestMethod.PUT)
-    public void setOperationConfig(@RequestBody OperationConfig config) {
+    public void setOperationConfig(OperationConfig config) {
 	operationConfig = config;
 	logger.info("Operation config set! [{}]", config);
     }
 
-    @RequestMapping(value = "/is_instantiation", method = RequestMethod.POST)
-    public boolean isInstantiation(@RequestBody Architecture desiredArchitecture) {
-	Architecture currentArchitecture = getCurrentArchitecture(desiredArchitecture.listPaaSSites());
+    public boolean isInstantiation(Architecture desiredArchitecture) {
+	Architecture currentArchitecture = pull(desiredArchitecture.listPaaSSites());
 	return currentArchitecture.isInstantiation(desiredArchitecture);
-    }
-
-    @RequestMapping(value = "health", method = RequestMethod.GET)
-    public String health() {
-	return "UP";
-    }
-
-    /**
-     * Upload the microservice binary or source file which is supposed to be
-     * uploaded to the PaaS
-     * 
-     * @param file
-     * @return the stored file name, which is supposed to fill out microservice path
-     *         in the desired architecture description
-     */
-    @RequestMapping(value = "/upload", method = RequestMethod.POST)
-    public @ResponseBody String handleFileUpload(@RequestParam("file") MultipartFile file) {
-	// split original file name base and extension
-	String[] fileOriginalNameSplited = file.getOriginalFilename().split("\\.(?=[^\\.]+$)");
-	String timestamp = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
-	String fileStoredName = String.format("%s_%s.%s", fileOriginalNameSplited[0], timestamp,
-		fileOriginalNameSplited[1]);
-	if (!file.isEmpty()) {
-	    try {
-		byte[] bytes = file.getBytes();
-		BufferedOutputStream stream = new BufferedOutputStream(
-			new FileOutputStream(new File(storePath + fileStoredName)));
-		stream.write(bytes);
-		stream.close();
-		logger.info("Successfully uploaded {} into {} !", file.getOriginalFilename(), fileStoredName);
-		return fileStoredName;
-	    } catch (Exception e) {
-		throw new IllegalStateException("Failed to upload " + file.getOriginalFilename(), e);
-	    }
-	} else {
-	    throw new IllegalStateException(String.format("Upload file [%s] is empty", file.getOriginalFilename()));
-	}
-    }
-
-    // users should only clean their proper uploaded files
-    @RequestMapping(value = "/cleanFiles", method = RequestMethod.PUT)
-    public @ResponseBody String cleanFilesUploaded(@RequestParam("fileName") String fileName) {
-	boolean success = new File(storePath + fileName).delete();
-	if (success) {
-	    return "File is successfully deleted.";
-	} else {
-	    return "File delete failed.";
-	}
     }
 
     public static CloudFoundryOperations getCloudFoundryOperations(PaaSSiteAccess site, OperationConfig config) {
@@ -159,7 +95,7 @@ public class Main {
      * @param managingSites
      * @return
      */
-    private Architecture getCurrentStableArchitecture(Collection<PaaSSiteAccess> managingSites) {
+    private Architecture pullAndStabilize(Collection<PaaSSiteAccess> managingSites) {
 	Architecture currentArchitecture = new Architecture();
 	for (PaaSSiteAccess siteAccess : managingSites) {
 	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, operationConfig)
@@ -170,11 +106,31 @@ public class Main {
 	return currentArchitecture;
     }
 
-    public static void main(String[] args) {
-	File storeDir = new File(storePath);
-	if (!storeDir.exists()) {
-	    storeDir.mkdirs();
+    public static void main(String[] args) throws ParseException {
+	if (args.length < 1) {
+	    throw new IllegalArgumentException("Missing command.");
 	}
-	SpringApplication.run(Main.class, args);
+	Options options = new Options();
+	CommandLineParser parser = new DefaultParser();
+	String[] optionArgs = Arrays.copyOfRange(args, 1, args.length);
+	switch (args[0]) {
+	case "pull":
+	    System.out.println("pulling the current architecture ...");
+	    options.addOption("sites", true, "related PaaS sites");
+	    CommandLine cli = parser.parse(options, optionArgs);
+	    System.out.println(cli.getOptionValue("sites"));
+	    break;
+	case "push":
+	    System.out.println("pushing to the desired architecture ...");
+	    break;
+	case "next":
+	    System.out.println("calculating the next desired architecture ...");
+	    break;
+	case "arrived":
+	    System.out.println("calculating whether the desired architecture arrived ...");
+	    break;
+	default:
+	    break;
+	}
     }
 }
