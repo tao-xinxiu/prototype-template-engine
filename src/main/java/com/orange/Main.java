@@ -144,7 +144,7 @@ public class Main {
 	    }
 	    Collection<PaaSSiteAccess> sites = mapper.readValue(new File(cli.getOptionValue("s")),
 		    mapper.getTypeFactory().constructCollectionType(Collection.class, PaaSSiteAccess.class));
-	    System.out.println(pull(sites));
+	    System.out.println(mapper.writeValueAsString(pull(sites)));
 	    break;
 	case "push":
 	    logger.info("pushing to the desired architecture ...");
@@ -156,7 +156,7 @@ public class Main {
 		setOperationConfig(opConfig);
 	    }
 	    Architecture desiredArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
-	    System.out.println(push(desiredArchitecture));
+	    System.out.println(mapper.writeValueAsString(push(desiredArchitecture)));
 	    break;
 	case "next":
 	    logger.info("calculating the next desired architecture ...");
@@ -168,7 +168,7 @@ public class Main {
 	    StrategyConfig strategyConfig = mapper.readValue(new File(cli.getOptionValue("sc")), StrategyConfig.class);
 	    setStrategyConfig(strategyName, strategyConfig);
 	    Architecture finalArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
-	    System.out.println(next(finalArchitecture));
+	    System.out.println(mapper.writeValueAsString(next(finalArchitecture)));
 	    break;
 	case "arrived":
 	    logger.info("calculating whether the desired architecture arrived ...");
