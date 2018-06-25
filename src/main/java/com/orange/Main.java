@@ -1,5 +1,7 @@
 package com.orange;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -9,6 +11,7 @@ import java.util.Set;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
@@ -17,6 +20,9 @@ import org.slf4j.LoggerFactory;
 import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
 import com.orange.model.architecture.Microservice;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSiteAccess;
 import com.orange.model.workflow.Workflow;
@@ -36,7 +42,7 @@ public class Main {
     // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
     private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
 
-    public Architecture pull(Collection<PaaSSiteAccess> managingSites) {
+    public static Architecture pull(Collection<PaaSSiteAccess> managingSites) {
 	Architecture currentArchitecture = new Architecture();
 	for (PaaSSiteAccess siteAccess : managingSites) {
 	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, operationConfig).get();
@@ -46,7 +52,7 @@ public class Main {
 	return currentArchitecture;
     }
 
-    public Architecture push(Architecture desiredArchitecture) {
+    public static Architecture push(Architecture desiredArchitecture) {
 	Architecture currentArchitecture = pullAndStabilize(desiredArchitecture.listPaaSSites());
 	Workflow reconfigureWorkflow = new WorkflowCalculator(currentArchitecture, desiredArchitecture, operationConfig)
 		.getReconfigureWorkflow();
@@ -55,7 +61,7 @@ public class Main {
 	return pull(desiredArchitecture.listPaaSSites());
     }
 
-    public Architecture next(Architecture finalArchitecture) {
+    public static Architecture next(Architecture finalArchitecture) {
 	if (nextArchitectureCalculator == null) {
 	    throw new IllegalStateException("Strategy config not yet set.");
 	}
@@ -63,18 +69,18 @@ public class Main {
 	return nextArchitectureCalculator.nextArchitecture(currentArchitecture, finalArchitecture);
     }
 
-    public void setStrategyConfig(String strategy, StrategyConfig config) {
+    public static void setStrategyConfig(String strategy, StrategyConfig config) {
 	strategy = strategyPackage + strategy;
 	nextArchitectureCalculator = new NextArchitectureCalculator(strategy, config);
 	logger.info("Strategy set: [{}]. Update config set: [{}]", strategy, config);
     }
 
-    public void setOperationConfig(OperationConfig config) {
+    public static void setOperationConfig(OperationConfig config) {
 	operationConfig = config;
 	logger.info("Operation config set! [{}]", config);
     }
 
-    public boolean isInstantiation(Architecture desiredArchitecture) {
+    public static boolean isInstantiation(Architecture desiredArchitecture) {
 	Architecture currentArchitecture = pull(desiredArchitecture.listPaaSSites());
 	return currentArchitecture.isInstantiation(desiredArchitecture);
     }
@@ -95,7 +101,7 @@ public class Main {
      * @param managingSites
      * @return
      */
-    private Architecture pullAndStabilize(Collection<PaaSSiteAccess> managingSites) {
+    private static Architecture pullAndStabilize(Collection<PaaSSiteAccess> managingSites) {
 	Architecture currentArchitecture = new Architecture();
 	for (PaaSSiteAccess siteAccess : managingSites) {
 	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, operationConfig)
@@ -106,31 +112,75 @@ public class Main {
 	return currentArchitecture;
     }
 
-    public static void main(String[] args) throws ParseException {
+    public static void main(String[] args)
+	    throws ParseException, JsonParseException, JsonMappingException, IOException {
 	if (args.length < 1) {
-	    throw new IllegalArgumentException("Missing command.");
+	    throw new IllegalArgumentException("Missing command (pull, push, next, or arrived).");
 	}
 	Options options = new Options();
 	CommandLineParser parser = new DefaultParser();
 	String[] optionArgs = Arrays.copyOfRange(args, 1, args.length);
+	Option sitesOpt = Option.builder("s").longOpt("sites").desc("the related PaaS sites").hasArg().argName("sites")
+		.required().build();
+	Option opConfigOpt = Option.builder("oc").longOpt("opConfig").desc("the PaaS operations configuration file")
+		.hasArg().argName("opConfigFile").build();
+	Option architectureOpt = Option.builder("a").longOpt("architecture").desc("the desired architecture").hasArg()
+		.argName("architecture").required().build();
+	Option strategyOpt = Option.builder("sn").longOpt("strategy").desc("the choosen strategy name").hasArg()
+		.argName("strategyName").required().build();
+	Option strategyConfigOpt = Option.builder("sc").longOpt("strategyConfig")
+		.desc("the strategy configuration file").hasArg().argName("strategyConfigFile").required().build();
+	CommandLine cli;
+	ObjectMapper mapper = new ObjectMapper();
 	switch (args[0]) {
 	case "pull":
-	    System.out.println("pulling the current architecture ...");
-	    options.addOption("sites", true, "related PaaS sites");
-	    CommandLine cli = parser.parse(options, optionArgs);
-	    System.out.println(cli.getOptionValue("sites"));
+	    logger.info("pulling the current architecture ...");
+	    options.addOption(sitesOpt);
+	    options.addOption(opConfigOpt);
+	    cli = parser.parse(options, optionArgs);
+	    if (cli.hasOption("oc")) {
+		OperationConfig opConfig = mapper.readValue(new File(cli.getOptionValue("oc")), OperationConfig.class);
+		setOperationConfig(opConfig);
+	    }
+	    Collection<PaaSSiteAccess> sites = mapper.readValue(new File(cli.getOptionValue("s")),
+		    mapper.getTypeFactory().constructCollectionType(Collection.class, PaaSSiteAccess.class));
+	    System.out.println(pull(sites));
 	    break;
 	case "push":
-	    System.out.println("pushing to the desired architecture ...");
+	    logger.info("pushing to the desired architecture ...");
+	    options.addOption(architectureOpt);
+	    options.addOption(opConfigOpt);
+	    cli = parser.parse(options, optionArgs);
+	    if (cli.hasOption("oc")) {
+		OperationConfig opConfig = mapper.readValue(new File(cli.getOptionValue("oc")), OperationConfig.class);
+		setOperationConfig(opConfig);
+	    }
+	    Architecture desiredArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
+	    System.out.println(push(desiredArchitecture));
 	    break;
 	case "next":
-	    System.out.println("calculating the next desired architecture ...");
+	    logger.info("calculating the next desired architecture ...");
+	    options.addOption(architectureOpt);
+	    options.addOption(strategyOpt);
+	    options.addOption(strategyConfigOpt);
+	    cli = parser.parse(options, optionArgs);
+	    String strategyName = cli.getOptionValue("sn");
+	    StrategyConfig strategyConfig = mapper.readValue(new File(cli.getOptionValue("sc")), StrategyConfig.class);
+	    setStrategyConfig(strategyName, strategyConfig);
+	    Architecture finalArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
+	    System.out.println(next(finalArchitecture));
 	    break;
 	case "arrived":
-	    System.out.println("calculating whether the desired architecture arrived ...");
+	    logger.info("calculating whether the desired architecture arrived ...");
+	    options.addOption(architectureOpt);
+	    cli = parser.parse(options, optionArgs);
+	    Architecture arrivedArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
+	    System.out.println(isInstantiation(arrivedArchitecture));
 	    break;
 	default:
-	    break;
+	    throw new IllegalArgumentException(String.format(
+		    "Unknown command: [%s]. Please use one of the following valid commands: pull, push, next, or arrived.",
+		    args[0]));
 	}
     }
 }
