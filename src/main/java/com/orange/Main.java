@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
@@ -27,71 +25,45 @@ import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSiteAccess;
 import com.orange.model.workflow.Workflow;
 import com.orange.paas.cf.CloudFoundryAPIv2;
-import com.orange.paas.cf.CloudFoundryOperations;
 import com.orange.reconfig.WorkflowCalculator;
 import com.orange.strategy.NextArchitectureCalculator;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-    // storePath and NextArchitectureCalculator(depending on strategy &
-    // StrategyConfig) are supposed to be specific to a user
     public static final String storePath = "./store/";
     private static final String strategyPackage = "com.orange.strategy.impl.";
-    private static NextArchitectureCalculator nextArchitectureCalculator;
-    private static OperationConfig operationConfig = new OperationConfig();
-    // private static Map<String, PaaSAPI> connectedSites = new HashMap<>();
-    private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
 
-    public static Architecture pull(Collection<PaaSSiteAccess> managingSites) {
+    public static Architecture pull(Collection<PaaSSiteAccess> managingSites, OperationConfig opConfig) {
 	Architecture currentArchitecture = new Architecture();
 	for (PaaSSiteAccess siteAccess : managingSites) {
-	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, operationConfig).get();
+	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, opConfig).get();
 	    currentArchitecture.addSite(siteAccess, microservices);
 	}
 	logger.info("Got current architecture: {} ", currentArchitecture);
 	return currentArchitecture;
     }
 
-    public static Architecture push(Architecture desiredArchitecture) {
-	Architecture currentArchitecture = pullAndStabilize(desiredArchitecture.listPaaSSites());
-	Workflow reconfigureWorkflow = new WorkflowCalculator(currentArchitecture, desiredArchitecture, operationConfig)
+    public static Architecture push(Architecture desiredArchitecture, OperationConfig opConfig) {
+	Architecture currentArchitecture = pullAndStabilize(desiredArchitecture.listPaaSSites(), opConfig);
+	Workflow reconfigureWorkflow = new WorkflowCalculator(currentArchitecture, desiredArchitecture, opConfig)
 		.getReconfigureWorkflow();
 	reconfigureWorkflow.exec();
-	logger.info("Workflow {} finished!", reconfigureWorkflow);
-	return pull(desiredArchitecture.listPaaSSites());
+	logger.info("Workflow {} finished.", reconfigureWorkflow);
+	return pull(desiredArchitecture.listPaaSSites(), opConfig);
     }
 
-    public static Architecture next(Architecture finalArchitecture) {
-	if (nextArchitectureCalculator == null) {
-	    throw new IllegalStateException("Strategy config not yet set.");
-	}
-	Architecture currentArchitecture = pullAndStabilize(finalArchitecture.listPaaSSites());
+    public static Architecture next(Architecture finalArchitecture, String strategy, StrategyConfig config,
+	    OperationConfig opConfig) {
+	strategy = strategyPackage + strategy;
+	NextArchitectureCalculator nextArchitectureCalculator = new NextArchitectureCalculator(strategy, config);
+	logger.info("Using strategy: [{}]. Using strategy config: [{}]", strategy, config);
+	Architecture currentArchitecture = pullAndStabilize(finalArchitecture.listPaaSSites(), opConfig);
 	return nextArchitectureCalculator.nextArchitecture(currentArchitecture, finalArchitecture);
     }
 
-    public static void setStrategyConfig(String strategy, StrategyConfig config) {
-	strategy = strategyPackage + strategy;
-	nextArchitectureCalculator = new NextArchitectureCalculator(strategy, config);
-	logger.info("Strategy set: [{}]. Update config set: [{}]", strategy, config);
-    }
-
-    public static void setOperationConfig(OperationConfig config) {
-	operationConfig = config;
-	logger.info("Operation config set! [{}]", config);
-    }
-
-    public static boolean isInstantiation(Architecture desiredArchitecture) {
-	Architecture currentArchitecture = pull(desiredArchitecture.listPaaSSites());
+    public static boolean isInstantiation(Architecture desiredArchitecture, OperationConfig opConfig) {
+	Architecture currentArchitecture = pull(desiredArchitecture.listPaaSSites(), opConfig);
 	return currentArchitecture.isInstantiation(desiredArchitecture);
-    }
-
-    public static CloudFoundryOperations getCloudFoundryOperations(PaaSSiteAccess site, OperationConfig config) {
-	CloudFoundryOperations ops = connectedSites.get(site.getName());
-	if (ops == null) {
-	    ops = new CloudFoundryOperations(site, config);
-	    connectedSites.put(site.getName(), ops);
-	}
-	return ops;
     }
 
     /**
@@ -101,15 +73,25 @@ public class Main {
      * @param managingSites
      * @return
      */
-    private static Architecture pullAndStabilize(Collection<PaaSSiteAccess> managingSites) {
+    private static Architecture pullAndStabilize(Collection<PaaSSiteAccess> managingSites, OperationConfig opConfig) {
 	Architecture currentArchitecture = new Architecture();
 	for (PaaSSiteAccess siteAccess : managingSites) {
-	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, operationConfig)
-		    .getStabilizedMicroservices();
+	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, opConfig).getStabilizedMicroservices();
 	    currentArchitecture.addSite(siteAccess, microservices);
 	}
 	logger.info("Got and stabilized current architecture: {} ", currentArchitecture);
 	return currentArchitecture;
+    }
+
+    private static OperationConfig parseOpConfig(CommandLine cli)
+	    throws JsonParseException, JsonMappingException, IOException {
+	OperationConfig opConfig = new OperationConfig();
+	logger.info("Using the default operation config: [{}]", opConfig);
+	if (cli.hasOption("oc")) {
+	    opConfig = new ObjectMapper().readValue(new File(cli.getOptionValue("oc")), OperationConfig.class);
+	    logger.info("Using the customized operation config: [{}]", opConfig);
+	}
+	return opConfig;
     }
 
     public static void main(String[] args)
@@ -130,33 +112,26 @@ public class Main {
 		.argName("strategyName").required().build();
 	Option strategyConfigOpt = Option.builder("sc").longOpt("strategyConfig")
 		.desc("the strategy configuration file").hasArg().argName("strategyConfigFile").required().build();
+	options.addOption(opConfigOpt); // all the commands need the option opConfig
+
 	CommandLine cli;
 	ObjectMapper mapper = new ObjectMapper();
 	switch (args[0]) {
 	case "pull":
 	    logger.info("pulling the current architecture ...");
 	    options.addOption(sitesOpt);
-	    options.addOption(opConfigOpt);
+
 	    cli = parser.parse(options, optionArgs);
-	    if (cli.hasOption("oc")) {
-		OperationConfig opConfig = mapper.readValue(new File(cli.getOptionValue("oc")), OperationConfig.class);
-		setOperationConfig(opConfig);
-	    }
 	    Collection<PaaSSiteAccess> sites = mapper.readValue(new File(cli.getOptionValue("s")),
 		    mapper.getTypeFactory().constructCollectionType(Collection.class, PaaSSiteAccess.class));
-	    System.out.println(mapper.writeValueAsString(pull(sites)));
+	    System.out.println(mapper.writeValueAsString(pull(sites, parseOpConfig(cli))));
 	    break;
 	case "push":
 	    logger.info("pushing to the desired architecture ...");
 	    options.addOption(architectureOpt);
-	    options.addOption(opConfigOpt);
 	    cli = parser.parse(options, optionArgs);
-	    if (cli.hasOption("oc")) {
-		OperationConfig opConfig = mapper.readValue(new File(cli.getOptionValue("oc")), OperationConfig.class);
-		setOperationConfig(opConfig);
-	    }
 	    Architecture desiredArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
-	    System.out.println(mapper.writeValueAsString(push(desiredArchitecture)));
+	    System.out.println(mapper.writeValueAsString(push(desiredArchitecture, parseOpConfig(cli))));
 	    break;
 	case "next":
 	    logger.info("calculating the next desired architecture ...");
@@ -166,16 +141,16 @@ public class Main {
 	    cli = parser.parse(options, optionArgs);
 	    String strategyName = cli.getOptionValue("sn");
 	    StrategyConfig strategyConfig = mapper.readValue(new File(cli.getOptionValue("sc")), StrategyConfig.class);
-	    setStrategyConfig(strategyName, strategyConfig);
 	    Architecture finalArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
-	    System.out.println(mapper.writeValueAsString(next(finalArchitecture)));
+	    System.out.println(mapper
+		    .writeValueAsString(next(finalArchitecture, strategyName, strategyConfig, parseOpConfig(cli))));
 	    break;
 	case "arrived":
 	    logger.info("calculating whether the desired architecture arrived ...");
 	    options.addOption(architectureOpt);
 	    cli = parser.parse(options, optionArgs);
 	    Architecture arrivedArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
-	    System.out.println(isInstantiation(arrivedArchitecture));
+	    System.out.println(isInstantiation(arrivedArchitecture, parseOpConfig(cli)));
 	    break;
 	default:
 	    throw new IllegalArgumentException(String.format(

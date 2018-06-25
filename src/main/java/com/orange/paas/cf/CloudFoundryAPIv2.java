@@ -11,7 +11,6 @@ import org.cloudfoundry.client.v2.spaces.SpaceApplicationSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.Main;
 import com.orange.model.*;
 import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.MicroserviceState;
@@ -31,13 +30,14 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     public CloudFoundryAPIv2(PaaSSiteAccess site, OperationConfig operationConfig) {
 	super(site, operationConfig);
 	this.logger = LoggerFactory.getLogger(String.format("%s(%s)", getClass(), site.getName()));
-	this.operations = Main.getCloudFoundryOperations(site, operationConfig);
+	this.operations = CloudFoundryOperations.getCloudFoundryOperations(site, operationConfig);
     }
 
     @Override
     public Set<Microservice> get() {
 	logger.info("Start getting the current architecture ...");
-	return operations.listSpaceApps().parallelStream().map(info -> parseMicroservice(info)).collect(Collectors.toSet());
+	return operations.listSpaceApps().parallelStream().map(info -> parseMicroservice(info))
+		.collect(Collectors.toSet());
     }
 
     public Set<Microservice> getStabilizedMicroservices() {

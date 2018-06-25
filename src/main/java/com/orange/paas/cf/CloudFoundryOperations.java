@@ -67,6 +67,8 @@ public class CloudFoundryOperations {
     private static final String runningState = "RUNNING";
     private static final String stagedState = "STAGED";
 
+    private static Map<String, CloudFoundryOperations> connectedSites = new HashMap<>();
+
     private final Logger logger;
     private final String siteInfo;
 
@@ -104,6 +106,15 @@ public class CloudFoundryOperations {
 	    throw new IllegalStateException("expcetion during creating client" + siteInfo, e);
 	}
 	this.spaceId = requestSpaceId();
+    }
+
+    public static CloudFoundryOperations getCloudFoundryOperations(PaaSSiteAccess site, OperationConfig opConfig) {
+	CloudFoundryOperations ops = connectedSites.get(site.getName());
+	if (ops == null) {
+	    ops = new CloudFoundryOperations(site, opConfig);
+	    connectedSites.put(site.getName(), ops);
+	}
+	return ops;
     }
 
     public List<SpaceApplicationSummary> listSpaceApps() {
@@ -148,8 +159,8 @@ public class CloudFoundryOperations {
     }
 
     /**
-     * Update app path. Note: in CF, app should be STOPPED before upload, so
-     * that it could be staged later by operation of starting
+     * Update app path. Note: in CF, app should be STOPPED before upload, so that it
+     * could be staged later by operation of starting
      * 
      * @param msId
      * @param desiredPath
@@ -164,8 +175,8 @@ public class CloudFoundryOperations {
     }
 
     /**
-     * Update app env. As we use env to store path, so updating of env should
-     * not change path value.
+     * Update app env. As we use env to store path, so updating of env should not
+     * change path value.
      * 
      * @param msId
      * @param env
@@ -226,8 +237,8 @@ public class CloudFoundryOperations {
     }
 
     /**
-     * update microservice state (i.e. manage its lifecycle), contains
-     * updatePath if necessary for state change (i.e. change from CREATED state)
+     * update microservice state (i.e. manage its lifecycle), contains updatePath if
+     * necessary for state change (i.e. change from CREATED state)
      * 
      * @param currentMicroservice
      * @param desiredMicroservice
