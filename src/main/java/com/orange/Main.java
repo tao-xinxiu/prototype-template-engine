@@ -43,13 +43,12 @@ public class Main {
 	return currentArchitecture;
     }
 
-    public static Architecture push(Architecture desiredArchitecture, OperationConfig opConfig) {
+    public static void push(Architecture desiredArchitecture, OperationConfig opConfig) {
 	Architecture currentArchitecture = pullAndStabilize(desiredArchitecture.listPaaSSites(), opConfig);
 	Workflow reconfigureWorkflow = new WorkflowCalculator(currentArchitecture, desiredArchitecture, opConfig)
 		.getReconfigureWorkflow();
 	reconfigureWorkflow.exec();
 	logger.info("Workflow {} finished.", reconfigureWorkflow);
-	return pull(desiredArchitecture.listPaaSSites(), opConfig);
     }
 
     public static Architecture next(Architecture finalArchitecture, String strategy, StrategyConfig config,
@@ -97,7 +96,7 @@ public class Main {
     public static void main(String[] args)
 	    throws ParseException, JsonParseException, JsonMappingException, IOException {
 	if (args.length < 1) {
-	    throw new IllegalArgumentException("Missing command (pull, push, next, or arrived).");
+	    throw new IllegalArgumentException("Missing command (pull, push, next, arrived, or update).");
 	}
 	Options options = new Options();
 	CommandLineParser parser = new DefaultParser();
@@ -120,21 +119,21 @@ public class Main {
 	case "pull":
 	    logger.info("pulling the current architecture ...");
 	    options.addOption(sitesOpt);
-
 	    cli = parser.parse(options, optionArgs);
 	    Collection<PaaSSiteAccess> sites = mapper.readValue(new File(cli.getOptionValue("s")),
 		    mapper.getTypeFactory().constructCollectionType(Collection.class, PaaSSiteAccess.class));
 	    System.out.println(mapper.writeValueAsString(pull(sites, parseOpConfig(cli))));
 	    break;
 	case "push":
-	    logger.info("pushing to the desired architecture ...");
+	    logger.info("pushing to the desired architecture in the most direct way ...");
 	    options.addOption(architectureOpt);
 	    cli = parser.parse(options, optionArgs);
 	    Architecture desiredArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
-	    System.out.println(mapper.writeValueAsString(push(desiredArchitecture, parseOpConfig(cli))));
+	    push(desiredArchitecture, parseOpConfig(cli));
+	    System.out.println("Pushed the desired architecture.");
 	    break;
 	case "next":
-	    logger.info("calculating the next desired architecture ...");
+	    logger.info("calculating the next desired architecture of the strategy ...");
 	    options.addOption(architectureOpt);
 	    options.addOption(strategyOpt);
 	    options.addOption(strategyConfigOpt);
@@ -152,9 +151,29 @@ public class Main {
 	    Architecture arrivedArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
 	    System.out.println(isInstantiation(arrivedArchitecture, parseOpConfig(cli)));
 	    break;
+	case "update":
+	    logger.info("updating the microservices to the final architecture by following a strategy ...");
+	    options.addOption(architectureOpt);
+	    options.addOption(strategyOpt);
+	    options.addOption(strategyConfigOpt);
+	    cli = parser.parse(options, optionArgs);
+	    String updStrategy = cli.getOptionValue("sn");
+	    StrategyConfig updStrategyConfig = mapper.readValue(new File(cli.getOptionValue("sc")),
+		    StrategyConfig.class);
+	    OperationConfig opConfig = parseOpConfig(cli);
+	    Architecture updFinalArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
+	    while (true) {
+		Architecture nextArchitecture = next(updFinalArchitecture, updStrategy, updStrategyConfig, opConfig);
+		if (nextArchitecture == null) {
+		    System.out.println("Updated to the final architecture.");
+		    break;
+		}
+		push(nextArchitecture, opConfig);
+	    }
+	    break;
 	default:
 	    throw new IllegalArgumentException(String.format(
-		    "Unknown command: [%s]. Please use one of the following valid commands: pull, push, next, or arrived.",
+		    "Unknown command: [%s]. Please use one of the following valid commands: pull, push, next, arrived, or update.",
 		    args[0]));
 	}
     }
