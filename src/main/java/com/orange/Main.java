@@ -84,11 +84,13 @@ public class Main {
 
     private static OperationConfig parseOpConfig(CommandLine cli)
 	    throws JsonParseException, JsonMappingException, IOException {
-	OperationConfig opConfig = new OperationConfig();
-	logger.info("Using the default operation config: [{}]", opConfig);
+	OperationConfig opConfig;
 	if (cli.hasOption("oc")) {
 	    opConfig = new ObjectMapper().readValue(new File(cli.getOptionValue("oc")), OperationConfig.class);
 	    logger.info("Using the customized operation config: [{}]", opConfig);
+	} else {
+	    opConfig = new OperationConfig();
+	    logger.info("Using the default operation config: [{}]", opConfig);
 	}
 	return opConfig;
     }
