@@ -30,7 +30,6 @@ import com.orange.strategy.NextArchitectureCalculator;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-    public static final String storePath = "./store/";
     private static final String strategyPackage = "com.orange.strategy.impl.";
 
     public static Architecture pull(Collection<PaaSSiteAccess> managingSites, OperationConfig opConfig) {

@@ -53,7 +53,6 @@ import org.cloudfoundry.reactor.tokenprovider.PasswordGrantTokenProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.orange.Main;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSiteAccess;
 import com.orange.model.architecture.cf.CFMicroservice;
@@ -405,7 +404,7 @@ public class CloudFoundryOperations {
     private void upload(String appId, String path) {
 	try {
 	    UploadApplicationRequest request = UploadApplicationRequest.builder().applicationId(appId)
-		    .application(new File(Main.storePath + path).toPath()).build();
+		    .application(new File(path).toPath()).build();
 	    logger.info("App [{}] package [{}] start uploading", appId, path);
 	    retry(() -> cloudFoundryClient.applicationsV2().upload(request)
 		    .block(Duration.ofSeconds(opConfig.getUploadTimeout())));
