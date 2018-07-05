@@ -123,7 +123,9 @@ public class Main {
 	    cli = parser.parse(options, optionArgs);
 	    Collection<PaaSSiteAccess> sites = mapper.readValue(new File(cli.getOptionValue("s")),
 		    mapper.getTypeFactory().constructCollectionType(Collection.class, PaaSSiteAccess.class));
-	    System.out.println(mapper.writeValueAsString(pull(sites, parseOpConfig(cli))));
+	    Architecture currentArchitecture = pull(sites, parseOpConfig(cli));
+	    logger.info("got the current architecture: " + currentArchitecture);
+	    System.out.println(mapper.writeValueAsString(currentArchitecture));
 	    break;
 	case "push":
 	    logger.info("pushing to the desired architecture in the most direct way ...");
@@ -131,7 +133,8 @@ public class Main {
 	    cli = parser.parse(options, optionArgs);
 	    Architecture desiredArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
 	    push(desiredArchitecture, parseOpConfig(cli));
-	    System.out.println("Pushed the desired architecture.");
+	    logger.info("pushed the desired architecture: " + desiredArchitecture);
+	    System.out.println(true);
 	    break;
 	case "next":
 	    logger.info("calculating the next desired architecture of the strategy ...");
@@ -142,8 +145,9 @@ public class Main {
 	    String strategyName = cli.getOptionValue("sn");
 	    StrategyConfig strategyConfig = mapper.readValue(new File(cli.getOptionValue("sc")), StrategyConfig.class);
 	    Architecture finalArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
-	    System.out.println(mapper
-		    .writeValueAsString(next(finalArchitecture, strategyName, strategyConfig, parseOpConfig(cli))));
+	    Architecture nextArchitecture = next(finalArchitecture, strategyName, strategyConfig, parseOpConfig(cli));
+	    logger.info(strategyName + " calculated the next architecture: " + nextArchitecture);
+	    System.out.println(mapper.writeValueAsString(nextArchitecture));
 	    break;
 	case "arrived":
 	    logger.info("calculating whether the desired architecture arrived ...");
@@ -164,12 +168,13 @@ public class Main {
 	    OperationConfig opConfig = parseOpConfig(cli);
 	    Architecture updFinalArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
 	    while (true) {
-		Architecture nextArchitecture = next(updFinalArchitecture, updStrategy, updStrategyConfig, opConfig);
-		if (nextArchitecture == null) {
-		    System.out.println("Updated to the final architecture.");
+		Architecture updNextArchitecture = next(updFinalArchitecture, updStrategy, updStrategyConfig, opConfig);
+		if (updNextArchitecture == null) {
+		    logger.info("updated to the final architecture: " + updFinalArchitecture);
+		    System.out.println(true);
 		    break;
 		}
-		push(nextArchitecture, opConfig);
+		push(updNextArchitecture, opConfig);
 	    }
 	    break;
 	default:
