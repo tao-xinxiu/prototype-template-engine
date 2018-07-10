@@ -1,5 +1,6 @@
 package com.orange.strategy;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -131,12 +132,12 @@ public class StrategyLibrary {
 			    }
 			    logger.info("{} detected as a new microservice.", nextMicroservice);
 			} else {
-			    // update from most similar microservice (i.e.
-			    // prefer path and env equals if exist)
+			    // update from the most similar microservice (i.e. path and env equals)
 			    Microservice currentMicroservice = SetUtil.getOneMicroservice(currentMicroservices,
 				    ms -> ms.get("path").equals(nextMicroservice.get("path"))
 					    && ms.get("env").equals(nextMicroservice.get("env")));
 			    if (currentMicroservice == null) {
+				// update from any version of the microservice when not exist path and env eq ms
 				currentMicroservice = currentMicroservices.iterator().next();
 			    }
 			    if (tmpRoute) {
@@ -165,13 +166,15 @@ public class StrategyLibrary {
 	    @Override
 	    public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 		Architecture nextArchitecture = new Architecture(currentArchitecture);
+		List<String> notUpdatedKeys = new ArrayList<>(updateAfterwardKeys);
+		notUpdatedKeys.add("routes");
 		for (String site : finalArchitecture.listSitesName()) {
 		    for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
 			Set<Microservice> nextMss = nextArchitecture.getSiteMicroservices(site);
-			if (SetUtil.noneMatch(nextMss, ms -> ms.eqAttrExcept(updateAfterwardKeys, desiredMs)
-				&& ms.get("version").equals(desiredVersion(desiredMs)))) {
-			    Microservice nextMs = SetUtil.getUniqueMicroservice(nextMss, (String) desiredMs.get("name"),
-				    desiredVersion(desiredMs));
+			Microservice nextMs = SetUtil.getUniqueMicroservice(nextMss, (String) desiredMs.get("name"),
+				desiredVersion(desiredMs));
+			if (nextMs != null && nextMs.eqAttrExcept(notUpdatedKeys, desiredMs)
+				&& !nextMs.eqAttr("routes", desiredMs)) {
 			    nextMs.copyAttr("routes", desiredMs);
 			    logger.info("Updated microservice [{}_{}] route to {} ", nextMs.get("name"),
 				    nextMs.get("version"), nextMs.get("routes"));
@@ -212,13 +215,12 @@ public class StrategyLibrary {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
 		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
-			    nextArchitecture.getSiteMicroservices(site), (String) desiredMicroservice.get("name"),
-			    desiredVersion(desiredMicroservice));
-		    if (nextMicroservice.get("nbProcesses") != desiredMicroservice.get("nbProcesses")) {
-			nextMicroservice.set("nbProcesses", desiredMicroservice.get("nbProcesses"));
-			logger.info("Updated microservice [{}_{}] nbProcesses to {} ", nextMicroservice.get("name"),
-				nextMicroservice.get("version"), nextMicroservice.get("nbProcesses"));
+		    Microservice nextMs = SetUtil.getUniqueMicroservice(nextArchitecture.getSiteMicroservices(site),
+			    (String) desiredMicroservice.get("name"), desiredVersion(desiredMicroservice));
+		    if (nextMs != null && nextMs.get("nbProcesses") != desiredMicroservice.get("nbProcesses")) {
+			nextMs.set("nbProcesses", desiredMicroservice.get("nbProcesses"));
+			logger.info("Updated microservice [{}_{}] nbProcesses to {} ", nextMs.get("name"),
+				nextMs.get("version"), nextMs.get("nbProcesses"));
 		    }
 		}
 	    }
@@ -231,18 +233,16 @@ public class StrategyLibrary {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
-			    nextArchitecture.getSiteMicroservices(site), (String) desiredMicroservice.get("name"),
-			    desiredVersion(desiredMicroservice));
-		    if ((int) nextMicroservice.get("nbProcesses") <= (int) desiredMicroservice.get("nbProcesses")) {
-			int nextNbr = (int) nextMicroservice.get("nbProcesses") + config.getCanaryIncrease();
-			nextNbr = nextNbr > (int) desiredMicroservice.get("nbProcesses")
-				? (int) desiredMicroservice.get("nbProcesses")
+		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
+		    Microservice nextMs = SetUtil.getUniqueMicroservice(nextArchitecture.getSiteMicroservices(site),
+			    (String) desiredMs.get("name"), desiredVersion(desiredMs));
+		    if (nextMs != null && (int) nextMs.get("nbProcesses") <= (int) desiredMs.get("nbProcesses")) {
+			int nextNbr = (int) nextMs.get("nbProcesses") + config.getCanaryIncrease();
+			nextNbr = nextNbr > (int) desiredMs.get("nbProcesses") ? (int) desiredMs.get("nbProcesses")
 				: nextNbr;
-			nextMicroservice.set("nbProcesses", nextNbr);
-			logger.info("Updated microservice [{}_{}] nbProcesses to {} ", nextMicroservice.get("name"),
-				nextMicroservice.get("version"), nextNbr);
+			nextMs.set("nbProcesses", nextNbr);
+			logger.info("Updated microservice [{}_{}] nbProcesses to {} ", nextMs.get("name"),
+				nextMs.get("version"), nextNbr);
 		    }
 		}
 	    }
@@ -255,19 +255,20 @@ public class StrategyLibrary {
 	public Architecture next(Architecture currentArchitecture, Architecture finalArchitecture) {
 	    Architecture nextArchitecture = new Architecture(currentArchitecture);
 	    for (String site : finalArchitecture.listSitesName()) {
-		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    Microservice nextMicroservice = SetUtil.getUniqueMicroservice(
-			    nextArchitecture.getSiteMicroservices(site), (String) desiredMicroservice.get("name"),
-			    desiredVersion(desiredMicroservice));
-		    if (nextMicroservice.get("memory").equals(desiredMicroservice.get("memory"))) {
-			nextMicroservice.set("memory", desiredMicroservice.get("memory"));
-			logger.info("Updated microservice [{}_{}] memory to {} ", nextMicroservice.get("name"),
-				nextMicroservice.get("version"), nextMicroservice.get("memory"));
-		    }
-		    if (nextMicroservice.get("disk").equals(desiredMicroservice.get("disk"))) {
-			nextMicroservice.set("disk", desiredMicroservice.get("disk"));
-			logger.info("Updated microservice [{}_{}] disk to {} ", nextMicroservice.get("name"),
-				nextMicroservice.get("version"), nextMicroservice.get("disk"));
+		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
+		    Microservice nextMs = SetUtil.getUniqueMicroservice(nextArchitecture.getSiteMicroservices(site),
+			    (String) desiredMs.get("name"), desiredVersion(desiredMs));
+		    if (nextMs != null) {
+			if (!nextMs.get("memory").equals(desiredMs.get("memory"))) {
+			    nextMs.set("memory", desiredMs.get("memory"));
+			    logger.info("Updated microservice [{}_{}] memory to {} ", nextMs.get("name"),
+				    nextMs.get("version"), nextMs.get("memory"));
+			}
+			if (!nextMs.get("disk").equals(desiredMs.get("disk"))) {
+			    nextMs.set("disk", desiredMs.get("disk"));
+			    logger.info("Updated microservice [{}_{}] disk to {} ", nextMs.get("name"),
+				    nextMs.get("version"), nextMs.get("disk"));
+			}
 		    }
 		}
 	    }

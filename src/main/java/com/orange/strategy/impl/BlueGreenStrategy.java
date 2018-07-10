@@ -18,8 +18,8 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 
     public BlueGreenStrategy(StrategyConfig config) {
 	super(config);
-	transitions = Arrays.asList(newPkgEnvTransit, updateExceptRouteTransit, library.updateRouteTransit(Arrays.asList("guid", "version")),
-		library.removeUndesiredTransit);
+	transitions = Arrays.asList(newPkgEnvTransit, updateExceptRouteTransit,
+		library.updateRouteTransit(Arrays.asList("guid", "version")), library.removeUndesiredTransit);
     }
 
     @Override
@@ -71,8 +71,7 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
 		    Microservice nextMs = SetUtil.getUniqueMicroservice(nextArchitecture.getSiteMicroservices(site),
 			    (String) desiredMs.get("name"), library.desiredVersion(desiredMs));
-		    // nextMs.eqAttr(Arrays.asList("name","path","env","nbProcesses","services","state"),desiredMs)
-		    if (!nextMs.eqAttrExcept(Arrays.asList("guid", "version", "routes"), desiredMs)) {
+		    if (nextMs != null && !nextMs.eqAttrExcept(Arrays.asList("guid", "version", "routes"), desiredMs)) {
 			nextMs.copyAttrExcept(Arrays.asList("guid", "version", "routes"), desiredMs);
 			nextMs.set("routes", library.tmpRoute(site, desiredMs));
 			logger.info("Updated microservice [{}_{}] to {} ", nextMs.get("name"), nextMs.get("version"),

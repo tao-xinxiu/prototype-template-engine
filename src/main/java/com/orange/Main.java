@@ -48,6 +48,7 @@ public class Main {
 		.getReconfigureWorkflow();
 	reconfigureWorkflow.exec();
 	logger.info("Workflow {} finished.", reconfigureWorkflow);
+	logger.info("Pushed the architecture: " + desiredArchitecture);
     }
 
     public static Architecture next(Architecture finalArchitecture, String strategy, StrategyConfig config,
@@ -169,12 +170,14 @@ public class Main {
 	    Architecture updFinalArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
 	    while (true) {
 		Architecture updNextArchitecture = next(updFinalArchitecture, updStrategy, updStrategyConfig, opConfig);
+		logger.info("calculated the next architecture: " + updNextArchitecture);
 		if (updNextArchitecture == null) {
 		    logger.info("updated to the final architecture: " + updFinalArchitecture);
 		    System.out.println(true);
 		    break;
 		}
 		push(updNextArchitecture, opConfig);
+		logger.info("pused the architecture: " + updNextArchitecture);
 	    }
 	    break;
 	default:

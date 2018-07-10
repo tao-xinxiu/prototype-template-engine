@@ -49,10 +49,12 @@ public abstract class Strategy {
 	for (Transition transition : transitions) {
 	    Architecture next = transition.next(currentArchitecture, finalArchitecture);
 	    if (!next.equals(currentArchitecture)) {
+		logger.info("using the transition: " + transition.getClass().getName());
 		return next;
 	    }
 	}
-	return finalArchitecture;
+	logger.info("arrived the final architecture.");
+	return null;
     }
 
     /**

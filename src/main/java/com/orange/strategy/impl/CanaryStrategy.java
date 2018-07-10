@@ -85,7 +85,8 @@ public class CanaryStrategy extends TagUpdatingVersionStrategy {
 		    Microservice nextMs = SetUtil.getUniqueMicroservice(nextArchitecture.getSiteMicroservices(site),
 			    ms -> ms.eqAttr("name", desiredMs)
 				    && ms.get("version").equals(library.desiredVersion(desiredMs)));
-		    if (!nextMs.eqAttrExcept(Arrays.asList("guid", "version", "routes", "nbProcesses"), desiredMs)) {
+		    if (nextMs != null && !nextMs
+			    .eqAttrExcept(Arrays.asList("guid", "version", "routes", "nbProcesses"), desiredMs)) {
 			nextMs.copyAttrExcept(Arrays.asList("guid", "version", "routes", "nbProcesses"), desiredMs);
 			nextMs.set("routes", library.tmpRoute(site, desiredMs));
 			logger.info("Updated microservice [{}_{}] to {} ", nextMs.get("name"), nextMs.get("version"),

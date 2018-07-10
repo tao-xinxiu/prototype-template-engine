@@ -22,10 +22,6 @@ public class NextArchitectureCalculator {
     }
 
     public Architecture nextArchitecture(final Architecture currentArchitecture, final Architecture finalArchitecture) {
-	// return null when arrived final architecture
-	if (currentArchitecture.isInstantiation(finalArchitecture)) {
-	    return null;
-	}
 	if (strategyConfig.isParallelAllSites()) {
 	    return strategy.nextArchitecture(currentArchitecture, finalArchitecture);
 	} else {
