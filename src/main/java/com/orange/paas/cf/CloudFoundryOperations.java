@@ -361,7 +361,7 @@ public class CloudFoundryOperations {
 	ApplicationInstancesResponse response = retry(
 		() -> cloudFoundryClient.applicationsV2().instances(request).block(timeout));
 	return response.getInstances().entrySet().stream()
-		.anyMatch(entity -> runningState.equals(entity.getValue().getState()));
+		.allMatch(entity -> runningState.equals(entity.getValue().getState()));
     }
 
     private String requestSpaceId() {
