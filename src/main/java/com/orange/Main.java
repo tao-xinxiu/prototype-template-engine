@@ -177,7 +177,6 @@ public class Main {
 		    break;
 		}
 		push(updNextArchitecture, opConfig);
-		logger.info("pused the architecture: " + updNextArchitecture);
 	    }
 	    break;
 	default:

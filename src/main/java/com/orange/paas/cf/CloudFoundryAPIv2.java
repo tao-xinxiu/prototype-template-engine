@@ -114,10 +114,9 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 		    operations.updatePath(msId, (String) desiredCFMicroservice.get("path"),
 			    (Map<String, String>) currentCFMicroservice.get("env"));
 		    currentCFMicroservice.set("state", CFMicroserviceState.UPLOADED);
-
 		}
 		boolean needRestage = false;
-		if (!currentCFMicroservice.get("services").equals(desiredMicroservice.get("services"))) {
+		if (!currentCFMicroservice.get("services").equals(desiredCFMicroservice.get("services"))) {
 		    operations.updateServicesIfNeed(msId, (Set<String>) currentCFMicroservice.get("services"),
 			    (Set<String>) desiredCFMicroservice.get("services"));
 		    needRestage = true;
@@ -132,6 +131,9 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 		}
 		operations.updateNbProcessesIfNeed(msId, (int) currentCFMicroservice.get("nbProcesses"),
 			(int) desiredCFMicroservice.get("nbProcesses"));
+		if ((int) currentCFMicroservice.get("nbProcesses") < (int) desiredCFMicroservice.get("nbProcesses")) {
+		    currentCFMicroservice.set("state", CFMicroserviceState.starting);
+		}
 		operations.updateStateIfNeed(currentCFMicroservice, desiredCFMicroservice);
 	    }
 	};
