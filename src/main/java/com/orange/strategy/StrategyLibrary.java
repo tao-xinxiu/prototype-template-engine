@@ -139,17 +139,20 @@ public class StrategyLibrary {
 			    if (currentMicroservice == null) {
 				// update from any version of the microservice when not exist path and env eq ms
 				currentMicroservice = currentMicroservices.iterator().next();
-			    }
-			    if (tmpRoute) {
-				nextMicroservice.set("routes", tmpRoute(site, nextMicroservice));
+				if (tmpRoute) {
+				    nextMicroservice.set("routes", tmpRoute(site, nextMicroservice));
+				}
 			    }
 			    nextMicroservice.set("guid", currentMicroservice.get("guid"));
 			    nextMicroservice.set("version", currentMicroservice.get("version"));
-			    logger.info("{} detected as a updated microservice", nextMicroservice);
+			    if (!currentMicroservice.isInstantiation(nextMicroservice)) {
+				logger.info("{} detected as a updated microservice", nextMicroservice);
+			    }
 			}
 		    }
 		}
-		return nextArchitecture;
+		// re-copy nextArchitecture to avoid Set contains problem, as ms is modified
+		return new Architecture(nextArchitecture);
 	    }
 	};
     }
