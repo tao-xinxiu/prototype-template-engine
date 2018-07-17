@@ -1,4 +1,4 @@
-package com.orange.state;
+package com.orange.strategy.impl;
 
 import java.util.Collections;
 import java.util.HashMap;
