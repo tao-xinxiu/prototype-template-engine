@@ -168,6 +168,9 @@ public class CloudFoundryOperations {
     public void updatePath(String msId, String desiredPath, Map<String, String> currentEnv) {
 	stop(msId);
 	upload(msId, desiredPath);
+	if (currentEnv == null) {
+	    currentEnv = new HashMap<>();
+	}
 	Map<String, String> envWithUpdatedPath = new HashMap<>(currentEnv);
 	envWithUpdatedPath.put(CloudFoundryAPIv2.pathKeyInEnv, desiredPath);
 	updateAppEnv(msId, envWithUpdatedPath);
