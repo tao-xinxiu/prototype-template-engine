@@ -150,6 +150,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	attributes.put("services", parseServices(info));
 	attributes.put("memory", info.getMemory());
 	attributes.put("disk", info.getDiskQuota());
+	attributes.put("runningProcesses", operations.getRunningInstance(info.getId()));
 	return new Microservice(attributes);
     }
 

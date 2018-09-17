@@ -368,12 +368,26 @@ public class CloudFoundryOperations {
 	if (!stagedState.equals(appSummary.getPackageState())) {
 	    return false;
 	}
-	ApplicationInstancesRequest request = ApplicationInstancesRequest.builder().applicationId(appSummary.getId())
-		.build();
+	ApplicationInstancesRequest request = ApplicationInstancesRequest.builder().applicationId(appId).build();
 	ApplicationInstancesResponse response = retry(
 		() -> cloudFoundryClient.applicationsV2().instances(request).block(timeout));
 	return response.getInstances().entrySet().stream()
 		.allMatch(entity -> runningState.equals(entity.getValue().getState()));
+    }
+
+    int getRunningInstance(String appId) {
+	SummaryApplicationResponse appSummary = getAppSummary(appId);
+	if (!CFMicroserviceDesiredState.STARTED.toString().equals(appSummary.getState())) {
+	    return 0;
+	}
+	if (!stagedState.equals(appSummary.getPackageState())) {
+	    return 0;
+	}
+	ApplicationInstancesRequest request = ApplicationInstancesRequest.builder().applicationId(appId).build();
+	ApplicationInstancesResponse response = retry(
+		() -> cloudFoundryClient.applicationsV2().instances(request).block(timeout));
+	return (int) response.getInstances().entrySet().stream()
+		.filter(entity -> runningState.equals(entity.getValue().getState())).count();
     }
 
     private String requestSpaceId() {
