@@ -272,12 +272,12 @@ public class CloudFoundryOperations {
 	    case staging:
 		waitStaged(msId);
 	    case starting:
-		waitRunning(msId);
+		waitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
 		break;
 	    case FAILED:
 		restage(msId);
 		waitStaged(msId);
-		waitRunning(msId);
+		waitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
 		break;
 	    default:
 		throw new IllegalStateException(
@@ -351,8 +351,8 @@ public class CloudFoundryOperations {
 		String.format("wait until microservice [%s] staged", msId), msId);
     }
 
-    private void waitRunning(String msId) {
-	new Wait(opConfig.getStartTimeout()).waitUntil(id -> appRunning(id),
+    private void waitRunning(String msId, int nbProcesses) {
+	new Wait(opConfig.getStartTimeout() * nbProcesses).waitUntil(id -> appRunning(id),
 		String.format("wait until microservice [%s] running", msId), msId);
     }
 
