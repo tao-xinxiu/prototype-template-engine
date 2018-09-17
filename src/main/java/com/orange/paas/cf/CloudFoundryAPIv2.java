@@ -59,9 +59,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	    @SuppressWarnings("unchecked")
 	    @Override
 	    public void exec() {
-		String msId = operations.create((String) desiredMicroservice.get("name"),
-			(int) desiredMicroservice.get("nbProcesses"),
-			(Map<String, String>) desiredMicroservice.get("env"));
+		String msId = operations.create(desiredMicroservice);
 		Map<String, Object> attributes = new HashMap<>();
 		attributes.put("guid", msId);
 		attributes.put("name", desiredMicroservice.get("name"));
@@ -150,8 +148,8 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	attributes.put("env", parseEnv(info));
 	attributes.put("routes", parseRoutes(info));
 	attributes.put("services", parseServices(info));
-	attributes.put("memory", info.getMemory() + "M");
-	attributes.put("disk", info.getDiskQuota() + "M");
+	attributes.put("memory", info.getMemory());
+	attributes.put("disk", info.getDiskQuota());
 	return new Microservice(attributes);
     }
 
