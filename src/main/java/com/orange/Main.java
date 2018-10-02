@@ -2,8 +2,10 @@ package com.orange;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
@@ -32,7 +34,7 @@ public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private static final String strategyPackage = "com.orange.strategy.impl.";
 
-    public static Architecture pull(Collection<PaaSSiteAccess> managingSites, OperationConfig opConfig) {
+    private static Architecture pull(Collection<PaaSSiteAccess> managingSites, OperationConfig opConfig) {
 	Architecture currentArchitecture = new Architecture();
 	for (PaaSSiteAccess siteAccess : managingSites) {
 	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, opConfig).get();
@@ -42,7 +44,7 @@ public class Main {
 	return currentArchitecture;
     }
 
-    public static void push(Architecture desiredArchitecture, OperationConfig opConfig) {
+    private static void push(Architecture desiredArchitecture, OperationConfig opConfig) {
 	Architecture currentArchitecture = pullAndStabilize(desiredArchitecture.listPaaSSites(), opConfig);
 	Workflow reconfigureWorkflow = new WorkflowCalculator(currentArchitecture, desiredArchitecture, opConfig)
 		.getReconfigureWorkflow();
@@ -51,16 +53,59 @@ public class Main {
 	logger.info("Pushed the architecture: " + desiredArchitecture);
     }
 
-    public static Architecture next(Architecture finalArchitecture, String strategy, StrategyConfig config,
+    private static List<Architecture> preview(Architecture initArchitecture, Architecture finalArchitecture,
+	    String strategy, StrategyConfig strategyConfig) {
+	List<Architecture> archSequence = new ArrayList<>();
+	Architecture currentArchitecture = initArchitecture;
+	while (true) {	    
+	    Architecture nextArchitecture = next(currentArchitecture, finalArchitecture, strategy, strategyConfig);
+	    logger.info("preview calculated the next architecture: " + nextArchitecture);
+	    if (nextArchitecture == null) {
+		logger.info("preview reached the final architecture: " + finalArchitecture);
+		System.out.println(true);
+		break;
+	    }
+	    archSequence.add(nextArchitecture);
+	    currentArchitecture = nextArchitecture;
+	}
+	return archSequence;
+    }
+
+    private static List<Architecture> preview(Architecture finalArchitecture, String strategy,
+	    StrategyConfig strategyConfig, OperationConfig opConfig) {
+	Architecture currentArchitecture = pull(finalArchitecture.listPaaSSites(), opConfig);
+	return preview(currentArchitecture, finalArchitecture, strategy, strategyConfig);
+    }
+
+    private static void update(Architecture finalArchitecture, String strategy, StrategyConfig strategyConfig,
 	    OperationConfig opConfig) {
+	while (true) {
+	    Architecture nextArchitecture = next(finalArchitecture, strategy, strategyConfig, opConfig);
+	    logger.info("calculated the next architecture: " + nextArchitecture);
+	    if (nextArchitecture == null) {
+		logger.info("updated to the final architecture: " + finalArchitecture);
+		System.out.println(true);
+		break;
+	    }
+	    push(nextArchitecture, opConfig);
+	}
+    }
+
+    private static Architecture next(Architecture currentArchitecture, Architecture finalArchitecture, String strategy,
+	    StrategyConfig config) {
 	strategy = strategyPackage + strategy;
 	NextArchitectureCalculator nextArchitectureCalculator = new NextArchitectureCalculator(strategy, config);
 	logger.info("Using strategy: [{}]. Using strategy config: [{}]", strategy, config);
-	Architecture currentArchitecture = pullAndStabilize(finalArchitecture.listPaaSSites(), opConfig);
 	return nextArchitectureCalculator.nextArchitecture(currentArchitecture, finalArchitecture);
     }
 
-    public static boolean isInstantiation(Architecture desiredArchitecture, OperationConfig opConfig) {
+    private static Architecture next(Architecture finalArchitecture, String strategy, StrategyConfig config,
+	    OperationConfig opConfig) {
+	Architecture currentArchitecture = pullAndStabilize(finalArchitecture.listPaaSSites(), opConfig);
+	return next(currentArchitecture, finalArchitecture, strategy, config);
+    }
+
+    private static boolean isInstantiation(Architecture desiredArchitecture, OperationConfig opConfig) {
 	Architecture currentArchitecture = pull(desiredArchitecture.listPaaSSites(), opConfig);
 	return currentArchitecture.isInstantiation(desiredArchitecture);
     }
@@ -168,16 +213,21 @@ public class Main {
 		    StrategyConfig.class);
 	    OperationConfig opConfig = parseOpConfig(cli);
 	    Architecture updFinalArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
-	    while (true) {
-		Architecture updNextArchitecture = next(updFinalArchitecture, updStrategy, updStrategyConfig, opConfig);
-		logger.info("calculated the next architecture: " + updNextArchitecture);
-		if (updNextArchitecture == null) {
-		    logger.info("updated to the final architecture: " + updFinalArchitecture);
-		    System.out.println(true);
-		    break;
-		}
-		push(updNextArchitecture, opConfig);
-	    }
+	    update(updFinalArchitecture, updStrategy, updStrategyConfig, opConfig);
+	    break;
+	case "preview":
+	    logger.info("previewing the intermediate architectures by following a strategy ...");
+	    options.addOption(architectureOpt);
+	    options.addOption(strategyOpt);
+	    options.addOption(strategyConfigOpt);
+	    cli = parser.parse(options, optionArgs);
+	    String prevStrategy = cli.getOptionValue("sn");
+	    StrategyConfig prevStrategyConfig = mapper.readValue(new File(cli.getOptionValue("sc")),
+		    StrategyConfig.class);
+	    OperationConfig prevOpConfig = parseOpConfig(cli);
+	    Architecture prevFinalArch = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
+	    List<Architecture> archSeq = preview(prevFinalArch, prevStrategy, prevStrategyConfig, prevOpConfig);
+	    System.out.println(mapper.writeValueAsString(archSeq));
 	    break;
 	default:
 	    throw new IllegalArgumentException(String.format(
