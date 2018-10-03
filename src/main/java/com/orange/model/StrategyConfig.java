@@ -14,10 +14,9 @@ public class StrategyConfig {
     private int canaryNbr = 1;
     private int canaryIncrease = 1;
     private Map<String, StrategySiteConfig> siteConfigs = new HashMap<>();
-    private String updatingVersion = "UPDATING";
-    private int groupSize = 0; // limit number of microservices being
-			       // simultaneously deployed per site, 0 means no
-			       // limit
+    // limit number of microservices being simultaneously deployed per site, 0 means
+    // no limit
+    private int groupSize = 0;
 
     public StrategyConfig() {
     }
@@ -74,14 +73,6 @@ public class StrategyConfig {
 	this.sitesOrder = sitesOrder;
     }
 
-    public String getUpdatingVersion() {
-	return updatingVersion;
-    }
-
-    public void setUpdatingVersion(String updatingVersion) {
-	this.updatingVersion = updatingVersion;
-    }
-
     public int getGroupSize() {
 	return groupSize;
     }
@@ -109,8 +100,8 @@ public class StrategyConfig {
     @Override
     public String toString() {
 	return "StrategyConfig [parallelAllSites=" + parallelAllSites + ", sitesOrder=" + sitesOrder + ", canaryNbr="
-		+ canaryNbr + ", canaryIncrease=" + canaryIncrease + ", siteConfigs=" + siteConfigs
-		+ ", updatingVersion=" + updatingVersion + ", groupSize=" + groupSize + "]";
+		+ canaryNbr + ", canaryIncrease=" + canaryIncrease + ", siteConfigs=" + siteConfigs + ", groupSize="
+		+ groupSize + "]";
     }
 
 }

@@ -18,7 +18,7 @@ public class BlueGreenCanaryMixStrategy extends CanaryStrategy {
     public BlueGreenCanaryMixStrategy(StrategyConfig config) {
 	super(config);
 	transitions = Arrays.asList(addCanaryTransit, updateExceptInstancesRoutesTransit,
-		library.updateRouteTransit(Arrays.asList("guid", "version", "nbProcesses")), scaleTransit,
+		library.updateRouteTransit(Arrays.asList("guid", "nbProcesses")), scaleTransit,
 		library.removeUndesiredTransit);
     }
 
@@ -40,7 +40,7 @@ public class BlueGreenCanaryMixStrategy extends CanaryStrategy {
 		    if (SetUtil.noneMatch(nextMss, ms -> ms.isInstantiation(desiredMs))) {
 			for (Microservice nextMs : SetUtil.searchByName(nextMss, (String) desiredMs.get("name"))) {
 			    int desiredNbProc = (int) desiredMs.get("nbProcesses");
-			    if (nextMs.get("version").equals(library.desiredVersion(desiredMs))) {
+			    if (nextMs.eqAttr("version", desiredMs)) {
 				int nextNbr = (int) nextMs.get("nbProcesses") + config.getCanaryIncrease();
 				nextNbr = nextNbr > desiredNbProc ? desiredNbProc : nextNbr;
 				nextMs.set("nbProcesses", nextNbr);

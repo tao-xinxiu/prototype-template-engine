@@ -1,7 +1,6 @@
 package com.orange.strategy.impl;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -13,7 +12,6 @@ import com.orange.model.architecture.Microservice;
 import com.orange.strategy.Strategy;
 import com.orange.strategy.Transition;
 import com.orange.util.SetUtil;
-import com.orange.util.VersionGenerator;
 
 public class UpdateRemoveStrategy extends Strategy {
     private static final Logger logger = LoggerFactory.getLogger(UpdateRemoveStrategy.class);
@@ -40,9 +38,6 @@ public class UpdateRemoveStrategy extends Strategy {
 			Microservice addedMs = new Microservice(desiredMs);
 			// Add non-exist microservice
 			addedMs.set("guid", null);
-			if (addedMs.get("version") == null) {
-			    addedMs.set("version", VersionGenerator.random(new HashSet<>()));
-			}
 			nextArchitecture.getSite(site).addMicroservice(addedMs);
 			logger.info("{} detected as a new microservice.", addedMs);
 		    } else {
@@ -55,7 +50,7 @@ public class UpdateRemoveStrategy extends Strategy {
 			    updatedMicroservice = nextMss.iterator().next();
 			}
 			if (!updatedMicroservice.isInstantiation(desiredMs)) {
-			    updatedMicroservice.copyAttrExcept(Arrays.asList("guid", "version"), desiredMs);
+			    updatedMicroservice.copyAttrExcept(Arrays.asList("guid"), desiredMs);
 			    logger.info("{} detected as a updated microservice", updatedMicroservice);
 			}
 		    }

@@ -161,8 +161,8 @@ public class CanaryStrategyTest {
     }
 
     private final static Architecture finalArchitecture() {
-	Microservice newMs = constructMs(null, msName, null, newMsPath, MicroserviceState.RUNNING, msNbProcesses, msEnv,
-		msRoutes, msServices, memory, disk);
+	Microservice newMs = constructMs(null, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING,
+		msNbProcesses, msEnv, msRoutes, msServices, memory, disk);
 	Architecture finalArchitecture = new Architecture();
 	finalArchitecture.addSite(site1, Collections.singleton(newMs));
 	finalArchitecture.addSite(site2, Collections.singleton(newMs));
@@ -186,13 +186,13 @@ public class CanaryStrategyTest {
 	Set<Microservice> site1Ms = new HashSet<>();
 	site1Ms.add(constructMs(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
 		msNbProcesses - 1, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(constructMs(null, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING, 1,
-		msEnv, msTmpRoutes, msServices, memory, disk));
+	site1Ms.add(constructMs(null, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 1, msEnv, msTmpRoutes,
+		msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
 	site2Ms.add(constructMs(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
 		msNbProcesses - 1, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(constructMs(null, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING, 1,
-		msEnv, msTmpRoutes, msServices, memory, disk));
+	site2Ms.add(constructMs(null, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 1, msEnv, msTmpRoutes,
+		msServices, memory, disk));
 	Architecture midArchitecture1 = new Architecture();
 	midArchitecture1.addSite(site1, site1Ms);
 	midArchitecture1.addSite(site2, site2Ms);
@@ -203,13 +203,13 @@ public class CanaryStrategyTest {
 	Set<Microservice> site1Ms = new HashSet<>();
 	site1Ms.add(constructMs(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
 		msNbProcesses - 1, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(constructMs(newMsSite1Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		1, msEnv, msTmpRoutes, msServices, memory, disk));
+	site1Ms.add(constructMs(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 1, msEnv,
+		msTmpRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
 	site2Ms.add(constructMs(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
 		msNbProcesses - 1, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(constructMs(newMsSite2Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		1, msEnv, msTmpRoutes, msServices, memory, disk));
+	site2Ms.add(constructMs(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 1, msEnv,
+		msTmpRoutes, msServices, memory, disk));
 	Architecture instantiatedArchitecture1 = new Architecture();
 	instantiatedArchitecture1.addSite(site1, site1Ms);
 	instantiatedArchitecture1.addSite(site2, site2Ms);
@@ -220,13 +220,13 @@ public class CanaryStrategyTest {
 	Set<Microservice> site1Ms = new HashSet<>();
 	site1Ms.add(constructMs(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
 		msNbProcesses - 1, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(constructMs(newMsSite1Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		1, msEnv, msRoutes, msServices, memory, disk));
+	site1Ms.add(constructMs(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 1, msEnv,
+		msRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
 	site2Ms.add(constructMs(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
 		msNbProcesses - 1, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(constructMs(newMsSite2Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		1, msEnv, msRoutes, msServices, memory, disk));
+	site2Ms.add(constructMs(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 1, msEnv,
+		msRoutes, msServices, memory, disk));
 	Architecture midArchitecture2 = new Architecture();
 	midArchitecture2.addSite(site1, site1Ms);
 	midArchitecture2.addSite(site2, site2Ms);
@@ -237,13 +237,13 @@ public class CanaryStrategyTest {
 	Set<Microservice> site1Ms = new HashSet<>();
 	site1Ms.add(constructMs(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
 		msNbProcesses - 2, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(constructMs(newMsSite1Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		1, msEnv, msRoutes, msServices, memory, disk));
+	site1Ms.add(constructMs(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 1, msEnv,
+		msRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
 	site2Ms.add(constructMs(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
 		msNbProcesses - 2, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(constructMs(newMsSite2Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		1, msEnv, msRoutes, msServices, memory, disk));
+	site2Ms.add(constructMs(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 1, msEnv,
+		msRoutes, msServices, memory, disk));
 	Architecture midArchitecture2 = new Architecture();
 	midArchitecture2.addSite(site1, site1Ms);
 	midArchitecture2.addSite(site2, site2Ms);
@@ -254,13 +254,13 @@ public class CanaryStrategyTest {
 	Set<Microservice> site1Ms = new HashSet<>();
 	site1Ms.add(constructMs(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
 		msNbProcesses - 2, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(constructMs(newMsSite1Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		2, msEnv, msRoutes, msServices, memory, disk));
+	site1Ms.add(constructMs(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 2, msEnv,
+		msRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
 	site2Ms.add(constructMs(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
 		msNbProcesses - 2, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(constructMs(newMsSite2Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		2, msEnv, msRoutes, msServices, memory, disk));
+	site2Ms.add(constructMs(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 2, msEnv,
+		msRoutes, msServices, memory, disk));
 	Architecture midArchitecture2 = new Architecture();
 	midArchitecture2.addSite(site1, site1Ms);
 	midArchitecture2.addSite(site2, site2Ms);
@@ -269,11 +269,11 @@ public class CanaryStrategyTest {
 
     private final static Architecture midArchitecture6() {
 	Set<Microservice> site1Ms = new HashSet<>();
-	site1Ms.add(constructMs(newMsSite1Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		2, msEnv, msRoutes, msServices, memory, disk));
+	site1Ms.add(constructMs(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 2, msEnv,
+		msRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
-	site2Ms.add(constructMs(newMsSite2Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		2, msEnv, msRoutes, msServices, memory, disk));
+	site2Ms.add(constructMs(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 2, msEnv,
+		msRoutes, msServices, memory, disk));
 	Architecture midArchitecture2 = new Architecture();
 	midArchitecture2.addSite(site1, site1Ms);
 	midArchitecture2.addSite(site2, site2Ms);
@@ -282,9 +282,9 @@ public class CanaryStrategyTest {
 
     private final static Architecture midArchitecture7() {
 	Architecture midArchitecture3 = new Architecture();
-	midArchitecture3.addSite(site1, Collections.singleton(constructMs(newMsSite1Id, msName, null, newMsPath,
+	midArchitecture3.addSite(site1, Collections.singleton(constructMs(newMsSite1Id, msName, newMsVersion, newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
-	midArchitecture3.addSite(site2, Collections.singleton(constructMs(newMsSite2Id, msName, null, newMsPath,
+	midArchitecture3.addSite(site2, Collections.singleton(constructMs(newMsSite2Id, msName, newMsVersion, newMsPath,
 		MicroserviceState.RUNNING, msNbProcesses, msEnv, msRoutes, msServices, memory, disk)));
 	return midArchitecture3;
     }

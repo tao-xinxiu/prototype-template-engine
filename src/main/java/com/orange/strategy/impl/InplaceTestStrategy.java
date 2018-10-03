@@ -8,7 +8,7 @@ public class InplaceTestStrategy extends StraightStrategy {
 
     public InplaceTestStrategy(StrategyConfig config) {
 	super(config);
-	transitions = Arrays.asList(library.directTransit(true), library.updateRouteTransit(Arrays.asList("guid", "version")));
+	transitions = Arrays.asList(library.directTransit(true), library.updateRouteTransit(Arrays.asList("guid")));
     }
 
 }

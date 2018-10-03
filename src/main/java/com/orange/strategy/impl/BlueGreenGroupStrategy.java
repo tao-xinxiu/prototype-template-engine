@@ -1,5 +1,6 @@
 package com.orange.strategy.impl;
 
+import java.util.Arrays;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -35,15 +36,12 @@ public class BlueGreenGroupStrategy extends BlueGreenStrategy {
 		int deployingNumber = 0;
 		Set<Microservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
 		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		    if (SetUtil.noneMatch(currentMicroservices, ms -> ms.get("name").equals(desiredMicroservice.get("name"))
-			    && ms.get("version").equals(library.desiredVersion(desiredMicroservice)))) {
+		    if (SetUtil.noneMatch(currentMicroservices,
+			    ms -> ms.eqAttr(Arrays.asList("name", "version"), desiredMicroservice))) {
 			deployingNumber++;
 			Microservice newMicroservice = new Microservice(desiredMicroservice);
 			newMicroservice.set("guid", null);
 			newMicroservice.set("routes", library.tmpRoute(site, desiredMicroservice));
-			if (newMicroservice.get("version") == null) {
-			    newMicroservice.set("version", config.getUpdatingVersion());
-			}
 			nextArchitecture.getSite(site).addMicroservice(newMicroservice);
 			logger.info("Added a new microservice deployment: {} ", newMicroservice);
 			if (deployingNumber == config.getGroupSize()) {

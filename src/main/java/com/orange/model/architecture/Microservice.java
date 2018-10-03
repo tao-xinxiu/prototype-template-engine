@@ -109,12 +109,7 @@ public class Microservice {
 	if (desiredMicroservice.get("guid") != null && !desiredMicroservice.get("guid").equals(get("guid"))) {
 	    return false;
 	}
-	if (desiredMicroservice.get("version") != null && !desiredMicroservice.get("version").equals(get("version"))) {
-	    return false;
-	}
-	List<String> compareKeys = Arrays.asList("name", "path", "state", "nbProcesses", "env", "routes", "services",
-		"memory", "disk");
-	for (String key : compareKeys) {
+	for (String key : keys) {
 	    if (!attributes.get(key).equals(desiredMicroservice.get(key))) {
 		return false;
 	    }

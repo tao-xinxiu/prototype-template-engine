@@ -81,13 +81,13 @@ public class UpdateRemoveStrategyTest {
 	Set<Microservice> site1Ms = new HashSet<>();
 	site1Ms.add(constructMs(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
 		msNbProcesses - 1, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(constructMs(newMsSite1Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		2, msEnv, msTmpRoutes, msServices, memory, disk));
+	site1Ms.add(constructMs(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 2, msEnv,
+		msTmpRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
 	site2Ms.add(constructMs(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
 		msNbProcesses - 1, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(constructMs(newMsSite2Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		2, msEnv, msTmpRoutes, msServices, memory, disk));
+	site2Ms.add(constructMs(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 2, msEnv,
+		msTmpRoutes, msServices, memory, disk));
 	Architecture instantiatedArchitecture = new Architecture();
 	instantiatedArchitecture.addSite(site1, site1Ms);
 	instantiatedArchitecture.addSite(site2, site2Ms);
@@ -96,15 +96,15 @@ public class UpdateRemoveStrategyTest {
 
     private final static Architecture midArchitecture1() {
 	Set<Microservice> site1Ms = new HashSet<>();
-	site1Ms.add(constructMs(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site1Ms.add(constructMs(newMsSite1Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		2, msEnv, msTmpRoutes, msServices, memory, disk));
+	site1Ms.add(constructMs(oldMsSite1Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses,
+		msEnv, msRoutes, msServices, memory, disk));
+	site1Ms.add(constructMs(newMsSite1Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 2, msEnv,
+		msTmpRoutes, msServices, memory, disk));
 	Set<Microservice> site2Ms = new HashSet<>();
-	site2Ms.add(constructMs(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING,
-		msNbProcesses, msEnv, msRoutes, msServices, memory, disk));
-	site2Ms.add(constructMs(newMsSite2Id, msName, config.getUpdatingVersion(), newMsPath, MicroserviceState.RUNNING,
-		2, msEnv, msTmpRoutes, msServices, memory, disk));
+	site2Ms.add(constructMs(oldMsSite2Id, msName, oldMsVersion, oldMsPath, MicroserviceState.RUNNING, msNbProcesses,
+		msEnv, msRoutes, msServices, memory, disk));
+	site2Ms.add(constructMs(newMsSite2Id, msName, newMsVersion, newMsPath, MicroserviceState.RUNNING, 2, msEnv,
+		msTmpRoutes, msServices, memory, disk));
 	Architecture midArchitecture1 = new Architecture();
 	midArchitecture1.addSite(site1, site1Ms);
 	midArchitecture1.addSite(site2, site2Ms);

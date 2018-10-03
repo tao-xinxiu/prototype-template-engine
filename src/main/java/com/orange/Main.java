@@ -62,7 +62,6 @@ public class Main {
 	    logger.info("preview calculated the next architecture: " + nextArchitecture);
 	    if (nextArchitecture == null) {
 		logger.info("preview reached the final architecture: " + finalArchitecture);
-		System.out.println(true);
 		break;
 	    }
 	    archSequence.add(nextArchitecture);

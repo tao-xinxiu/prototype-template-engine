@@ -10,19 +10,18 @@ import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
 import com.orange.model.architecture.Microservice;
 import com.orange.model.architecture.MicroserviceState;
-import com.orange.strategy.TagUpdatingVersionStrategy;
+import com.orange.strategy.Strategy;
 import com.orange.strategy.Transition;
 import com.orange.util.SetUtil;
-import com.orange.util.VersionGenerator;
 
 // Strategy assume route not updated between Ainit and Af
-public class CanaryStrategy extends TagUpdatingVersionStrategy {
+public class CanaryStrategy extends Strategy {
     private static final Logger logger = LoggerFactory.getLogger(CanaryStrategy.class);
 
     public CanaryStrategy(StrategyConfig config) {
 	super(config);
 	transitions = Arrays.asList(rolloutTransit, addCanaryTransit, updateExceptInstancesRoutesTransit,
-		library.updateRouteTransit(Arrays.asList("guid", "version", "nbProcesses")), scaleupTransit,
+		library.updateRouteTransit(Arrays.asList("guid", "nbProcesses")), scaleupTransit,
 		library.removeUndesiredTransit);
     }
 
@@ -54,12 +53,11 @@ public class CanaryStrategy extends TagUpdatingVersionStrategy {
 		Set<Microservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
 		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
 		    Microservice updatingMs = SetUtil.getUniqueMicroservice(currentMicroservices,
-			    (String) desiredMs.get("name"), config.getUpdatingVersion());
+			    (String) desiredMs.get("name"), (String) desiredMs.get("version"));
 		    if (updatingMs == null && SetUtil.noneMatch(currentMicroservices,
 			    ms -> ms.eqAttr(Arrays.asList("name", "path", "env"), desiredMs))) {
 			Microservice newMs = new Microservice(desiredMs);
 			newMs.set("guid", null);
-			newMs.set("version", library.desiredVersion(desiredMs));
 			newMs.set("routes", library.tmpRoute(site, desiredMs));
 			newMs.set("nbProcesses", config.getCanaryNbr());
 			nextArchitecture.getSite(site).addMicroservice(newMs);
@@ -83,11 +81,10 @@ public class CanaryStrategy extends TagUpdatingVersionStrategy {
 	    for (String site : finalArchitecture.listSitesName()) {
 		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
 		    Microservice nextMs = SetUtil.getUniqueMicroservice(nextArchitecture.getSiteMicroservices(site),
-			    ms -> ms.eqAttr("name", desiredMs)
-				    && ms.get("version").equals(library.desiredVersion(desiredMs)));
-		    if (nextMs != null && !nextMs
-			    .eqAttrExcept(Arrays.asList("guid", "version", "routes", "nbProcesses"), desiredMs)) {
-			nextMs.copyAttrExcept(Arrays.asList("guid", "version", "routes", "nbProcesses"), desiredMs);
+			    (String) desiredMs.get("name"), (String) desiredMs.get("version"));
+		    if (nextMs != null
+			    && !nextMs.eqAttrExcept(Arrays.asList("guid", "routes", "nbProcesses"), desiredMs)) {
+			nextMs.copyAttrExcept(Arrays.asList("guid", "routes", "nbProcesses"), desiredMs);
 			nextMs.set("routes", library.tmpRoute(site, desiredMs));
 			logger.info("Updated microservice [{}_{}] to {} ", nextMs.get("name"), nextMs.get("version"),
 				nextMs);
@@ -114,9 +111,9 @@ public class CanaryStrategy extends TagUpdatingVersionStrategy {
 		    if (relatedMicroservices.stream().mapToInt(ms -> (int) ms.get("nbProcesses"))
 			    .sum() == (int) desiredMs.get("nbProcesses")) {
 			Microservice nextMs = SetUtil.getUniqueMicroservice(relatedMicroservices,
-				ms -> !ms.get("version").equals(library.desiredVersion(desiredMs)));
+				ms -> !ms.eqAttr("version", desiredMs));
 			boolean canaryNotCreated = SetUtil.noneMatch(relatedMicroservices,
-				ms -> ms.get("version").equals(library.desiredVersion(desiredMs)));
+				ms -> ms.eqAttr("version", desiredMs));
 			int scaleDownNb = canaryNotCreated ? config.getCanaryNbr() : config.getCanaryIncrease();
 			int nextNbr = (int) nextMs.get("nbProcesses") - scaleDownNb;
 			if (nextNbr >= 1) {
@@ -145,20 +142,13 @@ public class CanaryStrategy extends TagUpdatingVersionStrategy {
 		    Set<Microservice> nextMicroservices = nextArchitecture.getSiteMicroservices(site);
 		    if (SetUtil.noneMatch(nextMicroservices, ms -> ms.isInstantiation(desiredMicroservice))) {
 			Microservice nextMs = SetUtil.getUniqueMicroservice(nextMicroservices,
-				ms -> ms.eqAttr("name", desiredMicroservice)
-					&& ms.get("version").equals(library.desiredVersion(desiredMicroservice)));
+				ms -> ms.eqAttr(Arrays.asList("name", "version"), desiredMicroservice));
 			int nextNbr = (int) nextMs.get("nbProcesses") + config.getCanaryIncrease();
 			if (nextNbr > (int) desiredMicroservice.get("nbProcesses")) {
 			    nextNbr = (int) desiredMicroservice.get("nbProcesses");
 			}
 			nextMs.set("nbProcesses", nextNbr);
 			logger.info("scaled up microservice {}", nextMs);
-			if (nextMs.isInstantiation(desiredMicroservice)
-				&& nextMs.get("version").equals(config.getUpdatingVersion())) {
-			    nextMs.set("version", VersionGenerator.random(SetUtil.collectVersions(nextMicroservices)));
-			    logger.info("Change microservice [{}] version from [{}] to [{}]", nextMs.get("name"),
-				    config.getUpdatingVersion(), nextMs.get("version"));
-			}
 		    }
 		}
 	    }

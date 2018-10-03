@@ -9,17 +9,17 @@ import org.slf4j.LoggerFactory;
 import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
 import com.orange.model.architecture.Microservice;
-import com.orange.strategy.TagUpdatingVersionStrategy;
+import com.orange.strategy.Strategy;
 import com.orange.strategy.Transition;
 import com.orange.util.SetUtil;
 
-public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
+public class BlueGreenStrategy extends Strategy {
     private static final Logger logger = LoggerFactory.getLogger(BlueGreenStrategy.class);
 
     public BlueGreenStrategy(StrategyConfig config) {
 	super(config);
 	transitions = Arrays.asList(newPkgEnvTransit, updateExceptRouteTransit,
-		library.updateRouteTransit(Arrays.asList("guid", "version")), library.removeUndesiredTransit);
+		library.updateRouteTransit(Arrays.asList("guid")), library.removeUndesiredTransit);
     }
 
     @Override
@@ -41,12 +41,11 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 		Set<Microservice> currentMicroservices = nextArchitecture.getSiteMicroservices(site);
 		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
 		    Microservice updatingMs = SetUtil.getUniqueMicroservice(currentMicroservices,
-			    (String) desiredMs.get("name"), config.getUpdatingVersion());
+			    (String) desiredMs.get("name"), (String) desiredMs.get("version"));
 		    if (updatingMs == null && SetUtil.noneMatch(currentMicroservices,
 			    ms -> ms.eqAttr(Arrays.asList("name", "path", "env"), desiredMs))) {
 			Microservice newMs = new Microservice(desiredMs);
 			newMs.set("guid", null);
-			newMs.set("version", library.desiredVersion(desiredMs));
 			newMs.set("routes", library.tmpRoute(site, desiredMs));
 			nextArchitecture.getSite(site).addMicroservice(newMs);
 			logger.info("Added a new microservice: {} ", newMs);
@@ -70,9 +69,9 @@ public class BlueGreenStrategy extends TagUpdatingVersionStrategy {
 	    for (String site : finalArchitecture.listSitesName()) {
 		for (Microservice desiredMs : finalArchitecture.getSiteMicroservices(site)) {
 		    Microservice nextMs = SetUtil.getUniqueMicroservice(nextArchitecture.getSiteMicroservices(site),
-			    (String) desiredMs.get("name"), library.desiredVersion(desiredMs));
-		    if (nextMs != null && !nextMs.eqAttrExcept(Arrays.asList("guid", "version", "routes"), desiredMs)) {
-			nextMs.copyAttrExcept(Arrays.asList("guid", "version", "routes"), desiredMs);
+			    (String) desiredMs.get("name"), (String) desiredMs.get("version"));
+		    if (nextMs != null && !nextMs.eqAttrExcept(Arrays.asList("guid", "routes"), desiredMs)) {
+			nextMs.copyAttrExcept(Arrays.asList("guid", "routes"), desiredMs);
 			nextMs.set("routes", library.tmpRoute(site, desiredMs));
 			logger.info("Updated microservice [{}_{}] to {} ", nextMs.get("name"), nextMs.get("version"),
 				nextMs);
