@@ -8,9 +8,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Microservice {
+    private static final Logger logger = LoggerFactory.getLogger(Microservice.class);
+
     protected Map<String, Object> attributes = new HashMap<>();
+    protected Set<String> keys = new HashSet<>(Arrays.asList("name", "version", "path", "state", "nbProcesses")); //"guid" is not the required key
 
     public Microservice() {
     }
@@ -117,6 +124,20 @@ public class Microservice {
 	    }
 	}
 	return true;
+    }
+
+    public void valid() {
+	if (!attributes.keySet().containsAll(keys)) {
+	    Set<String> missingKeys = new HashSet<>(keys);
+	    missingKeys.removeAll(attributes.keySet());
+	    throw new IllegalArgumentException(String.format("Missing the attributes [%s] in: %s.", missingKeys, this));
+	}
+	if (!keys.containsAll(attributes.keySet())) {
+	    Set<String> ignoreKeys = new HashSet<>(attributes.keySet());
+	    ignoreKeys.removeAll(keys);
+	    logger.warn(String.format("Ignoring the unknown attributes [%s] in the model: %s.", ignoreKeys, this));
+	    attributes.entrySet().removeIf(attribute -> !keys.contains(attribute.getKey()));
+	}
     }
 
     @Override

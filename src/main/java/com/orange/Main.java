@@ -57,7 +57,7 @@ public class Main {
 	    String strategy, StrategyConfig strategyConfig) {
 	List<Architecture> archSequence = new ArrayList<>();
 	Architecture currentArchitecture = initArchitecture;
-	while (true) {	    
+	while (true) {
 	    Architecture nextArchitecture = next(currentArchitecture, finalArchitecture, strategy, strategyConfig);
 	    logger.info("preview calculated the next architecture: " + nextArchitecture);
 	    if (nextArchitecture == null) {
@@ -140,6 +140,13 @@ public class Main {
 	return opConfig;
     }
 
+    private static Architecture parseArchitecture(String optionValue)
+	    throws JsonParseException, JsonMappingException, IOException {
+	Architecture finalArchitecture = new ObjectMapper().readValue(new File(optionValue), Architecture.class);
+	finalArchitecture.valid();
+	return finalArchitecture;
+    }
+
     public static void main(String[] args)
 	    throws ParseException, JsonParseException, JsonMappingException, IOException {
 	if (args.length < 1) {
@@ -177,7 +184,7 @@ public class Main {
 	    logger.info("pushing to the desired architecture in the most direct way ...");
 	    options.addOption(architectureOpt);
 	    cli = parser.parse(options, optionArgs);
-	    Architecture desiredArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
+	    Architecture desiredArchitecture = parseArchitecture(cli.getOptionValue("a"));
 	    push(desiredArchitecture, parseOpConfig(cli));
 	    logger.info("pushed the desired architecture: " + desiredArchitecture);
 	    System.out.println(true);
@@ -190,7 +197,7 @@ public class Main {
 	    cli = parser.parse(options, optionArgs);
 	    String strategyName = cli.getOptionValue("sn");
 	    StrategyConfig strategyConfig = mapper.readValue(new File(cli.getOptionValue("sc")), StrategyConfig.class);
-	    Architecture finalArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
+	    Architecture finalArchitecture = parseArchitecture(cli.getOptionValue("a"));
 	    Architecture nextArchitecture = next(finalArchitecture, strategyName, strategyConfig, parseOpConfig(cli));
 	    logger.info(strategyName + " calculated the next architecture: " + nextArchitecture);
 	    System.out.println(mapper.writeValueAsString(nextArchitecture));
@@ -199,7 +206,7 @@ public class Main {
 	    logger.info("calculating whether the desired architecture arrived ...");
 	    options.addOption(architectureOpt);
 	    cli = parser.parse(options, optionArgs);
-	    Architecture arrivedArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
+	    Architecture arrivedArchitecture = parseArchitecture(cli.getOptionValue("a"));
 	    System.out.println(isInstantiation(arrivedArchitecture, parseOpConfig(cli)));
 	    break;
 	case "update":
@@ -212,7 +219,7 @@ public class Main {
 	    StrategyConfig updStrategyConfig = mapper.readValue(new File(cli.getOptionValue("sc")),
 		    StrategyConfig.class);
 	    OperationConfig opConfig = parseOpConfig(cli);
-	    Architecture updFinalArchitecture = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
+	    Architecture updFinalArchitecture = parseArchitecture(cli.getOptionValue("a"));
 	    update(updFinalArchitecture, updStrategy, updStrategyConfig, opConfig);
 	    break;
 	case "preview":
@@ -225,7 +232,7 @@ public class Main {
 	    StrategyConfig prevStrategyConfig = mapper.readValue(new File(cli.getOptionValue("sc")),
 		    StrategyConfig.class);
 	    OperationConfig prevOpConfig = parseOpConfig(cli);
-	    Architecture prevFinalArch = mapper.readValue(new File(cli.getOptionValue("a")), Architecture.class);
+	    Architecture prevFinalArch = parseArchitecture(cli.getOptionValue("a"));
 	    List<Architecture> archSeq = preview(prevFinalArch, prevStrategy, prevStrategyConfig, prevOpConfig);
 	    System.out.println(mapper.writeValueAsString(archSeq));
 	    break;

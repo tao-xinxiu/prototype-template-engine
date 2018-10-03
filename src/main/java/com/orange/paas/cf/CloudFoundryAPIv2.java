@@ -3,6 +3,7 @@ package com.orange.paas.cf;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -137,7 +138,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	};
     }
 
-    private Microservice parseMicroservice(SpaceApplicationSummary info) {
+    private CFMicroservice parseMicroservice(SpaceApplicationSummary info) {
 	Map<String, Object> attributes = new HashMap<>();
 	attributes.put("guid", info.getId());
 	attributes.put("name", parseName(info.getName()));
@@ -151,7 +152,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	attributes.put("memory", info.getMemory());
 	attributes.put("disk", info.getDiskQuota());
 	attributes.put("runningProcesses", operations.getRunningInstance(info.getId()));
-	return new Microservice(attributes);
+	return new CFMicroservice(attributes);
     }
 
     private boolean stagedMicroservice(CFMicroserviceState msState) {
@@ -250,8 +251,16 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
     }
 
     private Set<String> parseRoutes(SpaceApplicationSummary info) {
-	return info.getRoutes().stream().map(route -> route.getHost() + "." + route.getDomain().getName())
-		.collect(Collectors.toSet());
+	List<org.cloudfoundry.client.v2.routes.Route> routes = info.getRoutes();
+	if (routes == null) {
+	    return new HashSet<>();
+	} else {
+	    return routes.stream().map(route -> parseRoute(route)).collect(Collectors.toSet());
+	}
+    }
+
+    private String parseRoute(org.cloudfoundry.client.v2.routes.Route route) {
+	return route.getHost() + "." + route.getDomain().getName();
     }
 
     private String parsePath(SpaceApplicationSummary info) {

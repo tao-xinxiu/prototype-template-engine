@@ -125,4 +125,7 @@ public class Architecture {
 	return true;
     }
 
+    public void valid() {
+	listSitesName().forEach(site -> getSiteMicroservices(site).forEach(Microservice::valid));
+    }
 }
