@@ -25,7 +25,7 @@ public class WorkflowCalculator {
 
     public Workflow getReconfigureWorkflow() {
 	Workflow reconfigure = new ParallelWorkflow("parallel update sites");
-	for (PaaSSiteAccess site : desiredArchitecture.listPaaSSites()) {
+	for (PaaSSiteAccess site : desiredArchitecture.listSitesAccess()) {
 	    Workflow reconfigSite = config.isParallelUpdateMicroservices()
 		    ? new ParallelWorkflow(String.format("parallel update site %s entities", site.getName()))
 		    : new SerialWorkflow(String.format("serial update site %s entities", site.getName()));

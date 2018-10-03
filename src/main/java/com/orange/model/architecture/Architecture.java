@@ -66,7 +66,7 @@ public class Architecture {
 	return sites.keySet();
     }
 
-    public Set<PaaSSiteAccess> listPaaSSites() {
+    public Set<PaaSSiteAccess> listSitesAccess() {
 	return sites.values().stream().map(s -> s.getSiteAccess()).collect(Collectors.toSet());
     }
 

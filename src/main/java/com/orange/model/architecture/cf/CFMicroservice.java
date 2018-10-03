@@ -1,7 +1,6 @@
 package com.orange.model.architecture.cf;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,13 +22,7 @@ public class CFMicroservice extends Microservice {
 
     @Override
     public void valid() {
-	keys.addAll(Arrays.asList("env", "routes", "services", "memory", "disk", "runningProcesses"));
-	if (attributes.get("routes") == null) {
-	    set("routes", new HashSet<>());
-	}
-	if (attributes.get("services") == null) {
-	    set("services", new HashSet<>());
-	}
+	keys.addAll(Arrays.asList("env", "routes", "services", "memory", "disk", "runningProcesses"));	
 	super.valid();
     }
 }

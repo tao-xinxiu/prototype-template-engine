@@ -45,7 +45,7 @@ public class Main {
     }
 
     private static void push(Architecture desiredArchitecture, OperationConfig opConfig) {
-	Architecture currentArchitecture = pullAndStabilize(desiredArchitecture.listPaaSSites(), opConfig);
+	Architecture currentArchitecture = pullAndStabilize(desiredArchitecture.listSitesAccess(), opConfig);
 	Workflow reconfigureWorkflow = new WorkflowCalculator(currentArchitecture, desiredArchitecture, opConfig)
 		.getReconfigureWorkflow();
 	reconfigureWorkflow.exec();
@@ -73,7 +73,7 @@ public class Main {
 
     private static List<Architecture> preview(Architecture finalArchitecture, String strategy,
 	    StrategyConfig strategyConfig, OperationConfig opConfig) {
-	Architecture currentArchitecture = pull(finalArchitecture.listPaaSSites(), opConfig);
+	Architecture currentArchitecture = pull(finalArchitecture.listSitesAccess(), opConfig);
 	return preview(currentArchitecture, finalArchitecture, strategy, strategyConfig);
     }
 
@@ -101,12 +101,12 @@ public class Main {
 
     private static Architecture next(Architecture finalArchitecture, String strategy, StrategyConfig config,
 	    OperationConfig opConfig) {
-	Architecture currentArchitecture = pullAndStabilize(finalArchitecture.listPaaSSites(), opConfig);
+	Architecture currentArchitecture = pullAndStabilize(finalArchitecture.listSitesAccess(), opConfig);
 	return next(currentArchitecture, finalArchitecture, strategy, config);
     }
 
     private static boolean isInstantiation(Architecture desiredArchitecture, OperationConfig opConfig) {
-	Architecture currentArchitecture = pull(desiredArchitecture.listPaaSSites(), opConfig);
+	Architecture currentArchitecture = pull(desiredArchitecture.listSitesAccess(), opConfig);
 	return currentArchitecture.isInstantiation(desiredArchitecture);
     }
 
