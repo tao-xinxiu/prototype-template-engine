@@ -110,7 +110,7 @@ public class Microservice {
 	if (desiredMicroservice.get("guid") != null && !desiredMicroservice.get("guid").equals(get("guid"))) {
 	    return false;
 	}
-	Set<String> compareKeys = new HashSet<>(attributes.keySet());
+	Set<String> compareKeys = new HashSet<>(desiredMicroservice.attributes.keySet());
 	compareKeys.remove("guid");
 	for (String key : compareKeys) {
 	    if (!attributes.get(key).equals(desiredMicroservice.get(key))) {
