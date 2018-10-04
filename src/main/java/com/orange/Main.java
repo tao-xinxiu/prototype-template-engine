@@ -45,6 +45,7 @@ public class Main {
     }
 
     private static void push(Architecture desiredArchitecture, OperationConfig opConfig) {
+	desiredArchitecture.valid();
 	Architecture currentArchitecture = pullAndStabilize(desiredArchitecture.listSitesAccess(), opConfig);
 	Workflow reconfigureWorkflow = new WorkflowCalculator(currentArchitecture, desiredArchitecture, opConfig)
 		.getReconfigureWorkflow();

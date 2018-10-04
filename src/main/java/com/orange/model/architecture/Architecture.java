@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import java.util.Map.Entry;
 
 import com.orange.model.PaaSSiteAccess;
+import com.orange.util.SetUtil;
 
 public class Architecture {
     // private Map<String, PaaSSiteAccess> sites = new HashMap<>();
@@ -126,6 +127,14 @@ public class Architecture {
     }
 
     public void valid() {
-	listSitesName().forEach(site -> getSiteMicroservices(site).forEach(Microservice::valid));
+	for (Site site : sites.values()) {
+	    Set<Microservice> microservices = site.getMicroservices();
+	    if (!SetUtil.uniqueByNameVersion(microservices)) {
+		throw new IllegalArgumentException(
+			String.format("Invalid architecture because of duplicate name and version in the site [%s].",
+				site.getSiteAccess().getName()));
+	    }
+	    microservices.forEach(Microservice::valid);
+	}
     }
 }
