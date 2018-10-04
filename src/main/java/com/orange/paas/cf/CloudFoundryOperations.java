@@ -208,10 +208,7 @@ public class CloudFoundryOperations {
 	logger.info("app {} instances updated from {} to {}.", msId, currentNbProcesses, desiredNbProcesses);
     }
 
-    public void updateNameIfNeed(String msId, String currentName, String desiredName) {
-	if (currentName.equals(desiredName)) {
-	    return;
-	}
+    public void updateName(String msId, String currentName, String desiredName) {
 	updateApp(msId, desiredName, null, null, null);
 	logger.info("microservice {} name updated from {} to {}.", msId, currentName, desiredName);
     }

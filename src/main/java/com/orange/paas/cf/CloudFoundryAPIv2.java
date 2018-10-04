@@ -104,23 +104,29 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 		String msId = (String) currentCFMicroservice.get("guid");
 		operations.updateRoutesIfNeed(msId, (Set<Route>) currentCFMicroservice.get("routes"),
 			(Set<Route>) desiredCFMicroservice.get("routes"));
-		operations.updateNameIfNeed(msId, (String) currentCFMicroservice.get("name"),
-			(String) desiredCFMicroservice.get("name"));
+		if (!currentCFMicroservice.eqAttr("name", desiredCFMicroservice)) {
+		    operations.updateName(msId, (String) currentCFMicroservice.get("name"),
+			    (String) desiredCFMicroservice.get("name"));
+		    currentCFMicroservice.copyAttr("name", desiredCFMicroservice);
+		}
 		if (desiredCFMicroservice.get("state") != CFMicroserviceState.CREATED
 			&& desiredCFMicroservice.get("path") != null
 			&& !desiredCFMicroservice.get("path").equals(currentCFMicroservice.get("path"))) {
 		    operations.updatePath(msId, (String) desiredCFMicroservice.get("path"),
 			    (Map<String, String>) currentCFMicroservice.get("env"));
+		    currentCFMicroservice.copyAttr("path", desiredCFMicroservice);
 		    currentCFMicroservice.set("state", CFMicroserviceState.UPLOADED);
 		}
 		boolean needRestage = false;
 		if (!currentCFMicroservice.get("services").equals(desiredCFMicroservice.get("services"))) {
 		    operations.updateServicesIfNeed(msId, (Set<String>) currentCFMicroservice.get("services"),
 			    (Set<String>) desiredCFMicroservice.get("services"));
+		    currentCFMicroservice.copyAttr("services", desiredCFMicroservice);
 		    needRestage = true;
 		}
 		if (!currentCFMicroservice.get("env").equals(desiredCFMicroservice.get("env"))) {
 		    operations.updateEnv(msId, (Map<String, String>) desiredCFMicroservice.get("env"));
+		    currentCFMicroservice.copyAttr("env", desiredCFMicroservice);
 		    needRestage = true;
 		}
 		if (needRestage && stagedMicroservice((CFMicroserviceState) currentCFMicroservice.get("state"))) {
