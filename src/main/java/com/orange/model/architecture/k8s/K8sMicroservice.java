@@ -20,7 +20,7 @@ public class K8sMicroservice extends Microservice {
 
     @Override
     public void valid() {
-	keys.addAll(Arrays.asList("labels", "selector", "env", "resources", "runningProcesses"));
+	requiredKeys.addAll(Arrays.asList("labels", "selector", "env", "resources", "runningProcesses"));
 	super.valid();
     }
 }

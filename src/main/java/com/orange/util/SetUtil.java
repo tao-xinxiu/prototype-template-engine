@@ -49,6 +49,10 @@ public class SetUtil {
 		ms -> ms.get("name").equals(name) && ms.get("version").equals(version));
     }
 
+    public static Microservice getUniqueMicroservice(Set<Microservice> microservices, String id) {
+	return getUniqueMicroservice(microservices, ms -> ms.get("guid").equals(id));
+    }
+
     public static Microservice getOneMicroservice(Set<Microservice> microservices, Predicate<Microservice> predicate) {
 	Set<Microservice> result = search(microservices, predicate);
 	switch (result.size()) {

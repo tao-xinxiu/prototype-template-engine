@@ -13,7 +13,8 @@ import java.util.Set;
 public class Microservice {
     protected Map<String, Object> attributes = new HashMap<>();
     // "guid" is not the required key
-    protected Set<String> keys = new HashSet<>(Arrays.asList("name", "version", "path", "state", "nbProcesses"));
+    protected final Set<String> requiredKeys = new HashSet<>(
+	    Arrays.asList("name", "version", "path", "state", "nbProcesses"));
 
     public Microservice() {
     }
@@ -109,7 +110,7 @@ public class Microservice {
 	if (desiredMicroservice.get("guid") != null && !desiredMicroservice.get("guid").equals(get("guid"))) {
 	    return false;
 	}
-	for (String key : keys) {
+	for (String key : requiredKeys) {
 	    if (!attributes.get(key).equals(desiredMicroservice.get(key))) {
 		return false;
 	    }
@@ -118,8 +119,8 @@ public class Microservice {
     }
 
     public void valid() {
-	if (!attributes.keySet().containsAll(keys)) {
-	    Set<String> missingKeys = new HashSet<>(keys);
+	if (!attributes.keySet().containsAll(requiredKeys)) {
+	    Set<String> missingKeys = new HashSet<>(requiredKeys);
 	    missingKeys.removeAll(attributes.keySet());
 	    throw new IllegalArgumentException(String.format("Missing the attributes [%s] in: %s.", missingKeys, this));
 	}
@@ -154,4 +155,5 @@ public class Microservice {
 	    return false;
 	return true;
     }
+
 }

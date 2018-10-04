@@ -22,7 +22,7 @@ public class CFMicroservice extends Microservice {
 
     @Override
     public void valid() {
-	keys.addAll(Arrays.asList("env", "routes", "services", "memory", "disk", "runningProcesses"));	
+	requiredKeys.addAll(Arrays.asList("env", "routes", "services", "memory", "disk", "runningProcesses"));	
 	super.valid();
     }
 }

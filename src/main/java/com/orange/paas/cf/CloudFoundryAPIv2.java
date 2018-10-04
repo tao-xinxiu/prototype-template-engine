@@ -49,7 +49,6 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	    microservice.set("state", stabilizeState(appSummary));
 	    microservices.add(microservice);
 	}
-
 	return microservices;
     }
 
@@ -138,7 +137,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	};
     }
 
-    private CFMicroservice parseMicroservice(SpaceApplicationSummary info) {
+    private Microservice parseMicroservice(SpaceApplicationSummary info) {
 	Map<String, Object> attributes = new HashMap<>();
 	attributes.put("guid", info.getId());
 	attributes.put("name", parseName(info.getName()));
@@ -152,7 +151,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	attributes.put("memory", info.getMemory());
 	attributes.put("disk", info.getDiskQuota());
 	attributes.put("runningProcesses", operations.getRunningInstance(info.getId()));
-	return new CFMicroservice(attributes);
+	return new Microservice(attributes);
     }
 
     private boolean stagedMicroservice(CFMicroserviceState msState) {

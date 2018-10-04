@@ -22,14 +22,8 @@ public class SiteComparator {
 	for (Microservice desiredMicroservice : desiredArchitecture.getMicroservices()) {
 	    if (desiredMicroservice.get("guid") == null) {
 		Microservice currentMicroservice = SetUtil.getUniqueMicroservice(currentArchitecture.getMicroservices(),
-			ms -> ms.get("name").equals(desiredMicroservice.get("name"))
-				&& ms.get("version").equals(desiredMicroservice.get("version")));
+			(String) desiredMicroservice.get("name"), (String) desiredMicroservice.get("version"));
 		if (currentMicroservice == null) {
-		    if (desiredMicroservice.get("path") == null) {
-			throw new IllegalStateException(
-				String.format("The path of the new microservice [%s, %s] is not specified.",
-					desiredMicroservice.get("name"), desiredMicroservice.get("version")));
-		    }
 		    addedMicroservices.add(desiredMicroservice);
 		} else {
 		    desiredMicroservice.set("guid", currentMicroservice.get("guid"));
@@ -41,7 +35,7 @@ public class SiteComparator {
 	    } else {
 		desiredMicroserviceIds.add((String) desiredMicroservice.get("guid"));
 		Microservice currentMicroservice = SetUtil.getUniqueMicroservice(currentArchitecture.getMicroservices(),
-			ms -> ms.get("guid").equals(desiredMicroservice.get("guid")));
+			(String) desiredMicroservice.get("guid"));
 		if (currentMicroservice == null) {
 		    throw new IllegalStateException(
 			    String.format("Desired microservice guid [%s] is not present in the current architecture.",
