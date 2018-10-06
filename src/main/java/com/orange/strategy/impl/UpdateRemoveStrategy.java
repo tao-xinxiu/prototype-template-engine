@@ -35,7 +35,7 @@ public class UpdateRemoveStrategy extends Strategy {
 		    Set<Microservice> nextMss = SetUtil.searchByName(nextArchitecture.getSiteMicroservices(site),
 			    (String) desiredMs.get("name"));
 		    if (nextMss.size() == 0) {
-			Microservice addedMs = new Microservice(desiredMs);
+			Microservice addedMs = desiredMs.deepCopy();
 			// Add non-exist microservice
 			addedMs.set("guid", null);
 			nextArchitecture.getSite(site).addMicroservice(addedMs);

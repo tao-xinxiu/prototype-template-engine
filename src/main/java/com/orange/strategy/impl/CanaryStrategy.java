@@ -56,7 +56,7 @@ public class CanaryStrategy extends Strategy {
 			    (String) desiredMs.get("name"), (String) desiredMs.get("version"));
 		    if (updatingMs == null && SetUtil.noneMatch(currentMicroservices,
 			    ms -> ms.eqAttr(Arrays.asList("name", "path", "env"), desiredMs))) {
-			Microservice newMs = new Microservice(desiredMs);
+			Microservice newMs = desiredMs.deepCopy();
 			newMs.set("guid", null);
 			newMs.set("routes", library.tmpRoute(site, desiredMs));
 			newMs.set("nbProcesses", config.getCanaryNbr());

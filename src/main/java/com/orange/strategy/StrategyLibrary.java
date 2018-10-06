@@ -37,7 +37,7 @@ public class StrategyLibrary {
 		for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
 		    if (SetUtil.noneMatch(currentMicroservices,
 			    ms -> ms.get("name").equals(desiredMicroservice.get("name")))) {
-			Microservice newMicroservice = new Microservice(desiredMicroservice);
+			Microservice newMicroservice = desiredMicroservice.deepCopy();
 			newMicroservice.set("guid", null);
 			currentMicroservices.add(newMicroservice);
 			logger.info("Added a new microservice: {} ", newMicroservice);

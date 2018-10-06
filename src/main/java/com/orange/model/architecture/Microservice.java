@@ -23,8 +23,8 @@ public class Microservice {
 	this.attributes = attributes;
     }
 
-    public Microservice(Microservice other) {
-	attributes = new HashMap<>(other.attributes);
+    public Microservice deepCopy() {
+	return new Microservice(new HashMap<>(attributes));
     }
 
     public Map<String, Object> getAttributes() {

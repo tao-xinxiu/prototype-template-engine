@@ -22,7 +22,7 @@ public class Site {
     public Site(Site other) {
 	this.siteAccess = new PaaSSiteAccess(other.siteAccess);
 	for (Microservice microservice : other.microservices) {
-	    this.microservices.add(new Microservice(microservice));
+	    this.microservices.add(microservice.deepCopy());
 	}
     }
 

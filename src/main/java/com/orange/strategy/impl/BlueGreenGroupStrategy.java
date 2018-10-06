@@ -39,7 +39,7 @@ public class BlueGreenGroupStrategy extends BlueGreenStrategy {
 		    if (SetUtil.noneMatch(currentMicroservices,
 			    ms -> ms.eqAttr(Arrays.asList("name", "version"), desiredMicroservice))) {
 			deployingNumber++;
-			Microservice newMicroservice = new Microservice(desiredMicroservice);
+			Microservice newMicroservice = desiredMicroservice.deepCopy();
 			newMicroservice.set("guid", null);
 			newMicroservice.set("routes", library.tmpRoute(site, desiredMicroservice));
 			nextArchitecture.getSite(site).addMicroservice(newMicroservice);

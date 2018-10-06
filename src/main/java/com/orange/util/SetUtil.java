@@ -11,7 +11,7 @@ import com.orange.model.architecture.MicroserviceState;
 
 public class SetUtil {
     public static Set<Microservice> deepCopy(Set<Microservice> microservices) {
-	return microservices.stream().map(Microservice::new).collect(Collectors.toSet());
+	return microservices.stream().map(Microservice::deepCopy).collect(Collectors.toSet());
     }
 
     public static Set<Microservice> searchByName(Set<Microservice> microservices, String name) {

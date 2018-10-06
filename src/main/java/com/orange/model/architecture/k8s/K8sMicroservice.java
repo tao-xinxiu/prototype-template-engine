@@ -8,10 +8,12 @@ import com.orange.model.architecture.Microservice;
 
 public class K8sMicroservice extends Microservice {
     public K8sMicroservice(Microservice microservice) {
-	super(microservice);
-	Map<String, String> labels = new HashMap<>();
-	labels.put("version", (String) microservice.get("version"));
-	set("labels", labels);
+	this(microservice.getAttributes());
+	if (microservice.getClass() != K8sMicroservice.class) {
+	    Map<String, String> labels = new HashMap<>();
+	    labels.put("version", (String) microservice.get("version"));
+	    set("labels", labels);
+	}
     }
 
     public K8sMicroservice(Map<String, Object> attributes) {
