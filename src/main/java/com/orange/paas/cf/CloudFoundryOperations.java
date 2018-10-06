@@ -328,36 +328,36 @@ public class CloudFoundryOperations {
 	}
     }
 
-    void stop(String msId) {
+    public void stop(String msId) {
 	updateApp(msId, null, null, null, CFMicroserviceDesiredState.STOPPED);
 	logger.info("app {} desired state updated to STOPPED.", msId);
     }
 
-    void restage(String msId) {
+    public void restage(String msId) {
 	RestageApplicationRequest request = RestageApplicationRequest.builder().applicationId(msId).build();
 	retry(() -> cloudFoundryClient.applicationsV2().restage(request).block(timeout));
     }
 
-    private void start(String msId) {
+    public void start(String msId) {
 	updateApp(msId, null, null, null, CFMicroserviceDesiredState.STARTED);
 	logger.info("app {} desired state updated to STARTED.", msId);
     }
 
-    private void waitStaged(String msId) {
+    public void waitStaged(String msId) {
 	new Wait(opConfig.getPrepareTimeout()).waitUntil(id -> appStaged(id),
 		String.format("wait until microservice [%s] staged", msId), msId);
     }
 
-    private void waitRunning(String msId, int nbProcesses) {
+    public void waitRunning(String msId, int nbProcesses) {
 	new Wait(opConfig.getStartTimeout() * nbProcesses).waitUntil(id -> appRunning(id),
 		String.format("wait until microservice [%s] running", msId), msId);
     }
 
-    private boolean appStaged(String appId) {
+    public boolean appStaged(String appId) {
 	return stagedState.equals(getAppSummary(appId).getPackageState());
     }
 
-    boolean appRunning(String appId) {
+    public boolean appRunning(String appId) {
 	SummaryApplicationResponse appSummary = getAppSummary(appId);
 	if (!CFMicroserviceDesiredState.STARTED.toString().equals(appSummary.getState())) {
 	    return false;
@@ -372,7 +372,7 @@ public class CloudFoundryOperations {
 		.allMatch(entity -> runningState.equals(entity.getValue().getState()));
     }
 
-    int getRunningInstance(String appId) {
+    public int getRunningInstance(String appId) {
 	SummaryApplicationResponse appSummary = getAppSummary(appId);
 	if (!CFMicroserviceDesiredState.STARTED.toString().equals(appSummary.getState())) {
 	    return 0;
