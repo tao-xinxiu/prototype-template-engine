@@ -143,7 +143,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	};
     }
 
-    private Microservice parseMicroservice(SpaceApplicationSummary info) {
+    private CFMicroservice parseMicroservice(SpaceApplicationSummary info) {
 	Map<String, Object> attributes = new HashMap<>();
 	attributes.put("guid", info.getId());
 	attributes.put("name", parseName(info.getName()));
@@ -156,7 +156,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	attributes.put("services", parseServices(info));
 	attributes.put("memory", info.getMemory());
 	attributes.put("disk", info.getDiskQuota());
-	return new Microservice(attributes);
+	return new CFMicroservice(attributes);
     }
 
     private boolean stagedMicroservice(CFMicroserviceState msState) {
@@ -199,20 +199,20 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	}
     }
 
-    private MicroserviceState parseState(SpaceApplicationSummary info) {
+    private CFMicroserviceState parseState(SpaceApplicationSummary info) {
 	if (operations.appRunning(info.getId())) {
-	    return MicroserviceState.RUNNING;
+	    return CFMicroserviceState.RUNNING;
 	}
 	switch (info.getPackageState()) {
 	case "FAILED":
-	    return MicroserviceState.FAILED;
+	    return CFMicroserviceState.FAILED;
 	case "STAGED":
-	    return MicroserviceState.STAGED;
+	    return isStarted(info) ? CFMicroserviceState.starting : CFMicroserviceState.STAGED;
 	default:
 	    if (info.getPackageUpdatedAt() == null) {
-		return MicroserviceState.CREATED;
+		return CFMicroserviceState.CREATED;
 	    } else {
-		return MicroserviceState.UPLOADED;
+		return isStarted(info) ? CFMicroserviceState.staging : CFMicroserviceState.UPLOADED;
 	    }
 	}
     }
@@ -229,7 +229,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	if (operations.appRunning(msId)) {
 	    return MicroserviceState.RUNNING;
 	}
-	if (CFMicroserviceDesiredState.STARTED.toString().equals(info.getState())) {
+	if (isStarted(info)) {
 	    logger.info("microservice {} state will be stabilized.", info);
 	    operations.stop(msId);
 	}
@@ -245,6 +245,10 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 		return MicroserviceState.UPLOADED;
 	    }
 	}
+    }
+
+    private boolean isStarted(SpaceApplicationSummary info) {
+	return CFMicroserviceDesiredState.STARTED.toString().equals(info.getState());
     }
 
     private Map<String, String> parseEnv(SpaceApplicationSummary info) {

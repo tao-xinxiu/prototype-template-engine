@@ -17,7 +17,8 @@ public class WorkflowCalculator {
     private Architecture desiredArchitecture;
     private OperationConfig config;
 
-    public WorkflowCalculator(Architecture currentArchitecture, Architecture desiredArchitecture, OperationConfig config) {
+    public WorkflowCalculator(Architecture currentArchitecture, Architecture desiredArchitecture,
+	    OperationConfig config) {
 	this.currentArchitecture = currentArchitecture;
 	this.desiredArchitecture = desiredArchitecture;
 	this.config = config;
@@ -31,19 +32,30 @@ public class WorkflowCalculator {
 		    : new SerialWorkflow(String.format("serial update site %s entities", site.getName()));
 	    SiteComparator comparator = new SiteComparator(currentArchitecture.getSite(site.getName()),
 		    desiredArchitecture.getSite(site.getName()));
-	    PaaSAPI directory = new CloudFoundryAPIv2(site, config);
+	    PaaSAPI api = parsePaaSApi(site, config);
 	    for (Microservice addedMicroservice : comparator.getAddedMicroservices()) {
-		reconfigSite.addStep(directory.add(addedMicroservice));
+		reconfigSite.addStep(api.add(addedMicroservice));
 	    }
 	    for (Microservice removedMicroservice : comparator.getRemovedMicroservices()) {
-		reconfigSite.addStep(directory.remove(removedMicroservice));
+		reconfigSite.addStep(api.remove(removedMicroservice));
 	    }
-	    for (Entry<Microservice, Microservice> modifiedMicroservice : comparator
-		    .getModifiedMicroservice().entrySet()) {
-		reconfigSite.addStep(directory.modify(modifiedMicroservice.getKey(), modifiedMicroservice.getValue()));
+	    for (Entry<Microservice, Microservice> modifiedMicroservice : comparator.getModifiedMicroservice()
+		    .entrySet()) {
+		reconfigSite.addStep(api.modify(modifiedMicroservice.getKey(), modifiedMicroservice.getValue()));
 	    }
 	    reconfigure.addStep(reconfigSite);
 	}
 	return reconfigure;
+    }
+
+    public static PaaSAPI parsePaaSApi(PaaSSiteAccess siteAccess, OperationConfig opConfig) {
+	switch (siteAccess.getType()) {
+	case "CloudFoundry":
+	    return new CloudFoundryAPIv2(siteAccess, opConfig);
+	case "Kubernetes":
+	    // TODO
+	default:
+	    throw new IllegalArgumentException("Unknown PaaS site type: " + siteAccess.getType());
+	}
     }
 }

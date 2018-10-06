@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -20,13 +21,16 @@ import org.slf4j.LoggerFactory;
 import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
 import com.orange.model.architecture.Microservice;
+import com.orange.model.architecture.Site;
+import com.orange.model.architecture.cf.CFMicroservice;
+import com.orange.model.architecture.k8s.K8sMicroservice;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orange.model.OperationConfig;
 import com.orange.model.PaaSSiteAccess;
 import com.orange.model.workflow.Workflow;
-import com.orange.paas.cf.CloudFoundryAPIv2;
+import com.orange.paas.PaaSAPI;
 import com.orange.reconfig.WorkflowCalculator;
 import com.orange.strategy.NextArchitectureCalculator;
 
@@ -37,7 +41,8 @@ public class Main {
     private static Architecture pull(Collection<PaaSSiteAccess> managingSites, OperationConfig opConfig) {
 	Architecture currentArchitecture = new Architecture();
 	for (PaaSSiteAccess siteAccess : managingSites) {
-	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, opConfig).get();
+	    PaaSAPI api = WorkflowCalculator.parsePaaSApi(siteAccess, opConfig);
+	    Set<Microservice> microservices = api.get();
 	    currentArchitecture.addSite(siteAccess, microservices);
 	}
 	logger.info("Got current architecture: {} ", currentArchitecture);
@@ -46,7 +51,7 @@ public class Main {
 
     private static void push(Architecture desiredArchitecture, OperationConfig opConfig) {
 	desiredArchitecture.valid();
-	Architecture currentArchitecture = pullAndStabilize(desiredArchitecture.listSitesAccess(), opConfig);
+	Architecture currentArchitecture = pull(desiredArchitecture.listSitesAccess(), opConfig);
 	Workflow reconfigureWorkflow = new WorkflowCalculator(currentArchitecture, desiredArchitecture, opConfig)
 		.getReconfigureWorkflow();
 	reconfigureWorkflow.exec();
@@ -101,30 +106,13 @@ public class Main {
 
     private static Architecture next(Architecture finalArchitecture, String strategy, StrategyConfig config,
 	    OperationConfig opConfig) {
-	Architecture currentArchitecture = pullAndStabilize(finalArchitecture.listSitesAccess(), opConfig);
+	Architecture currentArchitecture = pull(finalArchitecture.listSitesAccess(), opConfig);
 	return next(currentArchitecture, finalArchitecture, strategy, config);
     }
 
     private static boolean isInstantiation(Architecture desiredArchitecture, OperationConfig opConfig) {
 	Architecture currentArchitecture = pull(desiredArchitecture.listSitesAccess(), opConfig);
 	return currentArchitecture.isInstantiation(desiredArchitecture);
-    }
-
-    /**
-     * Get the current architecture and stabilize it. (i.e. stop the currently
-     * starting microservices)
-     * 
-     * @param managingSites
-     * @return
-     */
-    private static Architecture pullAndStabilize(Collection<PaaSSiteAccess> managingSites, OperationConfig opConfig) {
-	Architecture currentArchitecture = new Architecture();
-	for (PaaSSiteAccess siteAccess : managingSites) {
-	    Set<Microservice> microservices = new CloudFoundryAPIv2(siteAccess, opConfig).getStabilizedMicroservices();
-	    currentArchitecture.addSite(siteAccess, microservices);
-	}
-	logger.info("Got and stabilized current architecture: {} ", currentArchitecture);
-	return currentArchitecture;
     }
 
     private static OperationConfig parseOpConfig(CommandLine cli)
@@ -143,6 +131,26 @@ public class Main {
     private static Architecture parseArchitecture(String optionValue)
 	    throws JsonParseException, JsonMappingException, IOException {
 	Architecture finalArchitecture = new ObjectMapper().readValue(new File(optionValue), Architecture.class);
+	for (Site site : finalArchitecture.getSites().values()) {
+	    switch (site.getSiteAccess().getType()) {
+	    case "CloudFoundry":
+		Set<Microservice> cfMicroservices = new HashSet<>();
+		for (Microservice microservice : site.getMicroservices()) {
+		    cfMicroservices.add(new CFMicroservice(microservice));
+		}
+		site.setMicroservices(cfMicroservices);
+		break;
+	    case "Kubernetes":
+		Set<Microservice> k8sMicroservices = new HashSet<>();
+		for (Microservice microservice : site.getMicroservices()) {
+		    k8sMicroservices.add(new K8sMicroservice(microservice));
+		}
+		site.setMicroservices(k8sMicroservices);
+		break;
+	    default:
+		throw new IllegalArgumentException("Unknown PaaS site type: " + site.getSiteAccess().getType());
+	    }
+	}
 	finalArchitecture.valid();
 	return finalArchitecture;
     }
