@@ -135,24 +135,20 @@ public class CloudFoundryOperations {
      * @param desiredMicroservice
      * @return
      */
-    public String create(CFMicroservice desiredMicroservice) {
-	@SuppressWarnings("unchecked")
-	CreateApplicationRequest.Builder requestBuilder = CreateApplicationRequest.builder()
-		.name((String) desiredMicroservice.get("name")).spaceId(spaceId)
-		.instances((int) desiredMicroservice.get("nbProcesses"))
-		.environmentJsons((Map<String, String>) desiredMicroservice.get("env"))
-		.healthCheckTimeout(healthCheckTimeout);
-	if (desiredMicroservice.get("memory") != null) {
-	    requestBuilder.memory((int) desiredMicroservice.get("memory"));
+    public String create(String name, int nbProcesses, Map<String, String> env, Integer memory, Integer disk) {
+	CreateApplicationRequest.Builder requestBuilder = CreateApplicationRequest.builder().name(name).spaceId(spaceId)
+		.instances(nbProcesses).environmentJsons(env).healthCheckTimeout(healthCheckTimeout);
+	if (memory != null) {
+	    requestBuilder.memory(memory);
 	}
-	if (desiredMicroservice.get("disk") != null) {
-	    requestBuilder.diskQuota((int) desiredMicroservice.get("disk"));
+	if (disk != null) {
+	    requestBuilder.diskQuota(disk);
 	}
 	CreateApplicationRequest request = requestBuilder.build();
 	CreateApplicationResponse response = retry(
 		() -> cloudFoundryClient.applicationsV2().create(request).block(timeout));
 	String id = response.getMetadata().getId();
-	logger.info("App [{}] created with id [{}].", desiredMicroservice.get("name"), id);
+	logger.info("App [{}] created with id [{}].", name, id);
 	return id;
     }
 
@@ -220,16 +216,16 @@ public class CloudFoundryOperations {
      * @param currentRoutes
      * @param desiredRoutes
      */
-    public void updateRoutesIfNeed(String msId, Set<Route> currentRoutes, Set<Route> desiredRoutes) {
+    public void updateRoutesIfNeed(String msId, Set<String> currentRoutes, Set<String> desiredRoutes) {
 	if (currentRoutes.equals(desiredRoutes)) {
 	    return;
 	}
-	Set<Route> addedRoutes = desiredRoutes.stream().filter(route -> !currentRoutes.contains(route))
+	Set<String> addedRoutes = desiredRoutes.stream().filter(route -> !currentRoutes.contains(route))
 		.collect(Collectors.toSet());
-	Set<Route> removedRoutes = currentRoutes.stream().filter(route -> !desiredRoutes.contains(route))
+	Set<String> removedRoutes = currentRoutes.stream().filter(route -> !desiredRoutes.contains(route))
 		.collect(Collectors.toSet());
-	addedRoutes.stream().forEach(route -> createAndMapAppRoute(msId, route));
-	removedRoutes.stream().forEach(route -> unmapAppRoute(msId, route));
+	addedRoutes.stream().forEach(route -> createAndMapAppRoute(msId, new Route(route)));
+	removedRoutes.stream().forEach(route -> unmapAppRoute(msId, new Route(route)));
     }
 
     public void updateServicesIfNeed(String msId, Set<String> currentServices, Set<String> desiredServices) {

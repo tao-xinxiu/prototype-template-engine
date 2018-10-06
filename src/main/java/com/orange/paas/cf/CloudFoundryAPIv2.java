@@ -18,7 +18,6 @@ import com.orange.model.architecture.MicroserviceState;
 import com.orange.model.architecture.cf.CFMicroservice;
 import com.orange.model.architecture.cf.CFMicroserviceDesiredState;
 import com.orange.model.architecture.cf.CFMicroserviceState;
-import com.orange.model.architecture.cf.Route;
 import com.orange.model.workflow.Step;
 import com.orange.paas.PaaSAPI;
 
@@ -59,10 +58,15 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	    @SuppressWarnings("unchecked")
 	    @Override
 	    public void exec() {
-		String msId = operations.create(desiredMicroservice);
+		String msVersionedName = getVersionedName((String) desiredMicroservice.get("name"),
+			(String) desiredMicroservice.get("version"));
+		String msId = operations.create(msVersionedName, (int) desiredMicroservice.get("nbProcesses"),
+			(Map<String, String>) desiredMicroservice.get("env"), (int) desiredMicroservice.get("memory"),
+			(int) desiredMicroservice.get("disk"));
 		Map<String, Object> attributes = new HashMap<>();
 		attributes.put("guid", msId);
 		attributes.put("name", desiredMicroservice.get("name"));
+		attributes.put("version", desiredMicroservice.get("version"));
 		attributes.put("path", null);
 		attributes.put("state", CFMicroserviceState.CREATED);
 		attributes.put("nbProcesses", desiredMicroservice.get("nbProcesses"));
@@ -70,8 +74,8 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 		attributes.put("routes", new HashSet<>());
 		attributes.put("services", new HashSet<>());
 		CFMicroservice currentMicroservice = new CFMicroservice(attributes);
-		operations.updateRoutesIfNeed(msId, (Set<Route>) currentMicroservice.get("routes"),
-			(Set<Route>) desiredMicroservice.get("routes"));
+		operations.updateRoutesIfNeed(msId, (Set<String>) currentMicroservice.get("routes"),
+			(Set<String>) desiredMicroservice.get("routes"));
 		operations.updateServicesIfNeed(msId, (Set<String>) currentMicroservice.get("services"),
 			(Set<String>) desiredMicroservice.get("services"));
 		operations.updateStateIfNeed(currentMicroservice, desiredMicroservice);
@@ -102,12 +106,16 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	    @Override
 	    public void exec() {
 		String msId = (String) currentCFMicroservice.get("guid");
-		operations.updateRoutesIfNeed(msId, (Set<Route>) currentCFMicroservice.get("routes"),
-			(Set<Route>) desiredCFMicroservice.get("routes"));
-		if (!currentCFMicroservice.eqAttr("name", desiredCFMicroservice)) {
-		    operations.updateName(msId, (String) currentCFMicroservice.get("name"),
-			    (String) desiredCFMicroservice.get("name"));
+		operations.updateRoutesIfNeed(msId, (Set<String>) currentCFMicroservice.get("routes"),
+			(Set<String>) desiredCFMicroservice.get("routes"));
+		if (!currentCFMicroservice.eqAttr(Arrays.asList("name", "version"), desiredCFMicroservice)) {
+		    String currentName = getVersionedName((String) currentCFMicroservice.get("name"),
+			    (String) currentCFMicroservice.get("version"));
+		    String desiredName = getVersionedName((String) desiredMicroservice.get("name"),
+			    (String) desiredMicroservice.get("version"));
+		    operations.updateName(msId, currentName, desiredName);
 		    currentCFMicroservice.copyAttr("name", desiredCFMicroservice);
+		    currentCFMicroservice.copyAttr("version", desiredCFMicroservice);
 		}
 		if (desiredCFMicroservice.get("state") != CFMicroserviceState.CREATED
 			&& desiredCFMicroservice.get("path") != null
@@ -279,6 +287,10 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 
     private Set<String> parseServices(SpaceApplicationSummary info) {
 	return new HashSet<>(info.getServiceNames());
+    }
+
+    private String getVersionedName(String name, String version) {
+	return name + "_" + version;
     }
 
     abstract class SiteStep extends Step {
