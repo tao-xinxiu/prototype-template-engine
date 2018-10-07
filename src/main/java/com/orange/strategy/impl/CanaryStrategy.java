@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import com.orange.model.StrategyConfig;
 import com.orange.model.architecture.Architecture;
 import com.orange.model.architecture.Microservice;
-import com.orange.model.architecture.MicroserviceState;
 import com.orange.strategy.Strategy;
 import com.orange.strategy.Transition;
 import com.orange.util.SetUtil;
@@ -29,12 +28,9 @@ public class CanaryStrategy extends Strategy {
     public boolean valid(Architecture currentArchitecture, Architecture finalArchitecture) {
 	for (String site : finalArchitecture.listSitesName()) {
 	    for (Microservice desiredMicroservice : finalArchitecture.getSiteMicroservices(site)) {
-		if (desiredMicroservice.get("state") != MicroserviceState.RUNNING) {
-		    return false;
-		}
 		Set<Microservice> currentMicroservices = SetUtil.searchByName(
 			currentArchitecture.getSiteMicroservices(site), (String) desiredMicroservice.get("name"));
-		if (!SetUtil.uniqueByPathEnv(currentMicroservices)) {
+		if (!SetUtil.uniqueByNameVersion(currentMicroservices)) {
 		    return false;
 		}
 	    }
