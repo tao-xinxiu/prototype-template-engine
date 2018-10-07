@@ -106,18 +106,21 @@ public class CanaryStrategy extends Strategy {
 			    ms -> ms.eqAttr(Arrays.asList("name", "state", "routes"), desiredMs));
 		    if (relatedMicroservices.stream().mapToInt(ms -> (int) ms.get("nbProcesses"))
 			    .sum() == (int) desiredMs.get("nbProcesses")) {
-			Microservice nextMs = SetUtil.getUniqueMicroservice(relatedMicroservices,
+			Microservice oldVersionMs = SetUtil.getOneMicroservice(relatedMicroservices,
 				ms -> !ms.eqAttr("version", desiredMs));
+			if (oldVersionMs == null) { // this ms not have oldVersion instances
+			    continue;
+			}
 			boolean canaryNotCreated = SetUtil.noneMatch(relatedMicroservices,
 				ms -> ms.eqAttr("version", desiredMs));
 			int scaleDownNb = canaryNotCreated ? config.getCanaryNbr() : config.getCanaryIncrease();
-			int nextNbr = (int) nextMs.get("nbProcesses") - scaleDownNb;
+			int nextNbr = (int) oldVersionMs.get("nbProcesses") - scaleDownNb;
 			if (nextNbr >= 1) {
-			    nextMs.set("nbProcesses", nextNbr);
-			    logger.info("rolled out microservice {}", nextMs);
+			    oldVersionMs.set("nbProcesses", nextNbr);
+			    logger.info("rolled out microservice {}", oldVersionMs);
 			} else {
-			    nextMicroservices.remove(nextMs);
-			    logger.info("removed microservice {}", nextMs);
+			    nextMicroservices.remove(oldVersionMs);
+			    logger.info("removed microservice {}", oldVersionMs);
 			}
 		    }
 		}
