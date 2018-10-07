@@ -239,7 +239,7 @@ public class CloudFoundryAPIv2 extends PaaSAPI {
 	}
 	if (isStarted(info)) {
 	    logger.info("Waiting microservice {} state to be stabilized.", info);
-	    operations.waitRunning(msId, info.getInstances());
+	    operations.activeWaitRunning(msId, info.getInstances());
 	    return MicroserviceState.RUNNING;
 	}
 	switch (info.getPackageState()) {

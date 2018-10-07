@@ -3,8 +3,10 @@ package com.orange.paas.cf;
 import java.io.File;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -12,6 +14,7 @@ import java.util.stream.Collectors;
 import org.cloudfoundry.client.CloudFoundryClient;
 import org.cloudfoundry.client.v2.applications.ApplicationEnvironmentRequest;
 import org.cloudfoundry.client.v2.applications.ApplicationEnvironmentResponse;
+import org.cloudfoundry.client.v2.applications.ApplicationInstanceInfo;
 import org.cloudfoundry.client.v2.applications.ApplicationInstancesRequest;
 import org.cloudfoundry.client.v2.applications.ApplicationInstancesResponse;
 import org.cloudfoundry.client.v2.applications.CreateApplicationRequest;
@@ -20,6 +23,7 @@ import org.cloudfoundry.client.v2.applications.DeleteApplicationRequest;
 import org.cloudfoundry.client.v2.applications.RestageApplicationRequest;
 import org.cloudfoundry.client.v2.applications.SummaryApplicationRequest;
 import org.cloudfoundry.client.v2.applications.SummaryApplicationResponse;
+import org.cloudfoundry.client.v2.applications.TerminateApplicationInstanceRequest;
 import org.cloudfoundry.client.v2.applications.UpdateApplicationRequest;
 import org.cloudfoundry.client.v2.applications.UploadApplicationRequest;
 import org.cloudfoundry.client.v2.domains.ListDomainsRequest;
@@ -265,12 +269,14 @@ public class CloudFoundryOperations {
 	    case staging:
 		waitStaged(msId);
 	    case starting:
-		waitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
+		// waitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
+		activeWaitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
 		break;
 	    case FAILED:
 		restage(msId);
 		waitStaged(msId);
-		waitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
+		// waitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
+		activeWaitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
 		break;
 	    default:
 		throw new IllegalStateException(
@@ -349,6 +355,12 @@ public class CloudFoundryOperations {
 		String.format("wait until microservice [%s] running", msId), msId);
     }
 
+    public void activeWaitRunning(String msId, int nbProcesses) {
+	new Wait(opConfig.getStartTimeout() * nbProcesses).waitUntil(id -> appRunning(id),
+		String.format("wait until microservice [%s] running (auto restart crashed instances)", msId), msId,
+		(appId -> crashedInstances(appId).forEach(instance -> restartInstance(appId, instance))), msId);
+    }
+
     public boolean appStaged(String appId) {
 	return stagedState.equals(getAppSummary(appId).getPackageState());
     }
@@ -366,6 +378,19 @@ public class CloudFoundryOperations {
 		() -> cloudFoundryClient.applicationsV2().instances(request).block(timeout));
 	return response.getInstances().entrySet().stream()
 		.allMatch(entity -> runningState.equals(entity.getValue().getState()));
+    }
+
+    public Set<String> crashedInstances(String appId) {
+	Set<String> crashedInstances = new HashSet<>();
+	ApplicationInstancesRequest request = ApplicationInstancesRequest.builder().applicationId(appId).build();
+	ApplicationInstancesResponse response = retry(
+		() -> cloudFoundryClient.applicationsV2().instances(request).block(timeout));
+	for (Entry<String, ApplicationInstanceInfo> instance : response.getInstances().entrySet()) {
+	    if ("CRASHED".equals(instance.getValue().getState())) {
+		crashedInstances.add(instance.getKey());
+	    }
+	}
+	return crashedInstances;
     }
 
     public int getRunningInstance(String appId) {
@@ -635,6 +660,12 @@ public class CloudFoundryOperations {
 	}
 	assert serviceInstancesResponse.getResources().size() == 1;
 	return serviceInstancesResponse.getResources().get(0).getMetadata().getId();
+    }
+
+    private void restartInstance(String appId, String instanceIndex) {
+	TerminateApplicationInstanceRequest request = TerminateApplicationInstanceRequest.builder().applicationId(appId)
+		.index(instanceIndex).build();
+	retry(() -> cloudFoundryClient.applicationsV2().terminateInstance(request).block(timeout));
     }
 
     private <T> T retry(Supplier<T> function) {
