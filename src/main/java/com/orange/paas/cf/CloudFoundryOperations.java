@@ -367,6 +367,14 @@ public class CloudFoundryOperations {
     }
 
     public boolean appRunning(String appId) {
+	return appRunning(appId, opConfig.getMinRunProp());
+    }
+
+    public boolean appAllRunning(String appId) {
+	return appRunning(appId, 1);
+    }
+
+    public boolean appRunning(String appId, double minRunProp) {
 	SummaryApplicationResponse appSummary = getAppSummary(appId);
 	if (!CFMicroserviceDesiredState.STARTED.toString().equals(appSummary.getState())) {
 	    return false;
@@ -377,8 +385,10 @@ public class CloudFoundryOperations {
 	ApplicationInstancesRequest request = ApplicationInstancesRequest.builder().applicationId(appId).build();
 	ApplicationInstancesResponse response = retry(
 		() -> cloudFoundryClient.applicationsV2().instances(request).block(timeout));
-	return response.getInstances().entrySet().stream()
-		.allMatch(entity -> runningState.equals(entity.getValue().getState()));
+	int runningInstances = (int) response.getInstances().entrySet().stream()
+		.filter(entity -> runningState.equals(entity.getValue().getState())).count();
+	int minRunInstances = (int) (response.getInstances().size() * minRunProp);
+	return runningInstances >= minRunInstances;
     }
 
     public Set<String> crashedInstances(String appId) {

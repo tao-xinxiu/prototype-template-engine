@@ -8,6 +8,7 @@ public class OperationConfig {
     private int uploadTimeout = 20 * 60;
     private int prepareTimeout = 15 * 60;
     private int startTimeout = 20 * 60;
+    private double minRunProp = 0.8;
     private boolean parallelUpdateMicroservices = false;
 
     public OperationConfig() {
@@ -69,12 +70,20 @@ public class OperationConfig {
 	this.generalBackoff = generalBackoff;
     }
 
+    public double getMinRunProp() {
+	return minRunProp;
+    }
+
+    public void setMinRunProp(double minRunProp) {
+	this.minRunProp = minRunProp;
+    }
+
     public boolean isParallelUpdateMicroservices() {
-        return parallelUpdateMicroservices;
+	return parallelUpdateMicroservices;
     }
 
     public void setParallelUpdateMicroservices(boolean parallelUpdateMicroservices) {
-        this.parallelUpdateMicroservices = parallelUpdateMicroservices;
+	this.parallelUpdateMicroservices = parallelUpdateMicroservices;
     }
 
     @Override
@@ -82,6 +91,6 @@ public class OperationConfig {
 	return "OperationConfig [generalTimeout=" + generalTimeout + ", connectTimeout=" + connectTimeout
 		+ ", generalRetry=" + generalRetry + ", generalBackoff=" + generalBackoff + ", uploadTimeout="
 		+ uploadTimeout + ", prepareTimeout=" + prepareTimeout + ", startTimeout=" + startTimeout
-		+ ", parallelUpdateMicroservices=" + parallelUpdateMicroservices + "]";
+		+ ", minRunProp=" + minRunProp + ", parallelUpdateMicroservices=" + parallelUpdateMicroservices + "]";
     }
 }
