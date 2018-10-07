@@ -2,6 +2,7 @@ package com.orange.paas.cf;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -386,7 +387,8 @@ public class CloudFoundryOperations {
 	ApplicationInstancesResponse response = retry(
 		() -> cloudFoundryClient.applicationsV2().instances(request).block(timeout));
 	for (Entry<String, ApplicationInstanceInfo> instance : response.getInstances().entrySet()) {
-	    if ("CRASHED".equals(instance.getValue().getState())) {
+	    List<String> crashedState = Arrays.asList("CRASHED", "DOWN");
+	    if (crashedState.contains(instance.getValue().getState())) {
 		crashedInstances.add(instance.getKey());
 	    }
 	}
