@@ -63,7 +63,14 @@ public class Main {
 	    String strategy, StrategyConfig strategyConfig) {
 	List<Architecture> archSequence = new ArrayList<>();
 	Architecture currentArchitecture = initArchitecture;
+	int numIteration = 0;
 	while (true) {
+	    if (numIteration >= strategyConfig.getMaxIteration()) {
+		throw new IllegalStateException(String.format(
+			"Error: the strategy [%s] can't reach the target within [%d] intermediate architectures.",
+			strategy, strategyConfig.getMaxIteration()));
+	    }
+	    numIteration++;
 	    Architecture nextArchitecture = next(currentArchitecture, finalArchitecture, strategy, strategyConfig);
 	    logger.info("preview calculated the next architecture: " + nextArchitecture);
 	    if (nextArchitecture == null) {

@@ -17,6 +17,7 @@ public class StrategyConfig {
     // limit number of microservices being simultaneously deployed per site, 0 means
     // no limit
     private int groupSize = 0;
+    private int maxIteration = 100;
 
     public StrategyConfig() {
     }
@@ -80,6 +81,14 @@ public class StrategyConfig {
     public void setGroupSize(int groupSize) {
 	this.groupSize = groupSize;
     }
+    
+    public int getMaxIteration() {
+        return maxIteration;
+    }
+
+    public void setMaxIteration(int maxIteration) {
+        this.maxIteration = maxIteration;
+    }
 
     public void validSitesOrder(Set<String> completeSites) {
 	if (sitesOrder.isEmpty()) {
@@ -101,7 +110,7 @@ public class StrategyConfig {
     public String toString() {
 	return "StrategyConfig [parallelAllSites=" + parallelAllSites + ", sitesOrder=" + sitesOrder + ", canaryNbr="
 		+ canaryNbr + ", canaryIncrease=" + canaryIncrease + ", siteConfigs=" + siteConfigs + ", groupSize="
-		+ groupSize + "]";
+		+ groupSize + ", maxIteration=" + maxIteration + "]";
     }
 
 }
