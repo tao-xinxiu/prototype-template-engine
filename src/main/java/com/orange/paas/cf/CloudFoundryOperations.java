@@ -270,14 +270,14 @@ public class CloudFoundryOperations {
 	    case staging:
 		waitStaged(msId);
 	    case starting:
-		// waitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
-		activeWaitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
+		waitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
+		// activeWaitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
 		break;
 	    case FAILED:
 		restage(msId);
 		waitStaged(msId);
-		// waitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
-		activeWaitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
+		waitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
+		// activeWaitRunning(msId, (int) desiredMicroservice.get("nbProcesses"));
 		break;
 	    default:
 		throw new IllegalStateException(
