@@ -2,59 +2,72 @@
 The project is the prototype of an Architecture-based Framework for automating the update of multiple microservices on multiple distributed PaaS platforms (ex. Cloud Foundry, Heroku). The framework supports various updating strategies (ex. BlueGreen, Canary, CleanRedeploy etc.), and greatly facilitates fixing failures during updating.
 
 ## Usage
-### start server
+### compile the framework
 ```
 git clone https://github.com/tao-xinxiu/prototype-template-engine.git
 cd prototype-template-engine/
 mvn install
-java -jar target/prototype-template-engine-0.0.1-SNAPSHOT.jar
+alias ms-update="java -jar $PWD/target/prototype-template-engine-0.0.1-SNAPSHOT-shaded.jar"
 ```
+Now you are prepared to execute the commands of our framework.
 
-### setup client
-The basic idea of perfoming an update process with the framework is demonstrated as following digram: ![prototype sequence diagram](diagram/prototype_client_seqdiag.png)  
-The client could setup a pipeline (with tools as [Jenkins](https://jenkins.io/) or [Concourse](https://concourse.ci/)) as [example](https://gitlab.com/xxtao/microservices-demo-deployment), or write a simple script as [example](https://gitlab.com/xxtao/experiment/blob/master/scripts/update.sh) to send the update request to the server. Here is an example `update` script:
-```
-set_strategy_config(strategy_name, strategy_config)
-
-while(!is_instantiation(final_architecture))
-    next_architecture = next(final_architecture)
-    push(next_architecture)
-done
-```
-To perform a more prudent updating process, the user could invoke manually `next` and `push` command, so that it could always preview the next architecture before delivering it. This usage mode is often used during the implementation and testing of new custom strategy.
+### conduct the update
+You have two ways to conduct an update:
+1) Auto mode: directly conduct the `update` command to automatically deliver a target architecture.
+2) Step by step mode: to perform a more prudent updating process, you could invoke manually `next` and `push` command, so that you can always preview the next architecture before delivering it. This usage mode is often used during the implementation and testing of new custom strategy.
 
 ## Model
 An [architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java) is composed by the multiple PaaS sites, each site contains a set of [microservices architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Microservice.java).
 
-## API
+## CLI
+### deliver a desired architecture with a strategy
+The command delivers a target architecture with a specified strategy.  
+
+Command: `ms-update update -a $FINAL_ARCHI -sn $STRATEGY -sc $STRATEGY_CONFIG -oc $OP_CONFIG`
+
+Parameters: 
+- `FINAL_ARCHI`: a json file with the structure [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java)
+- `STRATEGY`: String, the name of the chosen strategy
+- `STRATEGY_CONFIG`: a json file with the structure [StrategyConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/StrategyConfig.java)
+- `OPCONFIG_FILE`: a json file with the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
+
 ### pull current architecture
-The endpoint get the current architecture of all managing PaaS sites.  
-request: PUT /pull  
-body: Collection<[PaaSSiteAccess](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/PaaSSiteAccess.java)> managingSites 
+The command gets the current architecture of all managing PaaS sites. 
+
+Command: `ms-update pull -s $SITES_FILE -oc $OPCONFIG_FILE`
+
+Parameters: 
+- `SITES_FILE`: a json file with the structure Collection<[PaaSSiteAccess](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/PaaSSiteAccess.java)> 
+- `OPCONFIG_FILE`: a json file with the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
 
 ### push a desired architecture
-The endpoint evolve the specified sites from their current architecture to the desired architecture.  
-request: POST /push  
-body: [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java) desiredArchitecture
+The command evolves the specified sites from their current architecture to the desired architecture in the most direct way without considering update strategies.  
+
+Command: `ms-update push -a $DESIRED_ARCHI -oc $OPCONFIG_FILE`
+
+Parameters: 
+- `DESIRED_ARCHI`: a json file with the structure [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java)
+- `OPCONFIG_FILE`: a json file with the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
 
 ### calculate next desired architecture
-The endpoint calculate the next desired architecture based on configured strategy.  
-request: POST /next  
-body: [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java) finalArchitecture
+The command calculates the next desired architecture based on configured strategy.  
+
+Command: `ms-update next -a $FINAL_ARCHI -sn $STRATEGY -sc $STRATEGY_CONFIG -oc $OP_CONFIG`
+
+Parameters: 
+- `FINAL_ARCHI`: a json file with the structure [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java)
+- `STRATEGY`: String, the name of the chosen strategy
+- `STRATEGY_CONFIG`: a json file with the structure [StrategyConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/StrategyConfig.java)
+- `OPCONFIG_FILE`: a json file with the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
 
 ### verify current architecture
-The endpoint verify whether the current architecture is the instantiation of a desired architecture  
-request: POST /is_instantiation  
-body:  [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java) desiredArchitecture 
+The command verifies whether the current architecture is the instantiation of a desired architecture  
 
-### set strategy configuration
-request: PUT /set_strategy_config  
-parameter: strategy name  
-body: [StrategyConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/StrategyConfig.java)
+Command: `ms-update arrived -a $DESIRED_ARCHI -oc $OPCONFIG_FILE`
 
-### set operation configuration
-request: PUT /set_operation_config  
-body: [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
+Parameters: 
+- `DESIRED_ARCHI`: a json file with the structure [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java)
+- `OPCONFIG_FILE`: a json file with the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
 
 ## Robustness
 This framework provides the kill-continue capability. That is, whenever the update process is stopped, either voluntarily by the user or involuntarily due to a failure, user could always re-start it by re-invoking the demonstrated  `update` [script](#client). In the practise, the user could easily configure `retry` in the pipeline setup or use loop in the script to avoid temporary failures (ex. network error). To correct the failure caused by microservice implementation or configuration, the user could change the desired microservice architecture `final_architecture`. In addition, the user could also change the chosen `strategy` to correct the erroneous strategy implementation.
