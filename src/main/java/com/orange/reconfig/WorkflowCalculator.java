@@ -52,6 +52,8 @@ public class WorkflowCalculator {
 	switch (siteAccess.getType()) {
 	case "CloudFoundry":
 	    return new CloudFoundryAPIv2(siteAccess, opConfig);
+	case "Heroku":
+		return new HerokuAPIImpl(siteAccess, opConfig);
 	case "Kubernetes":
 	    // TODO
 	default:

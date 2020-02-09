@@ -12,9 +12,9 @@ alias ms-update="java -jar $PWD/target/prototype-template-engine-0.0.1-SNAPSHOT-
 Now you are prepared to execute the commands of our framework.
 
 ### conduct the update
-You have two ways to conduct an update:
-1) Auto mode: directly conduct the `update` command to automatically deliver a target architecture.
-2) Step by step mode: to perform a more prudent updating process, you could invoke manually `next` and `push` command, so that you can always preview the next architecture before delivering it. This usage mode is often used during the implementation and testing of new custom strategy.
+You have two ways to process an update:
+1) Auto mode: directly process the `update` command to automatically deliver a target architecture.
+2) Step by step mode: to process an update step by step, you can invoke manually `next` and `push` commands, so that you will always preview the next architecture before delivering it. This usage mode is often used during the implementation and testing of new custom strategy.
 
 ## Model
 An [architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java) is composed by the multiple PaaS sites, each site contains a set of [microservices architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Microservice.java).
@@ -26,57 +26,57 @@ The command delivers a target architecture with a specified strategy.
 Command: `ms-update update -a $FINAL_ARCHI -sn $STRATEGY -sc $STRATEGY_CONFIG -oc $OP_CONFIG`
 
 Parameters: 
-- `FINAL_ARCHI`: a json file with the structure [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java)
+- `FINAL_ARCHI`: a json file describing the structure [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java)
 - `STRATEGY`: String, the name of the chosen strategy
-- `STRATEGY_CONFIG`: a json file with the structure [StrategyConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/StrategyConfig.java)
+- `STRATEGY_CONFIG`: a json file describing the structure [StrategyConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/StrategyConfig.java)
 - `OPCONFIG_FILE`: a json file with the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
 
 ### pull current architecture
-The command gets the current architecture of all managing PaaS sites. 
+The command gets the current architecture for all managed PaaS sites. 
 
 Command: `ms-update pull -s $SITES_FILE -oc $OPCONFIG_FILE`
 
 Parameters: 
-- `SITES_FILE`: a json file with the structure Collection<[PaaSSiteAccess](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/PaaSSiteAccess.java)> 
-- `OPCONFIG_FILE`: a json file with the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
+- `SITES_FILE`: a json file describing the structure Collection<[PaaSSiteAccess](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/PaaSSiteAccess.java)> 
+- `OPCONFIG_FILE`: a json file describing the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
 
 ### push a desired architecture
-The command evolves the specified sites from their current architecture to the desired architecture in the most direct way without considering update strategies.  
+The command evolves the specified sites from their current architecture to the desired target architecture in the most direct way without considering update strategies.  
 
 Command: `ms-update push -a $DESIRED_ARCHI -oc $OPCONFIG_FILE`
 
 Parameters: 
-- `DESIRED_ARCHI`: a json file with the structure [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java)
-- `OPCONFIG_FILE`: a json file with the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
+- `DESIRED_ARCHI`: a json file describing the structure [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java)
+- `OPCONFIG_FILE`: a json file describing the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
 
 ### calculate next desired architecture
-The command calculates the next desired architecture based on configured strategy.  
+The command computes the next desired architecture based on the chosen strategy.  
 
 Command: `ms-update next -a $FINAL_ARCHI -sn $STRATEGY -sc $STRATEGY_CONFIG -oc $OP_CONFIG`
 
 Parameters: 
-- `FINAL_ARCHI`: a json file with the structure [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java)
+- `FINAL_ARCHI`: a json file describing the structure [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java)
 - `STRATEGY`: String, the name of the chosen strategy
-- `STRATEGY_CONFIG`: a json file with the structure [StrategyConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/StrategyConfig.java)
-- `OPCONFIG_FILE`: a json file with the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
+- `STRATEGY_CONFIG`: a json file describing the structure [StrategyConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/StrategyConfig.java)
+- `OPCONFIG_FILE`: a json file describing the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
 
 ### verify current architecture
-The command verifies whether the current architecture is the instantiation of a desired architecture  
+The command checks whether the current architecture is the instantiation of the desired target architecture  
 
 Command: `ms-update arrived -a $DESIRED_ARCHI -oc $OPCONFIG_FILE`
 
 Parameters: 
-- `DESIRED_ARCHI`: a json file with the structure [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java)
-- `OPCONFIG_FILE`: a json file with the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
+- `DESIRED_ARCHI`: a json file describing the structure [Architecture](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/architecture/Architecture.java)
+- `OPCONFIG_FILE`: a json file describing the structure [OperationConfig](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/model/OperationConfig.java)
 
 ## Robustness
-This framework provides the kill-continue capability. That is, whenever the update process is stopped, either voluntarily by the user or involuntarily due to a failure, user could always re-start it by re-invoking the demonstrated  `update` [script](#client). In the practise, the user could easily configure `retry` in the pipeline setup or use loop in the script to avoid temporary failures (ex. network error). To correct the failure caused by microservice implementation or configuration, the user could change the desired microservice architecture `final_architecture`. In addition, the user could also change the chosen `strategy` to correct the erroneous strategy implementation.
+This framework provides a kill-continue capability. Whenever the update process is stopped, either voluntarily by the user or involuntarily due to a failure, the user can always re-start it by re-invoking the  `update` [script](#client). In the practise, the user can configure a `retry` pattern in the pipeline setup. To fix failures caused by microservice implementation or configuration, the user can change the desired microservice architecture `final_architecture`. In addition, the user can also change the chosen `strategy`.
 
 ## Updating Strategy
-In the framework, user control the updating process by choosing a provided or custom strategy. The choice of strategy is depending on the microservice architecture constraints and non-functional requirement (availability, resource usage, or updating duration etc.)
+In the framework, the user controls the updating process by choosing a provided or custom strategy. The choice of strategy depend's on the microservice architecture constraints and non-functional requirements (availability, resource usage, or updating duration etc.)
 
 ### provided strategy
-The following strategies is provided:
+The following strategies are provided:
 - [BlueGreen](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/BlueGreenStrategy.java)
 - [Canary](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/CanaryStrategy.java)
 - [BlueGreen Canary Mix](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/BlueGreenCanaryMixStrategy.java)
@@ -88,9 +88,9 @@ The following strategies is provided:
 - [Add then Remove](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/AddRemoveStrategy.java)
 - [Remove then Add](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/impl/RemoveAddStrategy.java)
 
-To perform the strategy sites by sites, you can simply specify `parallelAllSites` as `false` and set `sitesOrder` as the order of sites to update (e.x., `[["site1"], ["site2", "site3"], ["site4", "site5"]]`)
+To process an update site by site, you can simply specify `parallelAllSites` as `false` and set `sitesOrder` as the order of sites to update (e.x., `[["site1"], ["site2", "site3"], ["site4", "site5"]]`)
 
-To choose the proper strategy, you could check their comparison in the following table. It shows the influence of applying different strategies for updating the code of a microservice.
+To choose among several strategies, you can consider the following table that compares them. It shows the influence of applying different strategies for updating the code of a microservice.
 
 | strategy | multi-version coexisted | duration | resource consumption | performance degradation | available instances |
 |-----------|-----|-----|---------|-----|---------|
@@ -100,10 +100,10 @@ To choose the proper strategy, you could check their comparison in the following
 | Inplace   | No  | +   | N       | +++ | 0 ~ N   |
 | CleanRedeploy | No | ++ | 0 ~ N | ++++ | 0 ~ N  |
 
-In the table, the property `resource consumption` is shown by the number of instances. `N` means desired number of instances of the microservice. The property `available instances` means the number of instances in running. It is used to demonstrate more clearly `performance degradation`, as more instances available mean less performance degradation.
+In the table, the property `resource consumption` reflects the number of microservice instances. `N` stands for the desired number of instances of the microservice. The property `available instances` corresponds to the number of instances in running state. It is used to demonstrate more clearly `performance degradation`, as more instances available usually means less performance degradation.
 
 ### custom strategy
-The user could implement its proper strategy by implement [Strategy interface](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/Strategy.java). The key of the implementation of a strategy is to specify a sequence of [transitions](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/Transition.java). The `transitions` defined in [strategy library](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/StrategyLibrary.java) could be used to compose a new strategy.
+The user can implement its proper strategy by implementing the [Strategy interface](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/Strategy.java). The key of the implementation of a strategy is to specify a sequence of [transitions](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/Transition.java). The `transitions` defined in [strategy library](https://github.com/tao-xinxiu/prototype-template-engine/blob/master/src/main/java/com/orange/strategy/StrategyLibrary.java) can be used to compose new strategies.
 
 ## Evaluation
 An evaluation of this prototype is available in [another repo](https://gitlab.com/xxtao/experiment).
