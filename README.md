@@ -1,5 +1,5 @@
 # prototype-template-engine
-The project is the prototype of an Architecture-based Framework for automating the update of multiple microservices on multiple distributed PaaS platforms (ex. Cloud Foundry, Heroku). The framework supports various updating strategies (ex. BlueGreen, Canary, CleanRedeploy etc.), and greatly facilitates fixing failures during updating.
+The project is the prototype of an Architecture-based Framework for automating the update of multiple microservices running on multiple distributed PaaS platforms (e.g., Cloud Foundry, Heroku). The framework supports various updating strategies (e.g., BlueGreen, Canary, CleanRedeploy, etc.), and greatly facilitates fixing failures during updating.
 
 ## Usage
 ### compile the framework
